@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spinach Labs Command Center — Moodboard & Wireframe</title>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --panel: #121212;
+    --panel-2: #181818;
+    --hairline: rgba(255,255,255,0.07);
+    --hairline-2: rgba(255,255,255,0.12);
+    --text: #F7F6F1;
+    --text-2: #A0A09B;
+    --text-3: #6B6B66;
+    --green: #56883E;
+    --green-soft: rgba(86,136,62,0.14);
+    --amber: #C9A86A;
+    --amber-soft: rgba(201,168,106,0.12);
+    --blue: #7FA8C9;
+    --blue-soft: rgba(127,168,201,0.10);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Satoshi', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    padding: 48px 48px 80px;
+    max-width: 1240px;
+  }
+  .kicker { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); font-weight: 500; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 6px; }
+  h1 .dot { color: var(--green); }
+  .sub { font-size: 14px; color: var(--text-2); max-width: 640px; line-height: 1.5; }
+  .rule { height: 1px; background: var(--hairline); margin: 32px 0; }
+  h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+  h2 .num { color: var(--green); margin-right: 8px; }
+
+  /* ---- Moodboard swatches ---- */
+  .swatch-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .swatch { flex: 1; min-width: 130px; border-radius: 12px; overflow: hidden; border: 1px solid var(--hairline); }
+  .swatch .chip { height: 72px; }
+  .swatch .meta { padding: 10px 12px; background: var(--panel); }
+  .swatch .name { font-size: 12px; font-weight: 600; }
+  .swatch .hex { font-size: 11px; color: var(--text-3); font-family: ui-monospace, monospace; margin-top: 2px; }
+  .swatch .use { font-size: 10.5px; color: var(--text-3); margin-top: 4px; line-height: 1.35; }
+
+  /* ---- Material cards ---- */
+  .mat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .mat { border: 1px solid var(--hairline); border-radius: 12px; padding: 16px; background: var(--panel); }
+  .mat .tag { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+  .mat .t { font-size: 13px; font-weight: 600; margin: 6px 0 4px; }
+  .mat .d { font-size: 11.5px; color: var(--text-2); line-height: 1.45; }
+
+  /* ---- Wireframe ---- */
+  .wf {
+    border: 1px solid var(--hairline-2);
+    border-radius: 16px;
+    background: var(--panel);
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 150px 1fr 240px;
+    grid-template-rows: 54px 64px 300px 128px;
+    gap: 10px;
+  }
+  .wf .cell {
+    border: 1px dashed var(--hairline-2);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 10.5px;
+    color: var(--text-2);
+    line-height: 1.4;
+    background: var(--panel-2);
+    position: relative;
+  }
+  .wf .cell .h { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); margin-bottom: 4px; }
+  .wf .cell .g { color: var(--green); font-weight: 600; }
+  .wf .logo { grid-column: 1; grid-row: 1; display: flex; align-items: center; }
+  .wf .topbar { grid-column: 2 / 4; grid-row: 1; display: flex; align-items: center; justify-content: space-between; }
+  .wf .nav { grid-column: 1; grid-row: 2 / 4; }
+  .wf .metrics { grid-column: 2 / 4; grid-row: 2; display: flex; gap: 8px; }
+  .wf .metrics .cell { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .wf .office {
+    grid-column: 2; grid-row: 3;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(86,136,62,0.10), transparent 55%),
+      radial-gradient(ellipse at 75% 70%, rgba(201,168,106,0.12), transparent 50%),
+      linear-gradient(160deg, #101010 0%, #0C0C0C 100%);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+  }
+  .wf .office .big { font-size: 14px; font-weight: 700; color: var(--text); }
+  .wf .office .small { font-size: 10.5px; color: var(--text-3); margin-top: 6px; max-width: 320px; line-height: 1.5; }
+  .wf .right { grid-column: 3; grid-row: 3; display: flex; flex-direction: column; gap: 8px; }
+  .wf .right .cell { flex: 1; }
+  .wf .bottom { grid-column: 2 / 4; grid-row: 4; display: flex; gap: 8px; }
+  .wf .bottom .cell { flex: 1; }
+  .wf .navrow { display: flex; justify-content: space-between; padding: 2px 0; }
+  .wf .navrow .on { color: var(--green); font-weight: 600; }
+
+  /* ---- Animation inventory ---- */
+  .anim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .anim { border: 1px solid var(--hairline); border-radius: 10px; padding: 12px 14px; background: var(--panel); display: flex; gap: 10px; align-items: baseline; }
+  .anim .n { font-family: ui-monospace, monospace; font-size: 11px; color: var(--green); font-weight: 600; }
+  .anim .t { font-size: 12px; font-weight: 600; }
+  .anim .d { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+
+  /* ---- Build pipeline ---- */
+  .pipe { display: flex; gap: 0; align-items: stretch; }
+  .step { flex: 1; border: 1px solid var(--hairline); border-radius: 12px; padding: 14px 16px; background: var(--panel); position: relative; margin-right: 26px; }
+  .step:last-child { margin-right: 0; }
+  .step::after {
+    content: '→'; position: absolute; right: -21px; top: 50%; transform: translateY(-50%);
+    color: var(--text-3); font-size: 13px;
+  }
+  .step:last-child::after { display: none; }
+  .step .s { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--green); font-weight: 600; }
+  .step .t { font-size: 13px; font-weight: 700; margin: 5px 0 4px; }
+  .step .d { font-size: 11px; color: var(--text-2); line-height: 1.45; }
+
+  .footer-note { margin-top: 40px; font-size: 11.5px; color: var(--text-3); line-height: 1.6; border-left: 2px solid var(--green); padding-left: 14px; max-width: 700px; }
+</style>
+</head>
+<body>
+
+<div class="kicker">Spinach Labs · Command Center · Redesign v2</div>
+<h1>Plan, moodboard <span class="dot">·</span> wireframe</h1>
+<p class="sub">Built from your reference: a dark, photoreal digital-twin office inside a full dashboard shell — left nav, KPI row, central 3D scene with real desks/cabins/NPCs, right ops panels, bottom tracking row. Animation is the fix: the scene must breathe.</p>
+
+<div class="rule"></div>
+
+<h2><span class="num">01</span>Moodboard — palette (from reference + brand tokens)</h2>
+<div class="swatch-row">
+  <div class="swatch"><div class="chip" style="background:#0A0A0A"></div><div class="meta"><div class="name">Deep Charcoal</div><div class="hex">#0A0A0A</div><div class="use">Page bg, office void, walls</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#121212"></div><div class="meta"><div class="name">Panel Gray</div><div class="hex">#121212–#181818</div><div class="use">Sidebar, cards, panels</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#56883E"></div><div class="meta"><div class="name">Spinach Green</div><div class="hex">#56883E</div><div class="use">THE dot — status, active nav, progress (never neon)</div></div></div>
+  <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#C9A86A,#8A6D3B)"></div><div class="meta"><div class="name">Warm Amber</div><div class="hex">#C9A86A</div><div class="use">Baseboard light strips, meeting room glow, lounge</div></div></div>
+  <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#BFD4E6,#5A7A99)"></div><div class="meta"><div class="name">Monitor Blue-White</div><div class="hex">#BFD4E6</div><div class="use">35–40 screen glows — primary task light</div></div></div>
+  <div class="swatch"><div class="chip" style="background:#3A3F3B"></div><div class="meta"><div class="name">Sage Concrete</div><div class="hex">#3A3F3B</div><div class="use">Polished concrete floor, plant greens</div></div></div>
+</div>
+
+<div class="rule"></div>
+
+<h2><span class="num">02</span>Moodboard — materials & scene texture</h2>
+<div class="mat-row">
+  <div class="mat"><div class="tag">Floor</div><div class="t">Polished concrete</div><div class="d">Neutral dark grey, satin finish, soft blurred reflections of lights and furniture.</div></div>
+  <div class="mat"><div class="tag">Walls</div><div class="t">Dark solid + glass</div><div class="d">Left wall: solid panel with illuminated logo. Back wall: floor-to-ceiling windows, city skyline at night.</div></div>
+  <div class="tag" style="display:none"></div>
+  <div class="mat"><div class="tag">Cabins</div><div class="t">Glass fishbowl</div><div class="d">Floor-to-ceiling glass, black metal frames, conference table, wall screen, 2 pendant lights.</div></div>
+  <div class="mat"><div class="tag">Ceiling</div><div class="t">Open plenum, black</div><div class="d">Black track lighting with downward spotlights aimed at each work zone.</div></div>
+  <div class="mat"><div class="tag">Desks</div><div class="t">Dark bench rows</div><div class="d">Long communal benches, dual monitors each, ergonomic chairs, plants, cable management.</div></div>
+  <div class="mat"><div class="tag">Lounge</div><div class="t">Warm corner</div><div class="d">Rug, grey sofa, two armchairs, coffee table, dense potted plants, amber glow.</div></div>
+</div>
+
+<div class="rule"></div>
+
+<h2><span class="num">03</span>Wireframe — dashboard shell + 3D digital twin</h2>
+<div class="wf">
+  <div class="cell logo"><div><span style="font-weight:700">spinach</span><span style="color:var(--green)">.</span> <span style="color:var(--text-3);font-weight:400">labs</span></div></div>
+  <div class="cell topbar">
+    <div><div class="h">Good evening, Abhishek</div><div style="font-size:9.5px;color:var(--text-3)">Let's build a brighter tomorrow.</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div style="border:1px solid var(--hairline-2);border-radius:999px;padding:5px 14px;font-size:9.5px;color:var(--text-3)">Search anything… <span class="g">⌘K</span></div>
+      <div style="width:22px;height:22px;border-radius:999px;background:var(--green-soft);border:1px solid var(--hairline-2)"></div>
+      <div style="width:22px;height:22px;border-radius:999px;background:var(--green)"></div>
+    </div>
+  </div>
+  <div class="cell nav">
+    <div class="h">Navigation</div>
+    <div class="navrow"><span class="on">Command Center</span><span>⌂</span></div>
+    <div class="navrow"><span>Projects</span><span>▸</span></div>
+    <div class="navrow"><span>AI Agents</span><span>▸</span></div>
+    <div class="navrow"><span>Team</span><span>▸</span></div>
+    <div class="navrow"><span>Clients</span><span>▸</span></div>
+    <div class="navrow"><span>Marketing</span><span>▸</span></div>
+    <div class="navrow"><span>Analytics</span><span>▸</span></div>
+    <div class="navrow"><span>Assets</span><span>▸</span></div>
+    <div class="navrow"><span>Finance</span><span>▸</span></div>
+    <div class="navrow"><span>Knowledge</span><span>▸</span></div>
+    <div class="navrow"><span>Settings</span><span>▸</span></div>
+  </div>
+  <div class="metrics">
+    <div class="cell"><div class="h">Active Projects</div><div style="font-size:16px;font-weight:700">12 <span class="g">+8%</span></div></div>
+    <div class="cell"><div class="h">Tasks In Progress</div><div style="font-size:16px;font-weight:700">48 <span class="g">+12%</span></div></div>
+    <div class="cell"><div class="h">Agents Online</div><div style="font-size:16px;font-weight:700">20 <span class="g">live</span></div></div>
+    <div class="cell"><div class="h">Active Clients</div><div style="font-size:16px;font-weight:700">6</div></div>
+    <div class="cell"><div class="h">Avg. Growth</div><div style="font-size:16px;font-weight:700">2.4x</div></div>
+  </div>
+  <div class="cell office">
+    <div>
+      <div class="big">3D OFFICE — DIGITAL TWIN</div>
+      <div class="small">Photoreal scene: 5 bench-desk clusters · glass meeting cabin (right-middle) · lounge (bottom-right) · 25–30 NPCs seated/walking · amber baseboard strips · 35–40 blue-white monitor glows · black open ceiling with track spots · city skyline windows · high-angle trimetric camera 45–50°, slow idle drift</div>
+      <div class="small" style="margin-top:8px;color:var(--green)">Floating zone tags: Strategy & Consulting · Content & Creative · Campaigns & Media · Web & Tech · Data & Analytics</div>
+    </div>
+  </div>
+  <div class="right">
+    <div class="cell"><div class="h">Today</div><div style="font-size:9.5px">○ Review campaign creatives — 10:00<br>○ Client call — 11:30<br>○ Team standup — 14:00<br>○ Check ad performance — 16:00</div></div>
+    <div class="cell"><div class="h">AI Agents · 20 online</div><div style="font-size:9.5px">● Content · ● Research ● Ad · ● Design<br>● SEO · ● Outreach<br><span class="g">View all agents →</span></div></div>
+    <div class="cell"><div class="h">Live Activity</div><div style="font-size:9.5px">● AI generated 10 creatives — 2m<br>● Website audit completed — 5m<br>● SEO report drafted — 9m</div></div>
+  </div>
+  <div class="bottom">
+    <div class="cell"><div class="h">Project Progress</div><div style="font-size:9.5px">Spinach Labs Website ▓▓▓▓▓░░ 72%<br>Jha Realty Marketing ▓▓▓▓░░░ 55%<br>Gym in Mira Road ▓▓▓░░░░ 40%</div></div>
+    <div class="cell"><div class="h">Recent Outputs</div><div style="font-size:9.5px">[Creative] [Website]<br>[Reel] [Brand]<br>thumbnails grid</div></div>
+    <div class="cell"><div class="h">September 2026</div><div style="font-size:9.5px">Mo Tu We Th Fr Sa Su<br>&nbsp;1&nbsp; 2&nbsp; <span class="g" style="background:var(--green-soft);border-radius:999px;padding:0 3px">15</span> 17 18 19 20<br>21 22 23 24 25 26 27</div></div>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<h2><span class="num">04</span>Animation inventory — the fix for "static"</h2>
+<div class="anim-grid">
+  <div class="anim"><span class="n">A1</span><div><div class="t">NPC breathing</div><div class="d">All states, continuous subtle chest/shoulder rise</div></div></div>
+  <div class="anim"><span class="n">A2</span><div><div class="t">Random blinking</div><div class="d">2–6s intervals, per-NPC offset</div></div></div>
+  <div class="anim"><span class="n">A3</span><div><div class="t">Typing hands</div><div class="d">Working state: arm oscillation at desk</div></div></div>
+  <div class="anim"><span class="n">A4</span><div><div class="t">Walk cycle</div><div class="d">1–2 NPCs patrol the central aisle on paths</div></div></div>
+  <div class="anim"><span class="n">A5</span><div><div class="t">Monitor glow flicker</div><div class="d">Per-screen intensity oscillation — office feels powered</div></div></div>
+  <div class="anim"><span class="n">A6</span><div><div class="t">Meeting room life</div><div class="d">4–5 NPCs around table, gesturing loop</div></div></div>
+  <div class="anim"><span class="n">A7</span><div><div class="t">Camera idle drift</div><div class="d">Very slow orbit when user not interacting</div></div></div>
+  <div class="anim"><span class="n">A8</span><div><div class="t">Plant sway</div><div class="d">Subtle rotation on planter foliage</div></div></div>
+  <div class="anim"><span class="n">A9</span><div><div class="t">Coffee steam</div><div class="d">Tiny rising particles on 2–3 desks</div></div></div>
+  <div class="anim"><span class="n">A10</span><div><div class="t">State transitions</div><div class="d">WS agent_state → NPC state, 400ms GSAP ease</div></div></div>
+</div>
+
+<div class="rule"></div>
+
+<h2><span class="num">05</span>Execution pipeline</h2>
+<div class="pipe">
+  <div class="step"><div class="s">Step 1</div><div class="t">Architecture</div><div class="d">Floor, walls, glass cabins, windows+skyline, black ceiling, track lights</div></div>
+  <div class="step"><div class="s">Step 2</div><div class="t">Furniture</div><div class="d">5 bench clusters, chairs, dual monitors, planters, lounge set, props</div></div>
+  <div class="step"><div class="s">Step 3</div><div class="t">NPCs</div><div class="d">25–30 real-proportion avatars, seated/walking/meeting, screen glow, states</div></div>
+  <div class="step"><div class="s">Step 4</div><div class="t">Lighting + Motion</div><div class="d">Blue-white task light, amber baseboards, flicker, camera drift, all 10 anims</div></div>
+  <div class="step"><div class="s">Step 5</div><div class="t">Integrate + Verify</div><div class="d">Orchestrator, WS wiring, dashboard shell UI, browser verification</div></div>
+</div>
+
+<div class="footer-note">Steps 1–4 run as parallel delegated subagents; step 5 merges, wires the WebSocket to real agent states, rebuilds the dashboard shell around the scene, and verifies in the live browser at :3000. Brand rule holds: green #56883E only, never neon #2ecc71.</div>
+
+</body>
+</html>
