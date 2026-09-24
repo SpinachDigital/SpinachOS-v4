@@ -36,7 +36,14 @@ const supabase = createClient(
 );
 
 // JWT verification + issuance (HMAC-SHA256, signed + expiry-enforced)
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+// SECURITY (P0 Fix 3): no hardcoded fallback. A missing JWT_SECRET is a
+// config error — crash loudly at startup rather than sign tokens with a
+// predictable value.
+if (!process.env.JWT_SECRET) {
+  console.error('[FATAL] JWT_SECRET is not set. Refusing to start (set it in api/.env — never commit).');
+  process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 interface JwtPayload {
@@ -46,15 +53,47 @@ interface JwtPayload {
   exp?: number;
 }
 
-// Token minting: POST /api/v1/auth/token { sub, role } → signed JWT with exp
+// Token minting: POST /api/v1/auth/token
+// SECURITY (P0 Fix 2): this endpoint used to mint director JWTs for ANYONE.
+// Now it requires an existing valid director JWT (Authorization: Bearer …).
+// One-time bootstrap: BOOTSTRAP_ADMIN_TOKEN env may authorize the FIRST mint
+// only when no valid director token exists yet; every use is loudly logged.
 app.post('/api/v1/auth/token', async (req, res) => {
   try {
     const { sub, role } = req.body || {};
     if (!sub || typeof sub !== 'string') {
       return res.status(400).json({ error: 'Missing sub (user/agent id)' });
     }
+
+    // --- authorization check ---
+    const authHeader = req.headers.authorization || '';
+    const presented = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+    let authorized = false;
+    let bootstrapUsed = false;
+
+    if (presented) {
+      try {
+        const decoded = jwt.verify(presented, JWT_SECRET) as JwtPayload;
+        if (decoded?.role === 'director') authorized = true;
+      } catch {
+        /* invalid/expired token → not authorized */
+      }
+    }
+
+    // Bootstrap path: only for the very first mint (no valid director token
+    // in circulation). Gated on a server-side env secret, logged loudly.
+    if (!authorized && presented && process.env.BOOTSTRAP_ADMIN_TOKEN && presented === process.env.BOOTSTRAP_ADMIN_TOKEN) {
+      authorized = true;
+      bootstrapUsed = true;
+      console.warn('[AUTH][BOOTSTRAP] First-mint bootstrap token used from', req.ip, '— rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.');
+    }
+
+    if (!authorized) {
+      return res.status(401).json({ error: 'Token mint requires an existing director JWT (or one-time BOOTSTRAP_ADMIN_TOKEN for first setup).' });
+    }
+
     const token = jwt.sign(
-      { sub, role: typeof role === 'string' ? role : 'director' },
+      { sub, role: typeof role === 'string' ? role : 'director', ...(bootstrapUsed ? { via: 'bootstrap' } : {}) },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
@@ -3255,6 +3294,20 @@ app.post('/api/v1/scraper/seed', authMiddleware, async (req, res) => {
 // ============================================
 app.post('/api/v1/telegram/webhook', async (req, res) => {
   try {
+    // SECURITY (P0 Fix 4): verify Telegram's secret token header so only
+    // Telegram itself (configured via BotFather setWebhook secret_token)
+    // can invoke approvals through this webhook. 403 on missing/mismatch.
+    const expected = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const presentedHeader = (req.headers as any)['x-telegram-bot-api-secret-token'];
+    if (!expected) {
+      // Secret not configured → webhook must not silently accept traffic.
+      console.error('[SECURITY] TELEGRAM_WEBHOOK_SECRET not set — rejecting Telegram webhook. Set it via BotFather setWebhook (secret_token) + api/.env.');
+      return res.status(503).json({ error: 'Webhook not configured' });
+    }
+    if (presentedHeader !== expected) {
+      return res.status(403).json({ error: 'Forbidden: invalid webhook secret' });
+    }
+
     const update = req.body;
     const updateId = update.update_id;
     if (!updateId) return res.status(400).json({ error: 'Missing update_id' });
