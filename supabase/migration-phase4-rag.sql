@@ -4,12 +4,33 @@
 -- 1. Enable pgvector
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- 2. Real embedding column — REPLACES the JSONB placeholder.
---    (v6 §9 created `embedding JSONB` as a never-populated slot. IF NOT EXISTS
---    would silently skip, leaving JSONB, and the HNSW index would fail with
---    "vector_cosine_ops does not accept data type jsonb". Drop it first.)
-ALTER TABLE knowledge_chunks DROP COLUMN IF EXISTS embedding;
-ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS embedding vector(2048);
+-- 2. Real embedding column.
+--    (v6 §9 created `embedding JSONB` as a never-populated slot, and the
+--    original fix DROPPED it first — which also wiped any existing vector
+--    data on re-run. P1 Task 8: never DROP. The JSONB→vector type change
+--    is done ONCE via a guarded ALTER USING cast; subsequent runs are
+--    no-ops. If the column already exists as vector(2048), nothing happens.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'knowledge_chunks' AND column_name = 'embedding'
+  ) THEN
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'knowledge_chunks' AND column_name = 'embedding'
+        AND data_type = 'jsonb'
+    ) THEN
+      -- one-time conversion of the unused JSONB placeholder (was never
+      -- populated — safe to cast NULLs) — guarded so it runs only once.
+      ALTER TABLE knowledge_chunks ALTER COLUMN embedding TYPE vector(2048) USING NULL;
+    END IF;
+    -- already vector(2048) → no-op
+  ELSE
+    ALTER TABLE knowledge_chunks ADD COLUMN embedding vector(2048);
+  END IF;
+END
+$$;
 
 -- 3. HNSW index (cosine) — pgvector HNSW caps at 2000 dims, and nemotron
 --    embeddings are 2048d, so index a halfvec EXPRESSION instead (pgvector

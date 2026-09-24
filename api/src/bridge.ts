@@ -123,9 +123,14 @@ export async function runProfileTask(
     });
     return { output, model: `hermes/${profile}`, via: 'profile' };
   } catch (e: any) {
-    // Profile spawn failed (CLI missing, profile missing, timeout) → gateway fallback
+    // Profile spawn failed (CLI missing, profile missing, timeout) → gateway fallback.
+    // P1 Task 5: every fallback is now a recorded event (visible in /models/fallback-log).
     console.error(`[bridge] profile spawn failed for ${profile}:`, e?.message);
-    return { ...(await runGatewayTask(profile, task)), via: 'gateway-fallback' };
+    // P1 Task 5: record the fallback BEFORE attempting it — the fallback itself
+    // may also fail (dead gateway), and the event must still be in the log.
+    recordFallback(`hermes/profile:${profile}`, `omni:${GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast'}`, `profile spawn failed: ${String(e?.message || 'unknown').slice(0, 120)}`);
+    const gw = await runGatewayTask(profile, task);
+    return { ...gw, via: 'gateway-fallback' };
   } finally {
     clearTimeout(timer);
   }
@@ -135,9 +140,14 @@ export async function runProfileTask(
 // GATEWAY CALL (tiered, words-only + fallback)
 // ============================================
 
-const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128';
+// P1 Task 9: default now includes /v1 — the gateway call posts to
+// `${OMNIROUTE_URL}/chat/completions`, so without /v1 the default config
+// 404s/401s and every fallback silently fails.
+const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128/v1';
 const AGENT_TASK_TIMEOUT_MS = parseInt(String(process.env.AGENT_TASK_TIMEOUT_MS)) || 60000;
 
+import { breakerFor, breakerAllows, recordFailure, recordSuccess, recordFallback, getBreakerStates, getFallbackLog } from './breaker-telemetry';
+export { getBreakerStates, getFallbackLog, recordFallback };
 // Import AGENT_MODELS + prompts from the main module's values — re-declared here to
 // keep this module self-contained (the main file passes its own fallbacks anyway).
 const GATEWAY_MODEL_BY_PROFILE: Record<string, string> = {
@@ -169,10 +179,12 @@ export const PROFILE_SOULS: Record<string, string> = {
 async function runGatewayTask(profile: string, task: string): Promise<{ output: string; model: string }> {
   const model = GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast';
   const soul = PROFILE_SOULS[profile] || BENCH_SOUL_TEMPLATE('specialist', 'operations', 'the requested deliverable');
+  const b = breakerFor('omniroute');
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AGENT_TASK_TIMEOUT_MS);
   try {
+    if (!breakerAllows(b)) throw new Error('circuit open for provider omniroute (retry after 15 min)');
     const res = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -189,12 +201,17 @@ async function runGatewayTask(profile: string, task: string): Promise<{ output: 
     });
     if (!res.ok) {
       const body = await res.text();
+      recordFailure(b);
       throw new Error(`OmniRoute ${res.status}: ${body.slice(0, 200)}`);
     }
     const data = await res.json();
     const output = data?.choices?.[0]?.message?.content;
-    if (!output) throw new Error('OmniRoute returned empty output');
+    if (!output) { recordFailure(b); throw new Error('OmniRoute returned empty output'); }
+    recordSuccess(b);
     return { output: String(output), model: data?.model || model };
+  } catch (e: any) {
+    if (!String(e?.message || '').includes('circuit open')) recordFailure(b);
+    throw e;
   } finally {
     clearTimeout(timer);
   }

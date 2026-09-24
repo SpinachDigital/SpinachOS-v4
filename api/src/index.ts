@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // v6 execution bridge — path-aware dispatch (profile spawn | specialist | gateway)
-import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from './bridge';
+import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask, getBreakerStates, getFallbackLog } from './bridge';
 // Phase 4 — real semantic RAG (NVIDIA nemotron-3-embed-1b, 2048d, hybrid RRF)
 import { embed, reciprocalRankFuse, EMBED_DIMS } from './rag';
 
@@ -246,20 +246,38 @@ const BulkAgentActionSchema = z.object({
 // ============================================
 // PROFILES
 // ============================================
-app.get('/api/v1/profiles', authMiddleware, async (req, res) => {
+app.get('/api/v1/profiles', authMiddleware, async (_req, res) => {
   try {
-    // In production, query Hermes for actual profile status
+    // P1 Task 6: all 10 real profiles, live vs dormant marked explicitly.
+    // model = the bridge's GATEWAY_MODEL_BY_PROFILE (the model the profile's
+    // gateway calls actually use); fallback_model = the tiered auto/* route
+    // every gateway call degrades to; provider = OmniRoute today.
     const profiles = [
-      { id: 'ceo', name: 'CEO', model: 'nemotron-3-ultra', status: 'running' },
-      { id: 'cto', name: 'CTO', model: 'nemotron-3-ultra', status: 'running' },
-      { id: 'orchestrator', name: 'Orchestrator', model: 'nemotron-3-ultra', status: 'running' },
-      { id: 'research', name: 'Research', model: 'nemotron-3-ultra', status: 'running' },
-      { id: 'social', name: 'Social', model: 'nemotron-3-ultra', status: 'running' },
+      { id: 'ceo',            name: 'CEO',           model: 'auto/pro-reasoning', fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'cto',            name: 'CTO',           model: 'auto/pro-reasoning', fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'orchestrator',   name: 'Orchestrator',  model: 'auto/pro-reasoning', fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'designer',       name: 'Designer',      model: 'auto/best-chat',     fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'engineer',       name: 'Engineer',      model: 'auto/pro-coding',    fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'social',         name: 'Social',        model: 'auto/best-fast',     fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'seo_specialist', name: 'SEO',           model: 'auto/best-reasoning', fallback_model: 'auto/best-fast', provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'research',       name: 'Research',      model: 'auto/best-reasoning', fallback_model: 'auto/best-fast', provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'sales',          name: 'Sales',         model: 'auto/best-fast',     fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'live',    dormant: false },
+      { id: 'ads_manager',    name: 'Ads Manager',   model: 'auto/pro-reasoning', fallback_model: 'auto/best-fast',  provider: 'omniroute', status: 'dormant', dormant: true },
     ];
     res.json(profiles);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// P1 Task 4 — circuit-breaker telemetry (per-provider state)
+app.get('/api/v1/models/breakers', authMiddleware, (_req, res) => {
+  res.json(getBreakerStates());
+});
+
+// P1 Task 5 — fallback event log (from → to, reason, timestamp)
+app.get('/api/v1/models/fallback-log', authMiddleware, (_req, res) => {
+  res.json(getFallbackLog());
 });
 
 // ============================================
@@ -336,7 +354,10 @@ const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
   ops: 'You are the Ops agent of Spinach Digital. You handle launches, monitoring, and process. Checklist-style, max 150 words.',
 };
 
-/** Run a task through the OmniRoute gateway (Hermes model bridge). Returns the model's output text. */
+/** Run a task through the OmniRoute gateway (Hermes model bridge). Returns the model's output text.
+ *  P1 Task 4: routed through the same circuit breaker as bridge.ts gateway calls
+ *  (single per-provider state — import the breaker helpers from bridge). */
+import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from './breaker-telemetry';
 async function runAgentTask(agent: string, task: string): Promise<{ output: string; model: string }> {
   const model = AGENT_MODELS[agent] || 'auto/best-fast';
   const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || 'You are a helpful AI company agent. Be concise.';
@@ -344,6 +365,7 @@ async function runAgentTask(agent: string, task: string): Promise<{ output: stri
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AGENT_TASK_TIMEOUT_MS);
   try {
+    if (!gatewayBreakerAllows()) throw new Error('circuit open for provider omniroute (retry in ~15 min)');
     const res = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -360,12 +382,17 @@ async function runAgentTask(agent: string, task: string): Promise<{ output: stri
     });
     if (!res.ok) {
       const body = await res.text();
+      recordGatewayFailure();
       throw new Error(`OmniRoute ${res.status}: ${body.slice(0, 200)}`);
     }
     const data = await res.json();
     const output = data?.choices?.[0]?.message?.content;
-    if (!output) throw new Error('OmniRoute returned empty output');
+    if (!output) { recordGatewayFailure(); throw new Error('OmniRoute returned empty output'); }
+    recordGatewaySuccess();
     return { output: String(output), model: data?.model || model };
+  } catch (e: any) {
+    if (!String(e?.message || '').includes('circuit open')) recordGatewayFailure();
+    throw e;
   } finally {
     clearTimeout(timer);
   }
@@ -734,6 +761,65 @@ function sanitizeText(input: unknown, maxLen = 4000): string {
 // ============================================
 // APPROVALS
 // ============================================
+// P1 Task 2 — full approval history with filters (client 360 + audit views)
+// GET /api/v1/approvals?client_id=&status=&limit=
+app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
+  try {
+    const { client_id, status } = req.query;
+    const limit = Math.min(parseInt(String(req.query.limit || '100'), 10) || 100, 500);
+    let query = supabase
+      .from('approvals')
+      .select('id, client_id, type, title, description, platform, status, requested_by, approved_by, reviewed_at, expires_at, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (client_id) query = query.eq('client_id', String(client_id));
+    if (status) query = query.eq('status', String(status));
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// P1 Task 1 — invoices (Client 360 parked section)
+// GET /api/v1/invoices?client_id=  → list; POST /api/v1/invoices → create.
+// Table created by supabase/migration-p1-backend-gaps.sql.
+app.get('/api/v1/invoices', authMiddleware, async (req, res) => {
+  try {
+    const { client_id, status } = req.query;
+    let query = supabase
+      .from('invoices')
+      .select('id, client_id, package_key, amount, currency, status, due_at, paid_at, notes, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (client_id) query = query.eq('client_id', String(client_id));
+    if (status) query = query.eq('status', String(status));
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ error: `invoice list failed: ${error.message} (run supabase/migration-p1-backend-gaps.sql if the table is missing)` });
+    res.json(data || []);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/v1/invoices', authMiddleware, async (req, res) => {
+  try {
+    const { client_id, package_key, amount, currency = 'INR', status = 'draft', due_at, notes } = req.body || {};
+    if (!client_id) return res.status(400).json({ error: 'client_id required' });
+    if (amount == null || isNaN(Number(amount))) return res.status(400).json({ error: 'amount (number) required' });
+    const { data, error } = await supabase.from('invoices').insert({
+      client_id, package_key,
+      amount: Number(amount), currency, status,
+      due_at: due_at || null, notes: notes || null,
+    }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/v1/approvals/pending', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -4166,13 +4252,31 @@ app.post('/api/v1/social/plan-week', authMiddleware, async (req, res) => {
 
   for (const brand of brands) {
     // 1. Topic ideation: research exec pulls trends + RAG context (hybrid retrieval)
+    // P1 Task 11: the LLM must return 7 valid `PLATFORM | TOPIC` lines; if it
+    // returns fewer (observed: 3-5 lines on some runs), RETRY up to 3 times
+    // with a stricter prompt; pad any residual gap with deterministic fallbacks
+    // so every brand always gets exactly 7 slots (14 total). Never silent.
     const ragCtx = await hybridRetrieve('marketing trends content ideas founder audience', null, 5);
     const ragText = (ragCtx || []).map((c: any) => `[${c.kind}] ${c.title}: ${String(c.content).slice(0, 200)}`).join('\n');
-    const { output: topicsOut } = await runGatewayTask('research', `Generate 7 social content topics for the "${brand}" brand for the next week.
+    let topics: string[] = [];
+    let lastTopicsOut = '';
+    for (let attempt = 1; attempt <= 3 && topics.length < 7; attempt++) {
+      const { output: topicsOut } = await runGatewayTask('research', `Generate 7 social content topics for the "${brand}" brand for the next week.
 ${BRAND_VOICES[brand]}
 ${ragText ? `Recent knowledge:\n${ragText}` : ''}
-Return EXACTLY 7 lines, format: PLATFORM | TOPIC (one line each, mix platforms: ${platforms.join(', ')}). No numbering, no prose.`);
-    const topics = String(topicsOut || '').split('\n').map(l => l.trim()).filter(l => l.includes('|')).slice(0, 7);
+Return EXACTLY 7 lines, one per day. Each line MUST match the format: PLATFORM | TOPIC — PLATFORM is one of ${platforms.join(', ')}, then a pipe character, then the topic. No numbering, no bullets, no prose, no extra lines.${attempt > 1 ? `\nYour previous reply had ${topics.length || 'no'} valid lines — return STRICTLY 7 lines in the required format this time.` : ''}`);
+      lastTopicsOut = String(topicsOut || '');
+      topics = lastTopicsOut.split('\n').map(l => l.trim()).filter(l => l.includes('|') && platforms.some(p => l.toLowerCase().startsWith(p)));
+      if (topics.length < 7 && attempt < 3) console.warn(`[plan-week] brand=${brand} attempt=${attempt}: only ${topics.length}/7 valid topic lines — retrying`);
+    }
+    if (topics.length < 7) {
+      console.warn(`[plan-week] brand=${brand}: LLM returned ${topics.length}/7 topics after 3 attempts — padding with deterministic fallbacks`);
+    }
+    // deterministic pad to exactly 7 (retry + pad = 14 slots guaranteed)
+    while (topics.length < 7) {
+      topics.push(`x | ${brand} week-in-review: build log, learnings and what shipped (part ${topics.length + 1})`);
+    }
+    topics = topics.slice(0, 7);
 
     // 2. One slot per day, 09:00 + 3 days spread over platforms
     const days = topics.length || 7;
