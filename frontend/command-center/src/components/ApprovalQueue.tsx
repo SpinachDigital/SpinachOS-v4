@@ -126,7 +126,7 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
                                   {isPending && (
                                     <>
                                       <button
-                                        className="flex-1 px-3 py-2 bg-spinach-500 text-white rounded-lg text-sm font-medium hover:bg-spinach-400 transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 px-3 py-2 min-h-[44px] bg-spinach-500 text-white rounded-lg text-sm font-medium hover:bg-spinach-400 transition-colors flex items-center justify-center gap-2"
                                         onClick={() => onApprove?.(approval.id)}
                                         disabled={actionPending === approval.id}
                                       >
@@ -134,7 +134,7 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
                                         {actionPending === approval.id ? 'Approving…' : 'Approve'}
                                       </button>
                                       <button
-                                        className="flex-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2"
+                                        className="flex-1 px-3 py-2 min-h-[44px] bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2"
                                         onClick={() => onReject?.(approval.id)}
                                         disabled={actionPending === approval.id}
                                       >

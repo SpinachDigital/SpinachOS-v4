@@ -252,7 +252,7 @@ export default function EngagementAnalyticsPage() {
             {/* Top Posts Table */}
             <div className="p-4 rounded-xl" style={{ background: glass.bg, border: `1px solid ${glass.border}` }}>
               <div className="t-label mb-4" style={{ color: glass.text }}>Top Posts by Engagement</div>
-              <div className="overflow-x-auto">
+              <div className="table-wrap">
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${glass.border}` }}>
@@ -369,7 +369,7 @@ export default function EngagementAnalyticsPage() {
             {/* Daily Breakdown Table */}
             <div className="p-4 rounded-xl" style={{ background: glass.bg, border: `1px solid ${glass.border}` }}>
               <div className="t-label mb-4" style={{ color: glass.text }}>Daily Breakdown</div>
-              <div className="overflow-x-auto">
+              <div className="table-wrap">
                 <table className="w-full">
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${glass.border}` }}>

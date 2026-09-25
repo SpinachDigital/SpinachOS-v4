@@ -151,7 +151,7 @@ export default function ContentCalendarPage() {
         {loading ? (
           <div className="flex items-center justify-center h-64" style={{ color: glass.text2 }}><div className="t-mono">Loading calendar…</div></div>
         ) : view === 'week' ? (
-          <div className="grid grid-cols-7 gap-1" style={{ overflowX: 'auto', minWidth: '980px' }}>
+          <div className="grid grid-cols-7 gap-1 week-grid">
             {weekDates.map((date, dayIdx) => {
               const dayItems = filteredItems.filter(i => i.date === date);
               return (
