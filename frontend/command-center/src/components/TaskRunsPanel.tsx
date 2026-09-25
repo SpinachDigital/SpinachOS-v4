@@ -45,7 +45,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/kanban/cards');
+      const res = await apiFetch('/api/v1/kanban/cards');
       if (res.ok) {
         const data = await res.json();
         // Only agent-execution tasks (they carry metadata.source/model/output)
@@ -76,7 +76,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
     setExpanded(id);
     if (!outputCache[id]) {
       try {
-        const res = await apiFetch(`http://localhost:4000/api/v1/agents/execute/${id}`);
+        const res = await apiFetch(`/api/v1/agents/execute/${id}`);
         if (res.ok) {
           const full = await res.json();
           setOutputCache((c) => ({ ...c, [id]: full }));

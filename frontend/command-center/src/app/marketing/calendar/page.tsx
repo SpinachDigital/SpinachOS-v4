@@ -58,7 +58,7 @@ export default function ContentCalendarPage() {
 
   const fetchItems = useCallback(async () => {
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/marketing/calendar');
+      const res = await apiFetch('/api/v1/marketing/calendar');
       if (res.ok) {
         const data = await res.json();
         setItems(data);

@@ -54,7 +54,7 @@ export const useWebSocketStore = create<WSStore>((set, get) => ({
       // API WebSocket is on port 4000, not the frontend port.
       // Env-driven so a remote API host works without a code change
       // (NEXT_PUBLIC_WS_URL=ws://host:4000/ws; default = local API).
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
       const url = (process.env.NEXT_PUBLIC_WS_URL || apiBase.replace(/^http/, 'ws') + '/ws').trim();
       socket = new WebSocket(url);
       socket.onopen = () => set({ connected: true });

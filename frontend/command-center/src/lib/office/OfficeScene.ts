@@ -1,6 +1,7 @@
 // OfficeScene v2: orchestrator — assembles Architecture + Furniture + NPC + Lighting
 // Spinach Labs office — digital-twin with full animation loop, day/night modes, theme-aware
 import * as THREE from 'three';
+import { buildWsUrl } from '@/lib/auth';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildArchitecture } from './scene/Architecture';
 import { buildFurniture } from './scene/Furniture';
@@ -109,7 +110,7 @@ export class OfficeScene {
   setupWebSocket() {
     if (this.disposed) return;
     // API WebSocket is on port 4000
-    const wsUrl = `ws://localhost:4000/ws`;
+    const wsUrl = buildWsUrl('/ws');
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onmessage = (event) => {

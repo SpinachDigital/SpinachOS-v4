@@ -5,6 +5,7 @@
 // with projected dept tags → Live Activity / Jobs / Projects / Assets
 // → Progress / Outputs / Calendar / Quote. Live WS feed + TaskRunsPanel output viewer.
 import { useEffect, useMemo, useState } from 'react';
+import { buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
 import CommandInput from '@/components/CommandInput';
 import TaskRunsPanel from '@/components/TaskRunsPanel';
@@ -137,7 +138,7 @@ export default function CommandCenter() {
     let closed = false;
     const connect = () => {
       if (closed) return;
-      try { ws = new WebSocket('ws://localhost:4000/ws'); } catch { retry = setTimeout(connect, 5000); return; }
+      try { ws = new WebSocket(buildWsUrl('/ws')); } catch { retry = setTimeout(connect, 5000); return; }
       ws.onopen = () => setWsConnected(true);
       ws.onmessage = (e) => {
         try {

@@ -109,3 +109,10 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
   }
   return res;
 }
+
+// Build a WebSocket URL from NEXT_PUBLIC_API_BASE (http→ws conversion).
+// Single source of truth for WS endpoints — no hardcoded hosts anywhere.
+export function buildWsUrl(path: string): string {
+  const base = (process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000').replace(/^http/, 'ws');
+  return `${base}${path}`;
+}

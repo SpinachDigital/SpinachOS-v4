@@ -66,8 +66,8 @@ export default function ProjectsPage() {
   const fetchAll = useCallback(async () => {
     try {
       const [wfRes, leadRes] = await Promise.all([
-        apiFetch('http://localhost:4000/api/v1/workflows'),
-        apiFetch('http://localhost:4000/api/v1/leads'),
+        apiFetch('/api/v1/workflows'),
+        apiFetch('/api/v1/leads'),
       ]);
       if (wfRes.ok) setWorkflows(await wfRes.json());
       if (leadRes.ok) setLeads(await leadRes.json());

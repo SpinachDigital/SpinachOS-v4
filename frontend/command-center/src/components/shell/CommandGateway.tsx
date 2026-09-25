@@ -49,19 +49,12 @@ export default function CommandGateway() {
 
     try {
       let data: GatewayResponse | null = null;
-      for (const url of ['http://localhost:4000/api/v1/command', 'http://localhost:4000/command']) {
-        try {
-          const res = await apiFetch(url, {
-            method: 'POST',
-            body: JSON.stringify({ command, source, timestamp: new Date().toISOString() }),
-          });
-          if (res.ok) {
-            data = await res.json();
-            break;
-          }
-        } catch {
-          continue;
-        }
+      const res = await apiFetch('/api/v1/command', {
+        method: 'POST',
+        body: JSON.stringify({ command, source, timestamp: new Date().toISOString() }),
+      });
+      if (res.ok) {
+        data = await res.json();
       }
       const reply =
         data?.reply ||

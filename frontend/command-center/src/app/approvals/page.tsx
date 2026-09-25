@@ -36,7 +36,7 @@ export default function ApprovalsPage() {
   // Fetch approvals on mount and when feed updates
   const fetchApprovals = useCallback(async () => {
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/approvals/pending');
+      const res = await apiFetch('/api/v1/approvals/pending');
       if (res.ok) {
         const data = await res.json();
         setApprovals(data);
@@ -63,7 +63,7 @@ export default function ApprovalsPage() {
   const handleApprove = async (id: string) => {
     setActionPending(id);
     try {
-      const res = await apiFetch(`http://localhost:4000/api/v1/approvals/${id}/approve`, { method: 'POST' });
+      const res = await apiFetch(`/api/v1/approvals/${id}/approve`, { method: 'POST' });
       if (res.ok) {
         fetchApprovals();
       }
@@ -77,7 +77,7 @@ export default function ApprovalsPage() {
   const handleReject = async (id: string) => {
     setActionPending(id);
     try {
-      const res = await apiFetch(`http://localhost:4000/api/v1/approvals/${id}/reject`, { method: 'POST' });
+      const res = await apiFetch(`/api/v1/approvals/${id}/reject`, { method: 'POST' });
       if (res.ok) {
         fetchApprovals();
       }

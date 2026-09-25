@@ -41,7 +41,7 @@ export default function HierarchyTree() {
     let alive = true;
     (async () => {
       try {
-        const r = await apiFetch('http://localhost:4000/api/v1/hierarchy');
+        const r = await apiFetch('/api/v1/hierarchy');
         if (!r.ok) throw new Error((await r.json()).error || `HTTP ${r.status}`);
         const j = await r.json();
         if (alive) setTree(j);

@@ -33,8 +33,8 @@ export default function AnalyticsPage() {
   const fetchAll = useCallback(async () => {
     try {
       const [aRes, lRes] = await Promise.all([
-        apiFetch('http://localhost:4000/api/v1/agent-states'),
-        apiFetch('http://localhost:4000/api/v1/logs?limit=50'),
+        apiFetch('/api/v1/agent-states'),
+        apiFetch('/api/v1/logs?limit=50'),
       ]);
       if (aRes.ok) setAgents(await aRes.json());
       if (lRes.ok) setLogs(await lRes.json());

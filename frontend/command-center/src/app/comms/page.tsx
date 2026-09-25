@@ -5,7 +5,7 @@
 // Data: /api/v1/comms/* on :4000; real-time via WS 'message' events
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
-import { apiFetch } from '@/lib/auth';
+import { apiFetch, buildWsUrl } from '@/lib/auth';
 
 interface Channel {
   id: string;
@@ -55,7 +55,7 @@ export default function CommsPage() {
   // Fetch channels on mount
   const fetchChannels = useCallback(async () => {
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/comms/channels');
+      const res = await apiFetch('/api/v1/comms/channels');
       if (res.ok) {
         const data = await res.json();
         setChannels(data);
@@ -73,7 +73,7 @@ export default function CommsPage() {
   // Fetch messages when channel changes
   const fetchMessages = useCallback(async (channelId: string) => {
     try {
-      const res = await apiFetch(`http://localhost:4000/api/v1/comms/messages?channel_id=${channelId}`);
+      const res = await apiFetch(`/api/v1/comms/messages?channel_id=${channelId}`);
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
@@ -105,7 +105,7 @@ export default function CommsPage() {
         }
       } catch {}
     };
-    const ws = new WebSocket('ws://localhost:4000/ws');
+    const ws = new WebSocket(buildWsUrl('/ws'));
     ws.onmessage = handler;
     return () => ws.close();
   }, [activeChannel]);
@@ -131,7 +131,7 @@ export default function CommsPage() {
     };
     setMessages((m) => [...m, optimistic]);
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/comms/messages', {
+      const res = await apiFetch('/api/v1/comms/messages', {
         method: 'POST',
         body: JSON.stringify({
           channel_id: activeChannel.id,
@@ -193,7 +193,7 @@ export default function CommsPage() {
               <p className="t-meta" style={{ color: glass.text3, fontSize: 11 }}>No channels yet</p>
               <button
                 onClick={async () => {
-                  await apiFetch('http://localhost:4000/api/v1/comms/seed', { method: 'POST' });
+                  await apiFetch('/api/v1/comms/seed', { method: 'POST' });
                   fetchChannels();
                 }}
                 className="t-meta mt-2 px-2 py-1 rounded border"

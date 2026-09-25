@@ -81,7 +81,7 @@ export default function EngagementAnalyticsPage() {
       cutoff.setDate(cutoff.getDate() - timeRange.days);
       const params = new URLSearchParams({ recorded_at: `gte.${cutoff.toISOString()}` });
       if (selectedPlatform !== 'all') params.set('platform', selectedPlatform);
-      const res = await apiFetch(`http://localhost:4000/api/v1/marketing/engagement?${params.toString()}`);
+      const res = await apiFetch(`/api/v1/marketing/engagement?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);

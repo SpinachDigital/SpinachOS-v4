@@ -15,8 +15,8 @@ export default function CalendarPage() {
   const fetchData = useCallback(async () => {
     try {
       const [calsRes, eventsRes] = await Promise.all([
-        apiFetch('http://localhost:4000/api/v1/calendar/calendars'),
-        apiFetch('http://localhost:4000/api/v1/calendar/events'),
+        apiFetch('/api/v1/calendar/calendars'),
+        apiFetch('/api/v1/calendar/events'),
       ]);
       if (calsRes.ok) {
         const data = await calsRes.json();
@@ -45,7 +45,7 @@ export default function CalendarPage() {
 
   const handleScheduleStandup = async () => {
     try {
-      const res = await apiFetch('http://localhost:4000/api/v1/calendar/standup', { method: 'POST' });
+      const res = await apiFetch('/api/v1/calendar/standup', { method: 'POST' });
       if (res.ok) {
         fetchData();
       }

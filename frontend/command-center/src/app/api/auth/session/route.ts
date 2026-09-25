@@ -14,7 +14,7 @@ import { NextResponse } from 'next/server';
 let cached: { token: string; expires_at_ms: number } | null = null;
 
 export async function GET() {
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
   // serve from cache while >5 min of validity remains
   if (cached && Date.now() < cached.expires_at_ms - 5 * 60 * 1000) {
