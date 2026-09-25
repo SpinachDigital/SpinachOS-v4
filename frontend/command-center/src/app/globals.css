@@ -28,6 +28,7 @@
   --text: #f8f9f7;
   --text-dim: #a8b3ab;
   --text-faint: #6b7280;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --danger: #ef4444;
   --danger-soft: rgba(239, 68, 68, 0.12);
   --warn: #f59e0b;
@@ -875,3 +876,48 @@ body {
 .pill.rejected { background: rgba(239, 68, 68, 0.15); color: var(--red); }
 .pill.draft { background: var(--card-hover); color: var(--text-dim); }
 .pill.archived { background: var(--card-hover); color: var(--text-faint); }
+
+/* ---------- E1: global keyboard focus ring ---------- */
+:focus-visible {
+  outline: 3px solid rgba(22, 163, 74, 0.35);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- E2: motion tokens (one place, everywhere) ---------- */
+.panel {
+  transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease);
+}
+.panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 6px 16px rgba(0,0,0,0.35), 0 20px 40px -20px rgba(0,0,0,0.4);
+}
+button:active, [role='button']:active {
+  transform: scale(0.98);
+}
+.tabs .tab {
+  transition: opacity 0.15s var(--ease), color 0.15s var(--ease);
+}
+.main {
+  animation: pageEnter 0.25s var(--ease) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- E3: command bar micro-interactions ---------- */
+.command-bar input:focus {
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.25);
+  border-radius: 6px;
+}
+@keyframes sendPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.command-bar.sending input { animation: sendPulse 1s var(--ease) infinite; }
+@keyframes msgFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

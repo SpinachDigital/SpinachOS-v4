@@ -173,7 +173,7 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
       {/* Floating pill (bottom-center) */}
       <div className="absolute z-30 flex justify-center" style={{ bottom: 20, left: 0, right: 0 }}>
         <div
-          className="flex items-center gap-2 px-2 py-2 animate-rise"
+          className={`flex items-center gap-2 px-2 py-2 animate-rise${busy ? ' command-bar sending' : ''}`}
           style={{
             borderRadius: 999,
             background: 'rgba(15,15,15,0.85)',
@@ -334,7 +334,7 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
                   </span>
                   <span className="t-mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>{entry.time}</span>
                 </div>
-                <p className="t-meta" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, whiteSpace: 'pre-wrap' }}>
+                <p className="t-meta" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, whiteSpace: 'pre-wrap', animation: 'msgFadeIn 0.2s var(--ease) both' }}>
                   {entry.text}
                 </p>
               </div>
