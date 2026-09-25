@@ -16,7 +16,10 @@ interface Profile {
   id: string;
   name: string;
   model?: string;
+  fallback_model?: string;
+  provider?: string;
   status?: string;
+  dormant?: boolean;
 }
 
 type Tab = 'integrations' | 'models' | 'theme' | 'api' | 'advanced';
@@ -46,6 +49,9 @@ export default function SettingsPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
+  // Models & Brains live telemetry (P1 endpoints)
+  const [breakers, setBreakers] = useState<any[] | null>(null);
+  const [fallbackLog, setFallbackLog] = useState<any[] | null>(null);
 
   useEffect(() => {
     setIntegrations([
@@ -72,6 +78,17 @@ export default function SettingsPage() {
       .catch((e: any) => setProfilesError(e?.message || 'Failed to load profiles'))
       .finally(() => setProfilesLoading(false));
   }, [activeTab, profiles.length]);
+
+  // P1: breaker + fallback telemetry (loaded when the Models tab opens)
+  useEffect(() => {
+    if (activeTab !== 'models') return;
+    apiFetch('/api/v1/models/breakers')
+      .then(async (res) => { setBreakers(res.ok ? await res.json() : []); })
+      .catch(() => setBreakers([]));
+    apiFetch('/api/v1/models/fallback-log')
+      .then(async (res) => { setFallbackLog(res.ok ? await res.json() : []); })
+      .catch(() => setFallbackLog([]));
+  }, [activeTab]);
 
   const reportedIds = new Set(profiles.map((p) => p.id));
   const unreported = KNOWN_PROFILE_KEYS.filter((k) => !reportedIds.has(k));
@@ -156,7 +173,7 @@ export default function SettingsPage() {
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead>
-                      <tr><th>Profile</th><th>Primary model</th><th>Fallback</th><th>Status</th></tr>
+                      <tr><th>Profile</th><th>Primary model</th><th>Fallback model</th><th>Provider</th><th>Status</th></tr>
                     </thead>
                     <tbody>
                       {profiles.map((p) => (
@@ -166,11 +183,14 @@ export default function SettingsPage() {
                             <div className="cell-dim t-mono">{p.id}</div>
                           </td>
                           <td className="t-mono">{p.model || '—'}</td>
-                          <td><span className="cell-dim">Not exposed by API</span></td>
+                          <td className="t-mono">{p.fallback_model || '—'}</td>
+                          <td className="t-mono">{p.provider || '—'}</td>
                           <td>
-                            {p.status === 'running'
-                              ? <span className="pill approved">running</span>
-                              : <span className="pill draft">{p.status || 'unknown'}</span>}
+                            {p.dormant
+                              ? <span className="pill draft">dormant</span>
+                              : p.status === 'live' || p.status === 'running'
+                                ? <span className="pill approved">{p.status}</span>
+                                : <span className="pill pending">{p.status || 'unknown'}</span>}
                           </td>
                         </tr>
                       ))}
@@ -189,27 +209,80 @@ export default function SettingsPage() {
 
             <div className="grid-2" style={{ alignItems: 'start' }}>
               <div className="panel">
-                <div className="panel-head"><h3>Circuit breaker</h3></div>
-                <div className="empty-state" style={{ padding: '28px 20px' }}>
-                  <h3>No breaker telemetry</h3>
-                  <p>The API doesn't expose circuit-breaker state yet. Per-provider failure counts and open/half-open status will appear here once the backend adds the endpoint.</p>
-                  <span className="tag">backend gap</span>
+                <div className="panel-head">
+                  <h3>Circuit breaker</h3>
+                  <span className="badge badge-gray">GET /api/v1/models/breakers</span>
+                </div>
+                {breakers === null ? (
+                  <div className="skeleton" style={{ height: 100 }} />
+                ) : breakers.length === 0 ? (
+                  <div className="t-meta" style={{ color: 'var(--text-faint)', padding: '10px 0' }}>
+                    No gateway calls recorded yet this session — breaker rows appear after the
+                    first outbound LLM call (or its failure).
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead><tr><th>Provider</th><th>State</th><th>Consec. fails</th><th>Total fails</th><th>Last failure</th><th>Opened</th></tr></thead>
+                      <tbody>
+                        {breakers.map((b) => (
+                          <tr key={b.provider}>
+                            <td className="t-mono">{b.provider}</td>
+                            <td>
+                              {b.state === 'closed'
+                                ? <span className="pill approved">closed</span>
+                                : b.state === 'half-open'
+                                  ? <span className="pill pending">half-open</span>
+                                  : <span className="pill rejected">OPEN</span>}
+                            </td>
+                            <td>{b.consecutive_failures ?? 0}</td>
+                            <td>{b.total_failures ?? 0}</td>
+                            <td className="cell-dim">{b.last_failure_at ? new Date(b.last_failure_at).toLocaleString() : '—'}</td>
+                            <td className="cell-dim">{b.opened_at ? new Date(b.opened_at).toLocaleString() : '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div className="info-note" style={{ marginTop: 12 }}>
+                  3 consecutive failures open a provider for 15 min; one probe call re-closes it.
                 </div>
               </div>
               <div className="panel">
-                <div className="panel-head"><h3>Fallback event log</h3></div>
-                <div className="empty-state" style={{ padding: '28px 20px' }}>
-                  <h3>No fallback events</h3>
-                  <p>Model fallback switches (primary → fallback) will be listed here with timestamps once the backend emits them.</p>
-                  <span className="tag">backend gap</span>
+                <div className="panel-head">
+                  <h3>Fallback event log</h3>
+                  <span className="badge badge-gray">GET /api/v1/models/fallback-log</span>
                 </div>
+                {fallbackLog === null ? (
+                  <div className="skeleton" style={{ height: 100 }} />
+                ) : fallbackLog.length === 0 ? (
+                  <div className="t-meta" style={{ color: 'var(--text-faint)', padding: '10px 0' }}>
+                    No fallbacks triggered this session — every agent is running on its primary path.
+                  </div>
+                ) : (
+                  <div className="kv" style={{ maxHeight: 320, overflowY: 'auto' }}>
+                    {fallbackLog.map((f, i) => (
+                      <div key={i} className="kv-row" style={{ alignItems: 'flex-start' }}>
+                        <span className="k t-mono" style={{ maxWidth: '45%' }}>
+                          {f.from} → {f.to}
+                        </span>
+                        <span className="v" style={{ fontWeight: 400, textAlign: 'left', maxWidth: '55%' }}>
+                          {f.reason}
+                          <div className="t-meta" style={{ color: 'var(--text-faint)', fontSize: 11, marginTop: 2 }}>
+                            {f.timestamp ? new Date(f.timestamp).toLocaleString() : ''}
+                          </div>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="alert-note">
-              <b>Heads up:</b> the profiles endpoint currently serves hardcoded data
-              (all "running", all on one model). Treat statuses as provisional until the
-              backend wires it to the live Hermes runtime.
+              <b>Ads Manager is dormant by design</b> — it auto-activates when a Scale/Growth
+              client is onboarded. All other profiles are live.
             </div>
           </>
         ) : activeTab === 'theme' ? (

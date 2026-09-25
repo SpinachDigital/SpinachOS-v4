@@ -1,12 +1,13 @@
 'use client';
 
 // Client 360 — everything about one client on a single screen.
+//   GET /api/v1/invoices?client_id=     → invoices (P1 Task 1)
+//   GET /api/v1/approvals?client_id=     → full approval history (P1 Task 2)
 // Data:
 //   GET /api/v1/clients/:id            → { client, tasks, leads, content, workflows, approvals }
 //   GET /api/v1/knowledge/context/:id  → { package, brand_branch, knowledge_chunks } (DNA card)
 //   GET /api/v1/retainer/schedule      → filtered by client_id (retainer section)
 //   GET /api/v1/packages              → package detail lookup
-// Gaps (honest empty states, no fake data): invoices/payments, full approval history.
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
@@ -66,6 +67,8 @@ export default function Client360Page({ params }: Props) {
   const [dna, setDna] = useState<any>(null);
   const [retainer, setRetainer] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [approvalHistory, setApprovalHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,11 +76,13 @@ export default function Client360Page({ params }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [ctxRes, dnaRes, retRes, pkgRes] = await Promise.all([
+      const [ctxRes, dnaRes, retRes, pkgRes, invRes, apprRes] = await Promise.all([
         apiFetch(`/api/v1/clients/${id}`),
         apiFetch(`/api/v1/knowledge/context/${id}`),
         apiFetch('/api/v1/retainer/schedule'),
         apiFetch('/api/v1/packages'),
+        apiFetch(`/api/v1/invoices?client_id=${id}`),          // P1 Task 1
+        apiFetch(`/api/v1/approvals?client_id=${id}&limit=50`), // P1 Task 2
       ]);
       if (!ctxRes.ok) throw new Error(`client context: API ${ctxRes.status}`);
       const ctxData = await ctxRes.json();
@@ -91,6 +96,14 @@ export default function Client360Page({ params }: Props) {
       if (pkgRes.ok) {
         const p = await pkgRes.json();
         setPackages(Array.isArray(p) ? p : []);
+      }
+      if (invRes.ok) {
+        const inv = await invRes.json();
+        setInvoices(Array.isArray(inv) ? inv : []);
+      }
+      if (apprRes.ok) {
+        const hist = await apprRes.json();
+        setApprovalHistory(Array.isArray(hist) ? hist : []);
       }
     } catch (e: any) {
       setError(e?.message || 'Failed to load client');
@@ -351,32 +364,48 @@ export default function Client360Page({ params }: Props) {
         </div>
 
         <div className="grid-2" style={{ alignItems: 'start' }}>
-          {/* ---------- approvals ---------- */}
+          {/* ---------- approvals: pending queue + full history (P1 Task 2) ---------- */}
           <div className="panel">
             <div className="panel-head">
               <h3>Approvals</h3>
               <Link href="/approvals" className="link">Review queue →</Link>
             </div>
-            {approvals.length === 0 ? (
+            {approvals.length === 0 && approvalHistory.length === 0 ? (
               <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
                 Nothing waiting on you for this client.
               </div>
             ) : (
               <div className="kv">
                 {approvals.map((a: any) => (
-                  <div key={a.id} className="kv-row">
+                  <div key={`p-${a.id}`} className="kv-row">
                     <span className="k" style={{ maxWidth: '60%' }}>{a.title || a.type || 'Approval'}</span>
                     <span className="v">{statusPill(a.status)}</span>
                   </div>
                 ))}
+                {approvalHistory
+                  .filter((a: any) => a.status !== 'pending')
+                  .slice(0, 10)
+                  .map((a: any) => (
+                    <div key={`h-${a.id}`} className="kv-row">
+                      <span className="k" style={{ maxWidth: '60%' }}>
+                        {a.title || a.type || 'Approval'}
+                        <div className="t-meta" style={{ color: 'var(--text-faint)', fontSize: 11 }}>
+                          {a.approved_by ? `by ${a.approved_by} · ` : ''}{fmtDateTime(a.reviewed_at || a.created_at)}
+                        </div>
+                      </span>
+                      <span className="v">{statusPill(a.status)}</span>
+                    </div>
+                  ))}
               </div>
             )}
-            <div className="info-note" style={{ marginTop: 12 }}>
-              Pending items only — the API doesn't expose a per-client approval history endpoint yet.
-            </div>
+            {approvalHistory.length > 10 && (
+              <div className="t-meta" style={{ color: 'var(--text-faint)', marginTop: 8 }}>
+                Showing latest 10 of {approvalHistory.length} historical approvals.
+              </div>
+            )}
           </div>
 
-          {/* ---------- package & billing ---------- */}
+          {/* ---------- package & billing: real invoices (P1 Task 1) ---------- */}
           <div className="panel">
             <div className="panel-head"><h3>Package & billing</h3></div>
             {pkg ? (
@@ -391,10 +420,31 @@ export default function Client360Page({ params }: Props) {
                 {pkgKey ? `Package "${pkgKey}" not found in the packages table.` : 'No package assigned to this client yet.'}
               </div>
             )}
-            <div className="alert-note" style={{ marginTop: 12 }}>
-              <b>Invoices & payments:</b> no billing endpoint exists in the API yet — this section
-              is parked until the backend exposes invoice/payment records.
-            </div>
+
+            <div className="section-title" style={{ marginTop: 16 }}>Invoices</div>
+            {invoices.length === 0 ? (
+              <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
+                No invoices raised for this client yet.
+              </div>
+            ) : (
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead><tr><th>Invoice</th><th>Package</th><th>Amount</th><th>Status</th><th>Due</th><th>Paid</th></tr></thead>
+                  <tbody>
+                    {invoices.map((inv: any) => (
+                      <tr key={inv.id}>
+                        <td className="t-mono">{String(inv.id).slice(0, 8)}</td>
+                        <td className="cell-dim">{inv.package_key ? String(inv.package_key).replace(/_/g, ' ') : '—'}</td>
+                        <td><span className="cell-main">₹{Number(inv.amount || 0).toLocaleString('en-IN')}</span> <span className="cell-dim">{inv.currency}</span></td>
+                        <td>{statusPill(inv.status)}</td>
+                        <td className="cell-dim">{fmtDate(inv.due_at)}</td>
+                        <td className="cell-dim">{fmtDate(inv.paid_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
