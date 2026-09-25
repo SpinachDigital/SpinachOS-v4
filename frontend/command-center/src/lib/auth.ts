@@ -19,11 +19,12 @@ interface TokenCache {
 let inflight: Promise<string> | null = null;
 
 async function mintToken(): Promise<TokenCache> {
-  const res = await fetch(`${API_BASE}/api/v1/auth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sub: 'director', role: 'director' }),
-  });
+  // P0-compatible flow: the API's mint endpoint now requires an existing
+  // director JWT / bootstrap token, which the browser must never hold. The
+  // Next server route (/api/auth/session) carries the bootstrap secret
+  // server-side and mints on our behalf — the browser only ever receives
+  // the short-lived director JWT.
+  const res = await fetch('/api/auth/session', { method: 'GET' });
   if (!res.ok) {
     throw new Error(`Token mint failed: ${res.status}`);
   }
