@@ -451,6 +451,17 @@ async function executeAgentTask(agent: string, task: string, source: string, tas
         ({ output, model } = await runGatewayTask(agent, task));
         via = 'gateway';
       }
+      // Failure-sniff the output itself: a profile/gateway call can "succeed"
+      // (exit 0) while its text is an error report (e.g. 'Max retries (3)
+      // exhausted', 'Rate limited after', 'Final error: HTTP 4xx/5xx').
+      // Those must close as blocked, not done — observed: a 404/429-dead run
+      // finished 'done' with an error dump as its output.
+      const outText = String(output || '');
+      const looksLikeError = /max retries \(\d+\) exhausted|rate limited after|final error: http/i.test(outText)
+        && outText.length < 4000; // a full deliverable is never this short + matching
+      if (looksLikeError) {
+        throw new Error(`execution path reported failure: ${outText.slice(0, 200)}`);
+      }
       const { data: done, error: upErr } = await supabase
         .from('tasks')
         .update({
@@ -2391,6 +2402,12 @@ app.post('/api/v1/command', authMiddleware, async (req, res) => {
     const command = sanitizeText(req.body.command, 2000);
     const threadId = req.body.thread_id ? sanitizeText(req.body.thread_id, 50) : undefined;
     if (!command) return res.status(400).json({ error: 'Missing command' });
+    // Special commands (pipeline/onboard/approval/hire/standup) run their
+    // dedicated branches FIRST — they must never fall through to the Laya
+    // fast path (observed: a typo'd pipeline intent went to sales→social and
+    // died on NVIDIA rate limits with the task closed 'done').
+    const special = await specialCommandHandler(command, req.headers.authorization);
+    if (special) return res.json(special);
     const r = await handleCommandThread(command, threadId || undefined);
     res.json({ ok: true, ...r, action: r.mode === 'fast' ? 'dispatched' : r.mode });
   } catch (e: any) {
@@ -2523,7 +2540,14 @@ app.post('/api/v1/command', authMiddleware, async (req, res) => {
 async function specialCommandHandler(command: string, authHeader?: string): Promise<any | null> {
   {
     const cmdTrim = command.toLowerCase().trim();
-    const isPipelineCmd = cmdTrim.includes('start') && (cmdTrim.includes('pipeline') || cmdTrim.includes('workflow'));
+    // Typo/fuzzy-tolerant pipeline intent: match 'pipeline'/'piprlinr' style
+    // starts ("start pip*", "new client", "onboard"). A real onboarding intent
+    // must NEVER silently fall through to a random department LLM call —
+    // observed: 'start piprlinr for new client keo karpin' missed the exact
+    // match, went to sales→social profile, which died on NVIDIA 404/429 and
+    // the task still closed 'done' with nothing delivered.
+    const isPipelineCmd = (cmdTrim.includes('start') && (cmdTrim.includes('pip') || cmdTrim.includes('workflow')))
+      || cmdTrim.includes('onboard');
     const isApprovalCmd = cmdTrim.includes('approve') || cmdTrim.includes('reject') || cmdTrim.includes('pending');
     const isHireCmd = cmdTrim.includes('hire');
     const isStandupCmd = cmdTrim.includes('standup');
@@ -2533,10 +2557,12 @@ async function specialCommandHandler(command: string, authHeader?: string): Prom
           let result: any = { action: 'unknown', reply: '' };
 
           // Pipeline commands
-    if (cmdTrim.includes('start') && (cmdTrim.includes('pipeline') || cmdTrim.includes('workflow'))) {
-      // Extract client name - simplified
+    if (cmdTrim.includes('start') && (cmdTrim.includes('pip') || cmdTrim.includes('workflow'))) {
+      // Extract client name — simplified
       const clientMatch = cmdTrim.match(/(?:for|client)\s+([^.]+)/);
-      const clientName = clientMatch ? clientMatch[1].trim() : 'New Client';
+      let clientName = clientMatch ? clientMatch[1].trim() : 'New Client';
+      // 'for new client keo karpin' captures 'new client keo karpin' — strip the lead-in words
+      clientName = clientName.replace(/^new\s+client\s+/i, '').replace(/^client\s+/i, '').replace(/^for\s+/i, '').trim() || 'New Client';
       
       const { data: client, error: clientError } = await supabase
         .from('clients')
