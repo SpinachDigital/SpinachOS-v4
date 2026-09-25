@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import RightRail from './RightRail';
+import CommandGateway from './CommandGateway';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -30,6 +31,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <aside className="right">
         <RightRail />
       </aside>
+      {/* THE canonical command bar — on every page */}
+      <CommandGateway />
     </div>
   );
 }

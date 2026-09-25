@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
-import CommandInput from '@/components/CommandInput';
+
 import TaskRunsPanel from '@/components/TaskRunsPanel';
 import { useSpinachStore } from '@/store/spinach-store';
 
@@ -389,10 +389,6 @@ export default function CommandCenter() {
         </div>
       </section>
 
-      {/* ============ COMMAND INPUT — floating bottom center ============ */}
-      <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', width: 'min(640px, calc(100% - 48px))', zIndex: 40 }}>
-        <CommandInput />
-      </div>
 
       {/* ============ TASK RUNS DRAWER ============ */}
       {showRuns && <TaskRunsPanel onClose={() => setShowRuns(false)} />}

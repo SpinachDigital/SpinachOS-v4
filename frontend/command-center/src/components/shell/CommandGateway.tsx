@@ -1,9 +1,14 @@
 'use client';
 
-// CommandGateway: floating voice + text pill — talk to the office
-// Text: sends to API :4000 /api/v1/command (fallback: /command)
-// Voice: Web Speech API (webkitSpeechRecognition) with live transcript
-import { useState, useRef, useEffect } from 'react';
+// CommandGateway — THE canonical command bar (global, mounted in AppShell).
+// Thread persistence: every POST /api/v1/command response's thread_id is saved
+// to localStorage 'spinach_thread_id' and included in the next command body —
+// this is what makes the 2-round brainstorm + "Plan ready — delegate karun?"
+// flow work in the UI. ✕ reset clears the thread for a new topic.
+// Modes handled: fast (task_id + kanban link), brainstorm (round indicator),
+// delegated (plan approved + task), special actions (laya_routed etc).
+// Voice: Web Speech API (webkitSpeechRecognition) with live transcript.
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/auth';
 
 interface GatewayResponse {
@@ -12,6 +17,9 @@ interface GatewayResponse {
   message?: string;
   error?: string;
   action?: string;
+  mode?: string;
+  thread_id?: string;
+  task_id?: string;
 }
 
 type SpeechRecognitionLike = {
@@ -25,19 +33,46 @@ type SpeechRecognitionLike = {
   onerror: ((e: unknown) => void) | null;
 };
 
-export default function CommandGateway() {
+const THREAD_KEY = 'spinach_thread_id';
+
+export default function CommandGateway({ prefill }: { prefill?: string }) {
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [input, setInput] = useState('');
   const [log, setLog] = useState<Array<{ role: 'you' | 'office'; text: string; time: string }>>([]);
   const [busy, setBusy] = useState(false);
+  const [threadId, setThreadId] = useState<string | null>(null);
+  const [threadMode, setThreadMode] = useState<string | null>(null);
+  const [threadRound, setThreadRound] = useState(0);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const logEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // restore the active thread on mount (persists across page switches)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(THREAD_KEY);
+      if (saved) setThreadId(saved);
+    } catch { /* private mode */ }
+  }, []);
+
+  // zone-click prefill (from the 3D diorama) — prefill, never auto-send
+  useEffect(() => {
+    if (prefill) setInput(prefill);
+  }, [prefill]);
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ block: 'end' });
   }, [log]);
+
+  const resetThread = useCallback(() => {
+    try { localStorage.removeItem(THREAD_KEY); } catch { /* ignore */ }
+    setThreadId(null);
+    setThreadMode(null);
+    setThreadRound(0);
+    setLog((l) => [...l, { role: 'office', text: 'Thread reset — naya topic batao.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+  }, []);
 
   const send = async (text: string, source: 'text' | 'voice' = 'text') => {
     const command = text.trim();
@@ -48,20 +83,45 @@ export default function CommandGateway() {
     setTranscript('');
 
     try {
-      let data: GatewayResponse | null = null;
+      // thread persistence: include the active thread_id so the backend
+      // understands continuation (brainstorm round 2, yes → delegatePlan)
+      const body: Record<string, unknown> = { command, source: 'ui', timestamp: new Date().toISOString() };
+      if (threadId) body.thread_id = threadId;
       const res = await apiFetch('/api/v1/command', {
         method: 'POST',
-        body: JSON.stringify({ command, source, timestamp: new Date().toISOString() }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       });
-      if (res.ok) {
-        data = await res.json();
+      if (!res.ok) {
+        setLog((l) => [...l, { role: 'office', text: `API error ${res.status} — command not delivered.`, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+        return;
       }
-      const reply =
-        data?.reply ||
-        data?.message ||
-        (data?.action ? `Running: ${data.action}` : null) ||
-        'Office is offline (API :4000 not reachable) — command logged, will run when it\'s back.';
+      const data: GatewayResponse = await res.json();
+
+      // save the thread_id for continuation
+      if (data.thread_id) {
+        setThreadId(data.thread_id);
+        try { localStorage.setItem(THREAD_KEY, data.thread_id); } catch { /* ignore */ }
+      }
+      setThreadMode(data.mode || null);
+      if (data.mode === 'brainstorm') setThreadRound((r) => Math.min(r + 1, 2));
+      if (data.mode === 'delegated' || data.mode === 'fast') setThreadRound(0);
+
+      // response handling — backend's modes
+      let reply = data.reply || data.message || '';
+      if (data.mode === 'fast' && data.task_id) {
+        reply = `${reply}\nTask #${data.task_id.slice(0, 8)} — kanban me dekho.`;
+      } else if (data.mode === 'delegated') {
+        reply = `Plan approved — orchestrator ko de diya.${data.task_id ? ` Task #${data.task_id.slice(0, 8)}.` : ''}`;
+      } else if (data.mode === 'brainstorm') {
+        // round indicator comes from the thread chip; reply already carries the question
+      } else if (!reply && data.action) {
+        reply = `${data.action} — done.`;
+      } else if (!reply) {
+        reply = 'Office is offline — command logged, will run when it\'s back.';
+      }
       setLog((l) => [...l, { role: 'office', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      if (data.mode === 'brainstorm' || data.mode === 'delegated') setOpen(true);
     } catch {
       setLog((l) => [...l, { role: 'office', text: 'Gateway error — command logged.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } finally {
@@ -98,16 +158,19 @@ export default function CommandGateway() {
         setListening(false);
         void send(final, 'voice');
       }
-    };    rec.onend = () => setListening(false);
+    };
+    rec.onend = () => setListening(false);
     rec.onerror = () => setListening(false);
     recognitionRef.current = rec;
     rec.start();
     setListening(true);
   };
 
+  const modeLabel = threadMode === 'brainstorm' ? `Discussing • Brainstorm Round ${Math.max(threadRound, 1)}/2` : threadMode === 'delegated' ? 'Delegated • Plan approved' : threadMode === 'fast' ? 'Dispatched' : null;
+
   return (
     <>
-      {/* Floating pill (bottom-center of 3D stage) */}
+      {/* Floating pill (bottom-center) */}
       <div className="absolute z-30 flex justify-center" style={{ bottom: 20, left: 0, right: 0 }}>
         <div
           className="flex items-center gap-2 px-2 py-2 animate-rise"
@@ -141,6 +204,7 @@ export default function CommandGateway() {
 
           {/* Text input */}
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void send(input); }}
@@ -172,6 +236,26 @@ export default function CommandGateway() {
               <path d="m5 12 14 0M13 5l7 7-7 7" />
             </svg>
           </button>
+
+          {/* Thread context chip + reset (only when a thread is active) */}
+          {threadId && modeLabel && (
+            <button
+              onClick={resetThread}
+              className="t-mono shrink-0 animate-slide-in"
+              style={{
+                fontSize: 10,
+                color: 'var(--green-bright)',
+                background: 'var(--green-dim)',
+                border: '1px solid var(--green-dim)',
+                cursor: 'pointer',
+                padding: '3px 10px',
+                borderRadius: 999,
+              }}
+              title="Reset thread — naya topic"
+            >
+              {modeLabel} ✕
+            </button>
+          )}
 
           {/* History toggle */}
           <button
@@ -250,7 +334,7 @@ export default function CommandGateway() {
                   </span>
                   <span className="t-mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>{entry.time}</span>
                 </div>
-                <p className="t-meta" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 }}>
+                <p className="t-meta" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2, whiteSpace: 'pre-wrap' }}>
                   {entry.text}
                 </p>
               </div>
