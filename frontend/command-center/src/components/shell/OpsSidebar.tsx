@@ -33,7 +33,7 @@ export default function OpsSidebar() {
       className="shrink-0 flex flex-col overflow-y-auto"
       style={{
         width: 264,
-        background: '#0E0E0E',
+        background: 'var(--bg)',
         borderLeft: '1px solid rgba(255,255,255,0.06)',
       }}
     >
@@ -54,7 +54,7 @@ export default function OpsSidebar() {
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               {done[i] ? (
-                <CheckCircle2 style={{ width: 13, height: 13, color: '#56883E', flexShrink: 0 }} />
+                <CheckCircle2 style={{ width: 13, height: 13, color: 'var(--green)', flexShrink: 0 }} />
               ) : (
                 <Circle style={{ width: 13, height: 13, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }} />
               )}

@@ -18,7 +18,7 @@ const EngagementBoard = dynamic(() => import('@/app/marketing/engagement/page').
 function PanelLoading() {
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="t-mono" style={{ color: 'var(--ink-3)' }}>Loading…</div>
+      <div className="t-mono" style={{ color: 'var(--text-faint)' }}>Loading…</div>
     </div>
   );
 }
@@ -29,13 +29,13 @@ export default function MarketingPage() {
   const [tab, setTab] = useState<Tab>('calendar');
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-page)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
       {/* Header — left-aligned + tab row */}
       <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="t-title" style={{ color: 'var(--ink)' }}>Marketing</h1>
-            <p className="t-meta mt-0.5" style={{ color: 'var(--ink-3)' }}>Content calendar & engagement analytics</p>
+            <h1 className="t-title" style={{ color: 'var(--text)' }}>Marketing</h1>
+            <p className="t-meta mt-0.5" style={{ color: 'var(--text-faint)' }}>Content calendar & engagement analytics</p>
           </div>
         </div>
         {/* Tabs */}
@@ -49,8 +49,8 @@ export default function MarketingPage() {
               onClick={() => setTab(t.id)}
               className="btn btn-sm"
               style={{
-                background: tab === t.id ? 'var(--ink)' : 'var(--bg-elevated)',
-                color: tab === t.id ? 'var(--bg-page)' : 'var(--ink-2)',
+                background: tab === t.id ? 'var(--text)' : 'var(--panel-2)',
+                color: tab === t.id ? 'var(--bg)' : 'var(--text-dim)',
                 boxShadow: tab === t.id ? 'none' : 'var(--shadow-card)',
               }}
             >

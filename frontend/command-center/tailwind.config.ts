@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Brand colors from brand guide
+        // Single brand scale (dark theme)
         'spinach': {
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -23,52 +23,27 @@ const config: Config = {
           900: '#14532d',
           950: '#052e16',
         },
-        // Teal accent
-        'teal': {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#004B63', // Primary teal
-          600: '#003d4f',
-          700: '#002f40',
-          800: '#002232',
-          900: '#001524',
-        },
-        // Warm neutrals (off-white base)
-        'warm': {
-          50: '#fafaf7', // Page background
-          100: '#f5f5f0', // Panel background
-          200: '#eeeee6', // Hover states
-          300: '#d8d8ce',
-          400: '#c2c2b8',
-          500: '#a8a89e', // Placeholder text
-          600: '#78786e', // Muted text
-          700: '#40403a', // Secondary text
-          800: '#20201e',
-          900: '#0a0a0a', // Primary text (near-black)
-        },
       },
       fontFamily: {
-        sans: ['Inter var', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Satoshi', 'Inter var', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {
-        sm: '4px',
-        md: '8px',
-        lg: '12px',
-        xl: '16px',
+        sm: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '20px',
       },
       boxShadow: {
-        card: '0 0 0 1px rgba(10, 10, 10, 0.06), 0 2px 4px rgba(10,10,10,0.04), 0 8px 16px -8px rgba(10,10,10,0.06), inset 0 1px 0 #ffffff',
-        elevated: '0 0 0 1px rgba(10, 10, 10, 0.06), 0 4px 12px rgba(10,10,10,0.06), 0 16px 32px -16px rgba(10,10,10,0.08)',
-        focus: '0 0 0 3px rgba(0, 75, 99, 0.25)',
+        card: '0 0 0 1px rgba(255, 255, 255, 0.05), 0 2px 4px rgba(0,0,0,0.2), 0 8px 16px -8px rgba(0,0,0,0.3)',
+        raised: '0 0 0 1px rgba(255, 255, 255, 0.06), 0 6px 16px rgba(0,0,0,0.35), 0 20px 40px -20px rgba(0,0,0,0.4)',
+        focus: '0 0 0 3px rgba(22, 163, 74, 0.35)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'slide-in': 'slideIn 0.3s ease-out',
         'fade-in': 'fadeIn 0.2s ease-out',
+        'fade-up': 'fadeUp 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both',
       },
       keyframes: {
         slideIn: {
@@ -78,6 +53,10 @@ const config: Config = {
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        fadeUp: {
+          '0%': { transform: 'translateY(8px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
       },
     },

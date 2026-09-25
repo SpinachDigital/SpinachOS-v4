@@ -10,9 +10,9 @@ export default function PipelineDetail() {
   const { agentStates } = useWebSocket();
 
   return (
-    <div className="p-6" style={{ background: '#0A0A0A', minHeight: '100%' }}>
-      <h2 className="t-title" style={{ color: '#F7F6F1' }}>
-        Pipeline <span className="t-mono" style={{ color: '#7BA55E' }}>{pipelineId}</span>
+    <div className="p-6" style={{ background: 'var(--bg)', minHeight: '100%' }}>
+      <h2 className="t-title" style={{ color: 'var(--text)' }}>
+        Pipeline <span className="t-mono" style={{ color: 'var(--green)' }}>{pipelineId}</span>
       </h2>
       <p className="t-meta" style={{ color: 'rgba(255,255,255,0.45)', marginTop: 8, maxWidth: 520 }}>
         Pipeline detail view is being wired to the API at :4000. Workflow events (step
@@ -25,7 +25,7 @@ export default function PipelineDetail() {
           <div
             key={profile}
             className="flex items-center gap-3"
-            style={{ padding: '10px 12px', borderRadius: 10, background: '#121212', border: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ padding: '10px 12px', borderRadius: 10, background: 'var(--panel)', border: '1px solid rgba(255,255,255,0.06)' }}
           >
             <span
               className={`dot ${

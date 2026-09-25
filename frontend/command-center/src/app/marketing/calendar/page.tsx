@@ -20,13 +20,13 @@ interface ContentCalendarItem {
 }
 
 const THEME_COLORS: Record<string, string> = {
-  politics: '#DC2626',
-  cricket: '#16A34A',
-  ai: '#7C3AED',
-  github: '#24292E',
-  quote: '#0891B2',
-  gita: '#EA580C',
-  custom: '#56883E',
+  politics: 'var(--cat-politics)',
+  cricket: 'var(--green)',
+  ai: 'var(--cat-ai)',
+  github: 'var(--cat-github)',
+  quote: 'var(--accent-cyan)',
+  gita: 'var(--cat-gita)',
+  custom: 'var(--green)',
 };
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
@@ -37,13 +37,13 @@ const PLATFORM_ICONS: Record<string, React.ReactNode> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  planned: '#6B7280',
-  drafting: '#3B82F6',
-  review: '#F59E0B',
-  approved: '#10B981',
-  scheduled: '#8B5CF6',
-  published: '#10B981',
-  failed: '#EF4444',
+  planned: 'var(--planned)',
+  drafting: 'var(--info)',
+  review: 'var(--warn)',
+  approved: 'var(--green-bright)',
+  scheduled: 'var(--accent-violet)',
+  published: 'var(--green-bright)',
+  failed: 'var(--danger)',
 };
 
 export default function ContentCalendarPage() {
@@ -74,11 +74,11 @@ export default function ContentCalendarPage() {
 
   // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: 'var(--bg-page)',
+    bg: 'var(--bg)',
     border: 'var(--border-soft)',
-    text: 'var(--ink)',
-    text2: 'var(--ink-3)',
-    text3: 'var(--ink-4)',
+    text: 'var(--text)',
+    text2: 'var(--text-faint)',
+    text3: 'var(--text-faint)',
   };
 
   const filteredItems = items.filter(item => {
@@ -126,8 +126,8 @@ export default function ContentCalendarPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 px-5 py-3 border-b" style={{ borderColor: glass.border }}>
         <div className="flex gap-2">
-          <button onClick={() => setView('week')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'week' ? 'font-medium' : ''}`} style={{ background: view === 'week' ? 'rgba(86,136,62,0.2)' : glass.bg, borderColor: view === 'week' ? '#56883E' : glass.border, color: glass.text, border: '1px solid' }}>Week</button>
-          <button onClick={() => setView('month')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'month' ? 'font-medium' : ''}`} style={{ background: view === 'month' ? 'rgba(86,136,62,0.2)' : glass.bg, borderColor: view === 'month' ? '#56883E' : glass.border, color: glass.text, border: '1px solid' }}>Month</button>
+          <button onClick={() => setView('week')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'week' ? 'font-medium' : ''}`} style={{ background: view === 'week' ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === 'week' ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>Week</button>
+          <button onClick={() => setView('month')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'month' ? 'font-medium' : ''}`} style={{ background: view === 'month' ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === 'month' ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>Month</button>
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="px-3 py-1.5 text-sm rounded-lg border" style={{ background: glass.bg, borderColor: glass.border, color: glass.text }} />

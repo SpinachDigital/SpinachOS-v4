@@ -128,7 +128,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: var(--text-primary);
-  background: var(--bg-page);
+  background: var(--bg);
   min-height: 100vh;
 }
 
@@ -406,7 +406,7 @@ body {
   font-size: 11px;
   font-weight: 500;
   background: var(--text-primary);
-  color: var(--bg-page);
+  color: var(--bg);
   padding: 6px 10px;
   border-radius: var(--radius-sm);
   white-space: nowrap;

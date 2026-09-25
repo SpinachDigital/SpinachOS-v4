@@ -50,14 +50,14 @@ export default function LeftNav({ open, onToggle }: { open: boolean; onToggle: (
       className="flex flex-col shrink-0 transition-all duration-200"
       style={{
         width: open ? 232 : 60,
-        background: '#0E0E0E',
+        background: 'var(--bg)',
         borderRight: '1px solid rgba(255,255,255,0.06)',
       }}
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-gray-800 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--green)] to-[var(--green-bright)] flex items-center justify-center">
             <span className="font-bold text-white text-sm">S</span>
           </div>
           {open && (
@@ -87,7 +87,7 @@ export default function LeftNav({ open, onToggle }: { open: boolean; onToggle: (
               className={cn(
                 "w-full flex items-center gap-3 rounded-xl py-2.5 px-3 transition-all duration-200",
                 isActive
-                  ? "bg-teal-500/10 text-white border-l-2 border-teal-500"
+                  ? "bg-[var(--green)]/10 text-white border-l-2 border-[var(--green)]"
                   : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
               )}
               style={{ width: open ? '100%' : 'auto' }}
@@ -95,7 +95,7 @@ export default function LeftNav({ open, onToggle }: { open: boolean; onToggle: (
               <span className="flex items-center justify-center w-9 h-9 rounded-lg shrink-0" style={{
                 background: isActive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)'
               }}>
-                <item.icon className="w-5 h-5" style={{ color: isActive ? '#22c55e' : '#9ca3af' }} />
+                <item.icon className="w-5 h-5" style={{ color: isActive ? 'var(--green-bright)' : 'var(--sender-fallback)' }} />
               </span>
               {open && (
                 <div className="flex flex-col leading-tight min-w-0">

@@ -209,7 +209,7 @@ class MiniOfficeScene {
     canvas.width = 128;
     canvas.height = 32;
     const ctx = canvas.getContext('2d')!;
-    ctx.fillStyle = '#56883E';
+    ctx.fillStyle = 'var(--green)';
     ctx.font = 'bold 16px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -443,7 +443,7 @@ class NPCAvatar {
     const ctx = this.labelCtx;
     const canvas = this.labelCanvas;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#56883E';
+    ctx.fillStyle = 'var(--green)';
     ctx.font = '500 18px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -585,5 +585,5 @@ export default function OfficeCanvasMini({ workflow }: { workflow: any }) {
     }
   }, []);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%', backgroundColor: '#0a0a0a' }} />;
+  return <div ref={containerRef} style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg)' }} />;
 }

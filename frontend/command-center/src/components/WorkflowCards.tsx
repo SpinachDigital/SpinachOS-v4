@@ -44,9 +44,9 @@ export function WorkflowCards({ workflows }: WorkflowCardsProps) {
           <TrendingUp className="w-5 h-5 text-spinach-500" />
           Active Workflows
         </h2>
-        <div className="bg-warm-100 rounded-2xl p-8 text-center border border-warm-200">
-          <TrendingUp className="w-12 h-12 text-warm-500/30 mx-auto mb-4" />
-          <p className="text-warm-600">No active workflows. Start a client pipeline.</p>
+        <div className="bg-[var(--card)] rounded-2xl p-8 text-center border border-[var(--panel-2)]">
+          <TrendingUp className="w-12 h-12 text-[var(--text-dim)]/30 mx-auto mb-4" />
+          <p className="text-[var(--text-dim)]">No active workflows. Start a client pipeline.</p>
         </div>
       </section>
     );
@@ -67,7 +67,7 @@ export function WorkflowCards({ workflows }: WorkflowCardsProps) {
           return (
             <article
               key={workflow.id}
-              className="bg-white rounded-2xl border border-warm-200 shadow-card p-5 hover:border-spinach-500/30 transition-all duration-300"
+              className="bg-white rounded-2xl border border-[var(--panel-2)] shadow-card p-5 hover:border-spinach-500/30 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -75,11 +75,11 @@ export function WorkflowCards({ workflows }: WorkflowCardsProps) {
                     <Icon className="text-spinach-500 w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-warm-900">{workflow.name.replace('_', ' ')}</h3>
-                    <p className="text-xs text-warm-600 capitalize">{workflow.current_step || 'Initializing'}</p>
+                    <h3 className="font-semibold text-[var(--text)]">{workflow.name.replace('_', ' ')}</h3>
+                    <p className="text-xs text-[var(--text-dim)] capitalize">{workflow.current_step || 'Initializing'}</p>
                   </div>
                 </div>
-                <span className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-warm-100 text-warm-700">
+                <span className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 bg-[var(--card)] text-[var(--text-dim)]">
                   <StatusIcon className="w-4 h-4" />
                   {statusConfig.label}
                 </span>
@@ -88,10 +88,10 @@ export function WorkflowCards({ workflows }: WorkflowCardsProps) {
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-warm-600">Progress</span>
+                  <span className="text-[var(--text-dim)]">Progress</span>
                   <span className="font-mono font-semibold text-spinach-400">{workflow.progress}%</span>
                 </div>
-                <div className="h-2 bg-warm-200 rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--card-hover)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-spinach-500 to-spinach-400 rounded-full transition-all duration-500"
                     style={{ width: `${workflow.progress}%` }}
@@ -100,10 +100,10 @@ export function WorkflowCards({ workflows }: WorkflowCardsProps) {
               </div>
 
               {/* Steps Preview */}
-              <div className="pt-3 border-t border-warm-200">
-                <p className="text-xs text-warm-600 mb-2">Current: {workflow.current_step || 'Waiting...'}</p>
+              <div className="pt-3 border-t border-[var(--panel-2)]">
+                <p className="text-xs text-[var(--text-dim)] mb-2">Current: {workflow.current_step || 'Waiting...'}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-warm-600">Client: {workflow.client_id?.slice(0, 8) || '—'}</span>
+                  <span className="text-xs text-[var(--text-dim)]">Client: {workflow.client_id?.slice(0, 8) || '—'}</span>
                   <button className="text-xs text-spinach-600 hover:text-spinach-500 flex items-center gap-1">
                     <ExternalLink className="w-3 h-3" />
                     Details

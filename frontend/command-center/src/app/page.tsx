@@ -14,7 +14,7 @@ import { useSpinachStore } from '@/store/spinach-store';
 const ReferenceOffice = dynamic(() => import('@/components/three/ReferenceOffice'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center" style={{ background: '#0d1117' }}>
+    <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--bg)' }}>
       <div className="text-center">
         <div style={{ color: 'var(--green-bright)', fontSize: 13, marginBottom: 14, fontFamily: 'JetBrains Mono, monospace' }}>Building office…</div>
         <div style={{ width: 180, height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.08)', margin: '0 auto', overflow: 'hidden' }}>
@@ -166,7 +166,7 @@ export default function CommandCenter() {
     <>
       {/* ============ STATS ============ */}
       {apiError && (
-        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239,68,68,0.06)', padding: 18 }}>
+        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239, 68, 68, 0.06)', padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--red)', fontWeight: 600 }}>
             <span className="d down" /> {apiError}
           </div>

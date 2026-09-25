@@ -10,7 +10,7 @@ import type { FeedEntry } from '@/lib/office/wsStore';
 // ApprovalQueue uses lucide-react icons - load it client-only
 const ApprovalQueue = dynamic(() => import('@/components/ApprovalQueue').then(m => ({ default: m.ApprovalQueue })), {
   ssr: false,
-  loading: () => <div className="t-meta" style={{ color: 'var(--ink-3)' }}>Loading approvals…</div>,
+  loading: () => <div className="t-meta" style={{ color: 'var(--text-faint)' }}>Loading approvals…</div>,
 });
 
 interface ApprovalItem {
@@ -93,18 +93,18 @@ export default function ApprovalsPage() {
   const rejected = approvals.filter(a => a.status === 'rejected').length;
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-page)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
       {/* Header — left-aligned + action row */}
       <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <div>
-          <h1 className="t-title" style={{ color: 'var(--ink)' }}>Approvals</h1>
-          <p className="t-meta mt-0.5" style={{ color: 'var(--ink-3)' }}>
+          <h1 className="t-title" style={{ color: 'var(--text)' }}>Approvals</h1>
+          <p className="t-meta mt-0.5" style={{ color: 'var(--text-faint)' }}>
             Review and approve pending items from your AI team
           </p>
         </div>
         <div className="flex items-center gap-3">
           <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-          <span className="t-mono" style={{ color: 'var(--ink-3)', fontSize: 12 }}>
+          <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 12 }}>
             {connected ? 'Live' : 'Offline'}
           </span>
           <button onClick={fetchApprovals} disabled={loading} className="btn btn-secondary btn-sm">
@@ -117,26 +117,26 @@ export default function ApprovalsPage() {
       <div className="flex items-center gap-6 px-6 py-3" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <span className="flex items-center gap-2">
           <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{pending}</span>
-          <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Pending</span>
+          <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Pending</span>
         </span>
         <span className="flex items-center gap-2">
           <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{approved}</span>
-          <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Approved</span>
+          <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Approved</span>
         </span>
         <span className="flex items-center gap-2">
           <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{rejected}</span>
-          <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Rejected</span>
+          <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Rejected</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--ink)', fontWeight: 700 }}>{approvals.length}</span>
-          <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Total</span>
+          <span className="t-mono" style={{ color: 'var(--text)', fontWeight: 700 }}>{approvals.length}</span>
+          <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Total</span>
         </span>
       </div>
 
       {/* Approvals list */}
       <div className="flex-1 overflow-y-auto p-6">
         {loading ? (
-          <div className="flex items-center justify-center h-64" style={{ color: 'var(--ink-3)' }}>
+          <div className="flex items-center justify-center h-64" style={{ color: 'var(--text-faint)' }}>
             <div className="t-mono">Loading approvals…</div>
           </div>
         ) : (

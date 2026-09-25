@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
 
-// ── Brand + palette (spinach green #56883E only — never neon) ──
+// ── Brand + palette (spinach green var(--green) only — never neon) ──
 const BRAND_GREEN = 0x56883e;
 type PersonState = 'idle' | 'thinking' | 'working' | 'speaking' | 'blocked';
 const STATE_COLORS: Record<PersonState, number> = {

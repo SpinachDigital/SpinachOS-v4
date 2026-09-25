@@ -62,11 +62,11 @@ export default function AnalyticsPage() {
     : logs;
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-page)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
       {/* Header + tabs */}
       <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
-        <h1 className="t-title" style={{ color: 'var(--ink)' }}>Insights</h1>
-        <p className="t-meta mt-0.5" style={{ color: 'var(--ink-3)' }}>Agent throughput & audit trail</p>
+        <h1 className="t-title" style={{ color: 'var(--text)' }}>Insights</h1>
+        <p className="t-meta mt-0.5" style={{ color: 'var(--text-faint)' }}>Agent throughput & audit trail</p>
         <div className="flex items-center gap-1 mt-4">
           {([
             { id: 'overview', label: 'Overview' },
@@ -77,8 +77,8 @@ export default function AnalyticsPage() {
               onClick={() => setTab(t.id)}
               className="btn btn-sm"
               style={{
-                background: tab === t.id ? 'var(--ink)' : 'var(--bg-elevated)',
-                color: tab === t.id ? 'var(--bg-page)' : 'var(--ink-2)',
+                background: tab === t.id ? 'var(--text)' : 'var(--panel-2)',
+                color: tab === t.id ? 'var(--bg)' : 'var(--text-dim)',
                 boxShadow: tab === t.id ? 'none' : 'var(--shadow-card)',
               }}
             >
@@ -90,43 +90,43 @@ export default function AnalyticsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center flex-1">
-          <div className="t-mono" style={{ color: 'var(--ink-3)' }}>Loading…</div>
+          <div className="t-mono" style={{ color: 'var(--text-faint)' }}>Loading…</div>
         </div>
       ) : tab === 'overview' ? (
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {/* Inline stats row */}
           <div className="flex items-center gap-8">
             <span className="flex items-center gap-2">
-              <span className="t-mono" style={{ color: 'var(--teal)', fontWeight: 700, fontSize: 20 }}>{working}</span>
-              <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Working now</span>
+              <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700, fontSize: 20 }}>{working}</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Working now</span>
             </span>
             <span className="flex items-center gap-2">
               <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700, fontSize: 20 }}>{blocked}</span>
-              <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Blocked</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Blocked</span>
             </span>
             <span className="flex items-center gap-2">
               <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700, fontSize: 20 }}>{successRate}%</span>
-              <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Success rate</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Success rate</span>
             </span>
           </div>
 
           {/* Agent states */}
           <section>
             <div className="section-head">
-              <span className="t-label" style={{ color: 'var(--ink-3)' }}>Agent states</span>
-              <span className="t-meta" style={{ color: 'var(--ink-4)' }}>{agents.length} agents</span>
+              <span className="t-label" style={{ color: 'var(--text-faint)' }}>Agent states</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>{agents.length} agents</span>
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
+            <div className="rounded-xl overflow-hidden" style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
               {agents.map((a, i) => (
                 <div key={a.profile + i} className="flex items-center justify-between px-4 py-2.5"
                   style={{ borderBottom: i < agents.length - 1 ? '1px solid var(--border-hairline)' : 'none' }}>
                   <div className="flex items-center gap-3">
                     <span className={`dot ${a.state === 'working' ? 'dot-teal dot-pulse' : a.state === 'blocked' ? 'dot-red' : 'dot-gray'}`} />
-                    <span className="t-body-md capitalize" style={{ color: 'var(--ink)' }}>{a.profile}</span>
+                    <span className="t-body-md capitalize" style={{ color: 'var(--text)' }}>{a.profile}</span>
                   </div>
                   <div className="flex items-center gap-4 min-w-0">
-                    {a.activity && <span className="t-meta truncate max-w-xs" style={{ color: 'var(--ink-3)' }}>{a.activity}</span>}
-                    <span className="t-mono" style={{ color: 'var(--ink-4)', fontSize: 11 }}>{a.state}</span>
+                    {a.activity && <span className="t-meta truncate max-w-xs" style={{ color: 'var(--text-faint)' }}>{a.activity}</span>}
+                    <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 11 }}>{a.state}</span>
                   </div>
                 </div>
               ))}
@@ -143,18 +143,18 @@ export default function AnalyticsPage() {
             onChange={(e) => setFilter(e.target.value)}
             style={{ maxWidth: 320 }}
           />
-          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
+          <div className="rounded-xl overflow-hidden" style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
             {filteredLogs.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <p className="t-body" style={{ color: 'var(--ink-3)' }}>No log entries match</p>
+                <p className="t-body" style={{ color: 'var(--text-faint)' }}>No log entries match</p>
               </div>
             ) : (
               filteredLogs.map((l, i) => (
                 <div key={l.id} className="flex items-center justify-between px-4 py-2.5"
                   style={{ borderBottom: i < filteredLogs.length - 1 ? '1px solid var(--border-hairline)' : 'none' }}>
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="t-mono" style={{ color: 'var(--ink-3)', fontSize: 11 }}>{l.profile || l.agent || 'system'}</span>
-                    <span className="t-body-md truncate" style={{ color: 'var(--ink)' }}>{l.action}</span>
+                    <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 11 }}>{l.profile || l.agent || 'system'}</span>
+                    <span className="t-body-md truncate" style={{ color: 'var(--text)' }}>{l.action}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className={`badge ${l.status === 'success' ? 'badge-green' : l.status === 'error' ? 'badge-red' : 'badge-gray'}`}>

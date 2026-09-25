@@ -133,7 +133,7 @@ export default function CommandGateway() {
             className="flex items-center justify-center rounded-full shrink-0"
             style={{
               width: 38, height: 38,
-              background: listening ? '#B94A3E' : '#56883E',
+              background: listening ? 'var(--listening)' : 'var(--green)',
               cursor: 'pointer',
               border: 'none',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
@@ -251,7 +251,7 @@ export default function CommandGateway() {
                 <div className="flex items-baseline gap-2">
                   <span
                     className="t-label"
-                    style={{ color: entry.role === 'you' ? '#7BA55E' : '#C9A86A', fontSize: 9 }}
+                    style={{ color: entry.role === 'you' ? 'var(--green)' : 'var(--gold)', fontSize: 9 }}
                   >
                     {entry.role === 'you' ? 'YOU' : 'OFFICE'}
                   </span>

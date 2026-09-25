@@ -27,19 +27,19 @@ interface Message {
 }
 
 const SENDER_COLORS: Record<string, string> = {
-  director: '#C9A86A',
-  system: '#6366F1',
-  ceo: '#A78BFA',
-  cto: '#60A5FA',
-  orchestrator: '#FBBF24',
-  research: '#818CF8',
-  social: '#F472B6',
-  sales: '#FB923C',
-  content: '#818CF8',
-  design: '#22D3EE',
-  engineering: '#34D399',
-  ops: '#FBBF24',
-  human: '#C9A86A',
+  director: 'var(--gold)',
+  system: 'var(--accent-indigo)',
+  ceo: 'var(--sender-ceo)',
+  cto: 'var(--sender-cto)',
+  orchestrator: 'var(--warn)',
+  research: 'var(--accent-indigo)',
+  social: 'var(--sender-social)',
+  sales: 'var(--sender-sales)',
+  content: 'var(--accent-indigo)',
+  design: 'var(--sender-design)',
+  engineering: 'var(--sender-engineering)',
+  ops: 'var(--warn)',
+  human: 'var(--gold)',
 };
 
 export default function CommsPage() {
@@ -158,7 +158,7 @@ export default function CommsPage() {
     const parts = content.split(/(@[a-zA-Z0-9_-]+)/g);
     return parts.map((part, i) =>
       part.startsWith('@') ? (
-        <span key={i} style={{ color: '#56883E', fontWeight: 600 }}>{part}</span>
+        <span key={i} style={{ color: 'var(--green)', fontWeight: 600 }}>{part}</span>
       ) : (
         <span key={i}>{part}</span>
       )
@@ -167,17 +167,17 @@ export default function CommsPage() {
 
   // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: 'var(--bg-page)',
+    bg: 'var(--bg)',
     border: 'var(--border-soft)',
-    text: 'var(--ink)',
-    text2: 'var(--ink-3)',
-    text3: 'var(--ink-4)',
+    text: 'var(--text)',
+    text2: 'var(--text-faint)',
+    text3: 'var(--text-faint)',
   };
 
   return (
-    <div className="flex h-full" style={{ background: '#0A0A0A' }}>
+    <div className="flex h-full" style={{ background: 'var(--bg)' }}>
       {/* ============ CHANNELS SIDEBAR ============ */}
-      <div className="flex flex-col shrink-0" style={{ width: 220, background: '#0E0E0E', borderRight: `1px solid ${glass.border}` }}>
+      <div className="flex flex-col shrink-0" style={{ width: 220, background: 'var(--bg)', borderRight: `1px solid ${glass.border}` }}>
         <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${glass.border}` }}>
           <div className="t-label" style={{ color: glass.text2 }}>Channels</div>
           <div className="flex items-center gap-1.5 mt-1">
@@ -197,7 +197,7 @@ export default function CommsPage() {
                   fetchChannels();
                 }}
                 className="t-meta mt-2 px-2 py-1 rounded border"
-                style={{ color: '#56883E', borderColor: 'rgba(86,136,62,0.4)', fontSize: 11, cursor: 'pointer', background: 'transparent' }}
+                style={{ color: 'var(--green)', borderColor: 'rgba(22, 163, 74, 0.4)', fontSize: 11, cursor: 'pointer', background: 'transparent' }}
               >
                 Seed defaults
               </button>
@@ -211,7 +211,7 @@ export default function CommsPage() {
                   onClick={() => setActiveChannel(ch)}
                   className="w-full text-left px-2.5 py-1.5 rounded-md mb-0.5 transition-colors"
                   style={{
-                    background: isActive ? 'rgba(86,136,62,0.12)' : 'transparent',
+                    background: isActive ? 'rgba(22, 163, 74, 0.12)' : 'transparent',
                     cursor: 'pointer',
                     border: 'none',
                   }}
@@ -219,7 +219,7 @@ export default function CommsPage() {
                   onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                   title={ch.description}
                 >
-                  <span className="block truncate" style={{ fontSize: 12.5, fontWeight: isActive ? 600 : 500, color: isActive ? '#F7F6F1' : 'rgba(255,255,255,0.7)' }}>
+                  <span className="block truncate" style={{ fontSize: 12.5, fontWeight: isActive ? 600 : 500, color: isActive ? 'var(--text)' : 'rgba(255,255,255,0.7)' }}>
                     {ch.display_name || `#${ch.name}`}
                   </span>
                 </button>
@@ -255,7 +255,7 @@ export default function CommsPage() {
             </div>
           ) : (
             messages.map((msg) => {
-              const color = SENDER_COLORS[msg.sender_id] || SENDER_COLORS[msg.sender_type] || '#9CA3AF';
+              const color = SENDER_COLORS[msg.sender_id] || SENDER_COLORS[msg.sender_type] || 'var(--sender-fallback)';
               return (
                 <div key={msg.id} className="flex items-start gap-3 mb-3.5">
                   <div
@@ -268,10 +268,10 @@ export default function CommsPage() {
                     <div className="flex items-baseline gap-2">
                       <span style={{ fontSize: 12, fontWeight: 600, color }}>{msg.sender_id}</span>
                       {msg.sender_type === 'agent' && (
-                        <span className="px-1 py-0 rounded" style={{ fontSize: 8.5, color: '#56883E', background: 'rgba(86,136,62,0.15)' }}>AGENT</span>
+                        <span className="px-1 py-0 rounded" style={{ fontSize: 8.5, color: 'var(--green)', background: 'rgba(22, 163, 74, 0.15)' }}>AGENT</span>
                       )}
                       {msg.sender_type === 'system' && (
-                        <span className="px-1 py-0 rounded" style={{ fontSize: 8.5, color: '#6366F1', background: 'rgba(99,102,241,0.15)' }}>SYSTEM</span>
+                        <span className="px-1 py-0 rounded" style={{ fontSize: 8.5, color: 'var(--accent-indigo)', background: 'rgba(99,102,241,0.15)' }}>SYSTEM</span>
                       )}
                       <span className="t-mono" style={{ fontSize: 9, color: glass.text3 }}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -292,7 +292,7 @@ export default function CommsPage() {
         <div className="px-5 pb-5 shrink-0">
           <div
             className="flex items-center gap-2 px-3 py-2 rounded-xl"
-            style={{ background: '#141414', border: `1px solid ${glass.border}` }}
+            style={{ background: 'var(--panel)', border: `1px solid ${glass.border}` }}
           >
             <input
               value={input}
@@ -308,7 +308,7 @@ export default function CommsPage() {
               className="flex items-center justify-center rounded-lg shrink-0"
               style={{
                 width: 30, height: 30,
-                background: input.trim() && activeChannel ? '#56883E' : 'rgba(255,255,255,0.05)',
+                background: input.trim() && activeChannel ? 'var(--green)' : 'rgba(255,255,255,0.05)',
                 cursor: input.trim() && activeChannel ? 'pointer' : 'default',
                 border: 'none',
               }}

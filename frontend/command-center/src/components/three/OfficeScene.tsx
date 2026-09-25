@@ -80,7 +80,7 @@ export function OfficeScene() {
                   camera={{ position: [0, 22, 22], fov: 35 }}
                   style={{ outline: 'none' }}
                   gl={{ preserveDrawingBuffer: true, antialias: true }}
-                  onCreated={({ scene }) => { scene.background = new THREE.Color('#0d1117'); }}
+                  onCreated={({ scene }) => { scene.background = new THREE.Color('var(--bg)'); }}
                 >
                 {/* ============ CINEMATIC LIGHTING — night rig (lightMode flips to day) ============ */}
                 <ambientLight intensity={lightMode ? 1.1 : 0.3} color={lightMode ? '#fdfbf5' : '#fff8f0'} />
@@ -278,7 +278,7 @@ function DeskCluster({ dept, position, agentCount }: {
     design: '#a855f7',
     marketing: '#ec4899',
     sales: '#f97316',
-    research: '#3b82f6',
+    research: 'var(--info)',
     operations: '#eab308',
     social: '#06b6d4',
   };
@@ -430,7 +430,7 @@ function OfficeWalls() {
       <WallPoster position={[-20, 2, -24.8]} text="IDEAS → SYSTEMS → IMPACT" color="#eab308" />
       <WallPoster position={[20, 2, -24.8]} text="BETTER IDEAS FOR A BRIGHTER TOMORROW" color="#22c55e" />
       <WallPoster position={[0, 2, 24.8]} text="BUILD • SHIP • GROW • REPEAT" color="#ec4899" rotation={[0, Math.PI, 0]} />
-      <WallPoster position={[-28, 2, 0]} text="A HEALTHIER DIGITAL TOMORROW" color="#3b82f6" rotation={[0, -Math.PI/2, 0]} />
+      <WallPoster position={[-28, 2, 0]} text="A HEALTHIER DIGITAL TOMORROW" color="var(--info)" rotation={[0, -Math.PI/2, 0]} />
       <WallPoster position={[28, 2, 0]} text="SHIP FAST. LEARN FASTER." color="#ec4899" rotation={[0, Math.PI/2, 0]} />
     </>
   );
@@ -678,11 +678,11 @@ function WhiteboardArea({ position }: { position: [number, number, number] }) {
       {/* Markers */}
       <mesh position={[-0.5, 0.26, 1.8]} receiveShadow castShadow>
         <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
-        <meshStandardMaterial color="#ef4444" roughness={0.7} metalness={0.1} />
+        <meshStandardMaterial color="var(--danger)" roughness={0.7} metalness={0.1} />
       </mesh>
       <mesh position={[0, 0.26, 1.8]} receiveShadow castShadow>
         <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
-        <meshStandardMaterial color="#3b82f6" roughness={0.7} metalness={0.1} />
+        <meshStandardMaterial color="var(--info)" roughness={0.7} metalness={0.1} />
       </mesh>
       <mesh position={[0.5, 0.26, 1.8]} receiveShadow castShadow>
         <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
@@ -707,7 +707,7 @@ function DepartmentZones({ positions }: { positions: Record<string, THREE.Vector
     design: '#a855f7',
     marketing: '#ec4899',
     sales: '#f97316',
-    research: '#3b82f6',
+    research: 'var(--info)',
     operations: '#eab308',
     social: '#06b6d4',
   };
@@ -756,7 +756,7 @@ function FloatingZoneLabels({ positions }: { positions: Record<string, THREE.Vec
     design: '#a855f7',
     marketing: '#ec4899',
     sales: '#f97316',
-    research: '#3b82f6',
+    research: 'var(--info)',
     operations: '#eab308',
     social: '#06b6d4',
   };
@@ -901,13 +901,13 @@ function CEOCabin() {
         {/* Base */}
         <mesh position={[0, 0.1, 0]} receiveShadow castShadow>
           <cylinderGeometry args={[0.4, 0.4, 0.08, 16]} />
-          <meshStandardMaterial color="#0a0a0a" roughness={0.2} metalness={0.3} />
+          <meshStandardMaterial color="var(--bg)" roughness={0.2} metalness={0.3} />
         </mesh>
         {/* Wheels */}
         {[-0.3, 0.3].map(x => [-0.3, 0.3].map(y => (
           <mesh key={`${x}-${y}`} position={[x, 0.04, y]} receiveShadow castShadow>
             <sphereGeometry args={[0.05, 8, 8]} />
-            <meshStandardMaterial color="#0a0a0a" roughness={0.5} metalness={0.3} />
+            <meshStandardMaterial color="var(--bg)" roughness={0.5} metalness={0.3} />
           </mesh>
         )))}
       </group>

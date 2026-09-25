@@ -34,12 +34,12 @@ interface Lead {
 }
 
 // Pipeline step colors
-const STEP_ACTIVE = 'var(--teal)';
+const STEP_ACTIVE = 'var(--green)';
 const STEP_DONE = 'var(--green)';
-const STEP_TODO = 'var(--bg-hover)';
+const STEP_TODO = 'var(--card-hover)';
 
 function SegmentedPipeline({ steps }: { steps: PipelineStep[] }) {
-  if (!steps || steps.length === 0) return <span className="t-meta" style={{ color: 'var(--ink-4)' }}>No steps</span>;
+  if (!steps || steps.length === 0) return <span className="t-meta" style={{ color: 'var(--text-faint)' }}>No steps</span>;
   return (
     <div className="flex items-center gap-1">
       {steps.map((s, i) => (
@@ -88,21 +88,21 @@ export default function ProjectsPage() {
   const completed = workflows.filter(w => w.status === 'completed').length;
 
   return (
-    <div className="flex flex-col h-full" style={{ background: 'var(--bg-page)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'var(--bg)' }}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <div>
-          <h1 className="t-title" style={{ color: 'var(--ink)' }}>Projects</h1>
-          <p className="t-meta mt-0.5" style={{ color: 'var(--ink-3)' }}>Workflows & lead pipeline</p>
+          <h1 className="t-title" style={{ color: 'var(--text)' }}>Projects</h1>
+          <p className="t-meta mt-0.5" style={{ color: 'var(--text-faint)' }}>Workflows & lead pipeline</p>
         </div>
         <div className="flex items-center gap-5">
           <span className="flex items-center gap-2">
-            <span className="t-mono" style={{ color: 'var(--teal)', fontWeight: 700 }}>{active}</span>
-            <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Active</span>
+            <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{active}</span>
+            <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Active</span>
           </span>
           <span className="flex items-center gap-2">
             <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{completed}</span>
-            <span className="t-meta" style={{ color: 'var(--ink-3)' }}>Completed</span>
+            <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Completed</span>
           </span>
           <button onClick={fetchAll} className="btn btn-secondary btn-sm">Refresh</button>
         </div>
@@ -110,19 +110,19 @@ export default function ProjectsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center flex-1">
-          <div className="t-mono" style={{ color: 'var(--ink-3)' }}>Loading…</div>
+          <div className="t-mono" style={{ color: 'var(--text-faint)' }}>Loading…</div>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           {/* Workflows */}
           <section>
             <div className="section-head">
-              <span className="t-label" style={{ color: 'var(--ink-3)' }}>Workflows</span>
-              <span className="t-meta" style={{ color: 'var(--ink-4)' }}>{workflows.length} total</span>
+              <span className="t-label" style={{ color: 'var(--text-faint)' }}>Workflows</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>{workflows.length} total</span>
             </div>
             {workflows.length === 0 ? (
-              <div className="rounded-xl p-5" style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
-                <p className="t-body" style={{ color: 'var(--ink-3)' }}>
+              <div className="rounded-xl p-5" style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
+                <p className="t-body" style={{ color: 'var(--text-faint)' }}>
                   No workflows yet — say "start pipeline for [client]" in the Office command bar.
                 </p>
               </div>
@@ -130,21 +130,21 @@ export default function ProjectsPage() {
               <div className="space-y-2">
                 {workflows.slice(0, 20).map((w) => (
                   <div key={w.id} className="flex items-center justify-between rounded-xl px-4 py-3"
-                    style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
+                    style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
-                        <span className="t-body-md truncate" style={{ color: 'var(--ink)' }}>{w.name}</span>
+                        <span className="t-body-md truncate" style={{ color: 'var(--text)' }}>{w.name}</span>
                         <span className={`badge ${w.status === 'completed' ? 'badge-green' : w.status === 'active' ? 'badge-teal' : 'badge-gray'}`}>
                           {w.status}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 mt-1.5">
                         <SegmentedPipeline steps={w.steps_json} />
-                        <span className="t-mono" style={{ color: 'var(--ink-3)', fontSize: 11 }}>{w.progress}%</span>
+                        <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 11 }}>{w.progress}%</span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="t-meta" style={{ color: 'var(--ink-3)' }}>
+                      <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
                         {w.current_step ? `→ ${w.current_step}` : '—'}
                       </div>
                       <div className="feed-time mt-0.5">{new Date(w.created_at).toLocaleDateString('en-IN')}</div>
@@ -158,22 +158,22 @@ export default function ProjectsPage() {
           {/* Leads */}
           <section>
             <div className="section-head">
-              <span className="t-label" style={{ color: 'var(--ink-3)' }}>Leads</span>
-              <span className="t-meta" style={{ color: 'var(--ink-4)' }}>{leads.length} total</span>
+              <span className="t-label" style={{ color: 'var(--text-faint)' }}>Leads</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>{leads.length} total</span>
             </div>
             {leads.length === 0 ? (
-              <div className="rounded-xl p-5" style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
-                <p className="t-body" style={{ color: 'var(--ink-3)' }}>
+              <div className="rounded-xl p-5" style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
+                <p className="t-body" style={{ color: 'var(--text-faint)' }}>
                   No leads yet — run the GitHub/HN scraper scripts to populate.
                 </p>
               </div>
             ) : (
-              <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-elevated)', boxShadow: 'var(--shadow-card)' }}>
+              <div className="rounded-xl overflow-hidden" style={{ background: 'var(--panel-2)', boxShadow: 'var(--shadow-card)' }}>
                 {leads.slice(0, 15).map((l, i) => (
                   <div key={l.id} className="flex items-center justify-between px-4 py-2.5"
                     style={{ borderBottom: i < Math.min(leads.length, 15) - 1 ? '1px solid var(--border-hairline)' : 'none' }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="t-body-md truncate" style={{ color: 'var(--ink)' }}>{l.company || l.id.slice(0, 8)}</span>
+                      <span className="t-body-md truncate" style={{ color: 'var(--text)' }}>{l.company || l.id.slice(0, 8)}</span>
                       {l.source && <span className="badge badge-gray">{l.source}</span>}
                     </div>
                     <span className={`badge ${l.status === 'qualified' ? 'badge-green' : l.status === 'rejected' ? 'badge-red' : 'badge-gray'}`}>

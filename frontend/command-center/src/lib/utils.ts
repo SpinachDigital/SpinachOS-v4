@@ -11,7 +11,7 @@ export const DEPARTMENT_COLORS: Record<string, string> = {
   design: '#a855f7',
   marketing: '#ec4899',
   sales: '#f97316',
-  research: '#3b82f6',
+  research: 'var(--info)',
   operations: '#eab308',
   social: '#06b6d4',
   content: '#14b8a6',

@@ -56,10 +56,10 @@ export default function CalendarPage() {
 
   // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: 'var(--bg-page)',
+    bg: 'var(--bg)',
     border: 'var(--border-soft)',
-    text: 'var(--ink)',
-    text2: 'var(--ink-3)',
+    text: 'var(--text)',
+    text2: 'var(--text-faint)',
   };
 
   // Filter events by agent
@@ -116,8 +116,8 @@ export default function CalendarPage() {
               onClick={() => setView(v)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === v ? 'font-medium' : ''}`}
               style={{
-                background: view === v ? 'rgba(86,136,62,0.2)' : glass.bg,
-                borderColor: view === v ? '#56883E' : glass.border,
+                background: view === v ? 'rgba(22, 163, 74, 0.2)' : glass.bg,
+                borderColor: view === v ? 'var(--green)' : glass.border,
                 color: glass.text,
                 border: '1px solid',
               }}
@@ -186,7 +186,7 @@ export default function CalendarPage() {
                   <div key={event.id} className="p-4 rounded-xl" style={{ background: glass.bg, border: `1px solid ${glass.border}` }}>
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium" style={{ color: glass.text }}>{event.title}</h4>
-                      <span className="px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(86,136,62,0.2)', color: '#56883E' }}>
+                      <span className="px-2 py-0.5 rounded text-xs" style={{ background: 'rgba(22, 163, 74, 0.2)', color: 'var(--green)' }}>
                         {event.event_type || 'event'}
                       </span>
                     </div>
@@ -200,7 +200,7 @@ export default function CalendarPage() {
                     {event.attendees && event.attendees.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {event.attendees.map((a: any) => (
-                          <span key={a.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(99,102,241,0.2)', color: '#6366F1' }}>
+                          <span key={a.id} className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(99,102,241,0.2)', color: 'var(--accent-indigo)' }}>
                             {a.id}
                           </span>
                         ))}
@@ -208,7 +208,7 @@ export default function CalendarPage() {
                     )}
                     <div className="flex gap-2 mt-3 pt-2 border-t" style={{ borderColor: glass.border }}>
                       <button className="flex-1 px-2 py-1 text-xs rounded border transition-colors" style={{ borderColor: glass.border, color: glass.text, background: glass.bg }}>Edit</button>
-                      <button className="flex-1 px-2 py-1 text-xs rounded border transition-colors" style={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444', background: 'rgba(239,68,68,0.1)' }}>Delete</button>
+                      <button className="flex-1 px-2 py-1 text-xs rounded border transition-colors" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)' }}>Delete</button>
                     </div>
                   </div>
                 ))}

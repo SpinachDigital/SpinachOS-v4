@@ -22,14 +22,14 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
   }
 
   return (
-    <div className="bg-warm-50 rounded-lg p-4 border border-warm-200">
-      <h3 className="text-lg font-medium text-warm-900 mb-4">Current Step</h3>
+    <div className="bg-[var(--panel)] rounded-lg p-4 border border-[var(--panel-2)]">
+      <h3 className="text-lg font-medium text-[var(--text)] mb-4">Current Step</h3>
       <div className="space-y-4">
         <div className="flex items-start gap-4">
           {/* Step status indicator */}
           <div className="flex-shrink-0 mt-2">
             <div className={`h-8 w-8 rounded-full 
-               ${currentStep.status === 'completed' ? 'bg-teal-500' : currentStep.status === 'in_progress' ? 'bg-teal-400' : 'bg-warm-200'} 
+               ${currentStep.status === 'completed' ? 'bg-[var(--green)]' : currentStep.status === 'in_progress' ? 'bg-[var(--green)]' : 'bg-[var(--card-hover)]'} 
                flex items-center justify-center text-white text-sm font-medium`}>
               {currentStep.status === 'completed' ? (
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,11 +47,11 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
             </div>
           </div>
           <div className="flex-1">
-            <h4 className="text-base font-semibold text-warm-900">{currentStep.name.replace('_', ' ')}</h4>
-            <p className="text-warm-600">{currentStep.description || `Step handled by ${currentStep.agent.toUpperCase()} team`}</p>
+            <h4 className="text-base font-semibold text-[var(--text)]">{currentStep.name.replace('_', ' ')}</h4>
+            <p className="text-[var(--text-dim)]">{currentStep.description || `Step handled by ${currentStep.agent.toUpperCase()} team`}</p>
             <div className="mt-2 flex items-center gap-2 text-xs">
               <span className="font-medium">Agent:</span>
-              <span className="bg-teal-500/20 px-2 py-0.5 rounded text-teal-500 text-[0.75rem]">{currentStep.agent.toUpperCase()}</span>
+              <span className="bg-[var(--green)]/20 px-2 py-0.5 rounded text-[var(--green)] text-[0.75rem]">{currentStep.agent.toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
         <div className="mt-4 flex justify-end space-x-3">
           {currentStep.status === 'pending' && (
             <button
-              className="px-4 py-2 bg-teal-500 text-warm-50 rounded hover:bg-teal-600 transition-colors"
+              className="px-4 py-2 bg-[var(--green)] text-[var(--panel)] rounded hover:bg-[var(--green)] transition-colors"
               onClick={() => {
                 // TODO: Implement step start via WebSocket or API
                 console.log(`Starting step: ${currentStep.name}`);
@@ -72,7 +72,7 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
           {currentStep.status === 'in_progress' && (
             <>
               <button
-                className="px-4 py-2 bg-warm-200 text-warm-900 rounded hover:bg-warm-300 transition-colors"
+                className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
                 onClick={() => {
                   // TODO: Implement step completion
                   console.log(`Completing step: ${currentStep.name}`);
@@ -81,7 +81,7 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
                 Complete Step
               </button>
               <button
-                className="px-4 py-2 bg-warm-200 text-warm-900 rounded hover:bg-warm-300 transition-colors"
+                className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
                 onClick={() => {
                   // TODO: Implement step block
                   console.log(`Blocking step: ${currentStep.name}`);
@@ -93,7 +93,7 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
           )}
           {currentStep.status === 'completed' && (
             <button
-              className="px-4 py-2 bg-warm-200 text-warm-900 rounded hover:bg-warm-300 transition-colors"
+              className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
               onClick={() => {
                 // TODO: Implement step reopen
                 console.log(`Reopening step: ${currentStep.name}`);

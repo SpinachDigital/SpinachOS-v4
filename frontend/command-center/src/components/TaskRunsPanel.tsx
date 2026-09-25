@@ -29,7 +29,7 @@ interface TaskRow {
 }
 
 const STATE_DOT: Record<string, string> = {
-  done: '#56883E',
+  done: 'var(--green)',
   running: '#004B63',
   blocked: '#B94A3E',
   review: '#B98A2F',
@@ -93,7 +93,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
   return (
     <aside
       className="fixed right-0 top-14 bottom-0 z-40 flex flex-col w-96 max-w-full"
-      style={{ background: '#0E0E0E', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'var(--bg)', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -153,7 +153,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
                         {t.metadata?.model ? ` · ${t.metadata.model}` : ''}
                       </span>
                     </span>
-                    {t.status === 'done' && <CheckCircle2 style={{ width: 12, height: 12, color: '#56883E', flexShrink: 0 }} />}
+                    {t.status === 'done' && <CheckCircle2 style={{ width: 12, height: 12, color: 'var(--green)', flexShrink: 0 }} />}
                     {t.status === 'blocked' && <AlertTriangle style={{ width: 12, height: 12, color: '#B94A3E', flexShrink: 0 }} />}
                     {t.status === 'running' && <Loader2 className="animate-spin" style={{ width: 12, height: 12, color: '#004B63', flexShrink: 0 }} />}
                   </button>
@@ -167,9 +167,9 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
                           <p className="t-mono mt-1" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap' }}>{error}</p>
                         </div>
                       ) : output ? (
-                        <div className="mt-2 rounded-md p-2.5" style={{ background: 'rgba(86,136,62,0.08)' }}>
+                        <div className="mt-2 rounded-md p-2.5" style={{ background: 'rgba(22, 163, 74, 0.08)' }}>
                           <div className="flex items-center justify-between">
-                            <span className="t-label" style={{ fontSize: 9, color: '#7BA55E' }}>Output</span>
+                            <span className="t-label" style={{ fontSize: 9, color: 'var(--green)' }}>Output</span>
                             <span className="t-mono" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>{full?.metadata?.model || ''}</span>
                           </div>
                           <p className="mt-1.5" style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>

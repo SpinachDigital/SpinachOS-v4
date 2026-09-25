@@ -6,25 +6,25 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
 
   return (
     <aside
-      className={`flex flex-col border-l border-warm-200 bg-warm-50/80 backdrop-blur-sm 
+      className={`flex flex-col border-l border-[var(--panel-2)] bg-[var(--panel)]/80 backdrop-blur-sm 
                    ${open ? 'w-[320px]' : 'w-[64px]' } 
                    transition-all duration-300 overflow-hidden`}
     >
       <div className="flex h-16 items-center justify-center gap-2">
         <button
           onClick={() => onToggle(!open)}
-          className="p-2 rounded hover:bg-warm-200/50 transition-colors"
+          className="p-2 rounded hover:bg-[var(--card-hover)]/50 transition-colors"
           aria-label="Toggle right panel"
         >
           {!open ? (
-            <Users className="h-5 w-5 text-warm-600" />
+            <Users className="h-5 w-5 text-[var(--text-dim)]" />
           ) : (
-            <span className="text-[0.75rem] font-medium text-warm-600">Context</span>
+            <span className="text-[0.75rem] font-medium text-[var(--text-dim)]">Context</span>
           )}
         </button>
       </div>
 
-      <nav className="flex h-12 border-b border-warm-200 bg-warm-50">
+      <nav className="flex h-12 border-b border-[var(--panel-2)] bg-[var(--panel)]">
         <div className="flex-1 flex space-x-2 px-2">
           {([['agents', Users], ['pipeline', Activity], ['logs', MessageSquare], ['settings', Settings]] as const).map(
             ([tab, Icon]) => (
@@ -32,7 +32,7 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 flex items-center justify-center rounded-md transition-colors
-                           ${activeTab === tab ? 'bg-warm-200 text-teal-500' : 'hover:bg-warm-200/50 text-warm-600'}`}
+                           ${activeTab === tab ? 'bg-[var(--card-hover)] text-[var(--green)]' : 'hover:bg-[var(--card-hover)]/50 text-[var(--text-dim)]'}`}
               >
                 <Icon className="h-4 w-4" />
               </button>
@@ -44,21 +44,21 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {activeTab === 'agents' && (
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-warm-700">Agent States</h3>
+            <h3 className="text-sm font-medium text-[var(--text-dim)]">Agent States</h3>
             <div className="space-y-2">
               {/* This will be populated from WebSocket/agent_states */}
-              <div className="flex items-center gap-3 p-2 rounded bg-warm-100">
-                <div className="h-3 w-3 rounded-full bg-teal-500" />
+              <div className="flex items-center gap-3 p-2 rounded bg-[var(--card)]">
+                <div className="h-3 w-3 rounded-full bg-[var(--green)]" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">CEO</p>
-                  <p className="text-[0.75rem] text-warm-500">Idle - Monitoring...</p>
+                  <p className="text-xs font-medium text-[var(--text)]">CEO</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">Idle - Monitoring...</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-2 rounded bg-warm-100">
-                <div className="h-3 w-3 rounded-full bg-teal-500" />
+              <div className="flex items-center gap-3 p-2 rounded bg-[var(--card)]">
+                <div className="h-3 w-3 rounded-full bg-[var(--green)]" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">CTO</p>
-                  <p className="text-[0.75rem] text-warm-500">Idle - Monitoring...</p>
+                  <p className="text-xs font-medium text-[var(--text)]">CTO</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">Idle - Monitoring...</p>
                 </div>
               </div>
               {/* Add more agents as needed */}
@@ -67,39 +67,39 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
         )}
         {activeTab === 'pipeline' && (
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-warm-700">Active Pipeline</h3>
+            <h3 className="text-sm font-medium text-[var(--text-dim)]">Active Pipeline</h3>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-2 rounded bg-warm-100">
-                <div className="h-3 w-3 rounded-full bg-teal-500" />
+              <div className="flex items-center gap-3 p-2 rounded bg-[var(--card)]">
+                <div className="h-3 w-3 rounded-full bg-[var(--green)]" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">Mira Road Gym</p>
-                  <p className="text-[0.75rem] text-warm-500">Step 3/8: Lead Generation</p>
+                  <p className="text-xs font-medium text-[var(--text)]">Mira Road Gym</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">Step 3/8: Lead Generation</p>
                 </div>
-                <div className="text-xs text-teal-500">60%</div>
+                <div className="text-xs text-[var(--green)]">60%</div>
               </div>
             </div>
           </div>
         )}
         {activeTab === 'logs' && (
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-warm-700">Recent Activity</h3>
+            <h3 className="text-sm font-medium text-[var(--text-dim)]">Recent Activity</h3>
             <div className="space-y-2">
-              <div className="flex items-start gap-3 p-2 rounded bg-warm-100">
+              <div className="flex items-start gap-3 p-2 rounded bg-[var(--card)]">
                 <div className="h-3 w-3 flex-shrink-0">
-                  <Activity className="h-4 w-4 text-teal-500" />
+                  <Activity className="h-4 w-4 text-[var(--green)]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">CEO approved strategy for Acme Corp</p>
-                  <p className="text-[0.75rem] text-warm-500">2 min ago</p>
+                  <p className="text-xs font-medium text-[var(--text)]">CEO approved strategy for Acme Corp</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">2 min ago</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-2 rounded bg-warm-100">
+              <div className="flex items-start gap-3 p-2 rounded bg-[var(--card)]">
                 <div className="h-3 w-3 flex-shrink-0">
-                  <BarChart3 className="h-4 w-4 text-teal-500" />
+                  <BarChart3 className="h-4 w-4 text-[var(--green)]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">Content team drafted 5 LinkedIn posts</p>
-                  <p className="text-[0.75rem] text-warm-500">5 min ago</p>
+                  <p className="text-xs font-medium text-[var(--text)]">Content team drafted 5 LinkedIn posts</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">5 min ago</p>
                 </div>
               </div>
             </div>
@@ -107,15 +107,15 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
         )}
         {activeTab === 'settings' && (
           <div className="space-y-3">
-            <h3 className="text-sm font-medium text-warm-700">System Settings</h3>
+            <h3 className="text-sm font-medium text-[var(--text-dim)]">System Settings</h3>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-2 rounded bg-warm-100">
+              <div className="flex items-center gap-3 p-2 rounded bg-[var(--card)]">
                 <div className="h-3 w-3 flex-shrink-0">
-                  <Settings className="h-4 w-4 text-teal-500" />
+                  <Settings className="h-4 w-4 text-[var(--green)]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-warm-900">WebSocket Connection</p>
-                  <p className="text-[0.75rem] text-warm-500">Connected • 12 agents</p>
+                  <p className="text-xs font-medium text-[var(--text)]">WebSocket Connection</p>
+                  <p className="text-[0.75rem] text-[var(--text-dim)]">Connected • 12 agents</p>
                 </div>
               </div>
             </div>
@@ -125,12 +125,12 @@ export default function RightPanel({ open, onToggle }: { open: boolean; onToggle
 
       {/* Collapse indicator when closed */}
       {!open && (
-        <div className="flex h-14 items-center justify-center border-t border-warm-200">
+        <div className="flex h-14 items-center justify-center border-t border-[var(--panel-2)]">
           <button
             onClick={() => onToggle(true)}
-            className="p-2 rounded hover:bg-warm-200/50 transition-colors"
+            className="p-2 rounded hover:bg-[var(--card-hover)]/50 transition-colors"
           >
-            <Users className="h-5 w-5 text-warm-600" />
+            <Users className="h-5 w-5 text-[var(--text-dim)]" />
           </button>
         </div>
       )}

@@ -24,10 +24,10 @@ interface PostEngagement {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  x: '#000000',
-  linkedin: '#0A66C2',
-  instagram: '#E1306C',
-  threads: '#000000',
+  x: 'var(--brand-x)',
+  linkedin: 'var(--brand-linkedin)',
+  instagram: 'var(--brand-instagram)',
+  threads: 'var(--brand-x)',
 };
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
@@ -38,12 +38,12 @@ const PLATFORM_ICONS: Record<string, React.ReactNode> = {
 };
 
 const METRIC_COLORS: Record<string, string> = {
-  like: '#EF4444',
-  retweet: '#10B981',
-  reply: '#3B82F6',
-  quote: '#8B5CF6',
-  impression: '#0891B2',
-  profile_click: '#F59E0B',
+  like: 'var(--danger)',
+  retweet: 'var(--green-bright)',
+  reply: 'var(--info)',
+  quote: 'var(--accent-violet)',
+  impression: 'var(--accent-cyan)',
+  profile_click: 'var(--warn)',
 };
 
 const METRIC_LABELS: Record<string, string> = {
@@ -97,11 +97,11 @@ export default function EngagementAnalyticsPage() {
 
   // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: 'var(--bg-page)',
+    bg: 'var(--bg)',
     border: 'var(--border-soft)',
-    text: 'var(--ink)',
-    text2: 'var(--ink-3)',
-    text3: 'var(--ink-4)',
+    text: 'var(--text)',
+    text2: 'var(--text-faint)',
+    text3: 'var(--text-faint)',
   };
 
   // Aggregate metrics
@@ -150,7 +150,7 @@ export default function EngagementAnalyticsPage() {
       <div className="flex flex-wrap gap-3 px-5 py-3 border-b" style={{ borderColor: glass.border }}>
         <div className="flex gap-2">
           {TIME_RANGES.map(r => (
-            <button key={r.label} onClick={() => setTimeRange(r)} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${timeRange === r ? 'font-medium' : ''}`} style={{ background: timeRange === r ? 'rgba(86,136,62,0.2)' : glass.bg, borderColor: timeRange === r ? '#56883E' : glass.border, color: glass.text, border: '1px solid' }}>{r.label}</button>
+            <button key={r.label} onClick={() => setTimeRange(r)} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${timeRange === r ? 'font-medium' : ''}`} style={{ background: timeRange === r ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: timeRange === r ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>{r.label}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 ml-auto">
@@ -160,7 +160,7 @@ export default function EngagementAnalyticsPage() {
           </select>
           <div className="flex gap-2">
             {(['overview', 'posts', 'trends'] as const).map(v => (
-              <button key={v} onClick={() => setView(v)} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === v ? 'font-medium' : ''}`} style={{ background: view === v ? 'rgba(86,136,62,0.2)' : glass.bg, borderColor: view === v ? '#56883E' : glass.border, color: glass.text, border: '1px solid' }}>{v.charAt(0).toUpperCase() + v.slice(1)}</button>
+              <button key={v} onClick={() => setView(v)} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === v ? 'font-medium' : ''}`} style={{ background: view === v ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === v ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>{v.charAt(0).toUpperCase() + v.slice(1)}</button>
             ))}
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function EngagementAnalyticsPage() {
             <div className="p-4 rounded-xl" style={{ background: glass.bg, border: `1px solid ${glass.border}` }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="t-label" style={{ color: glass.text }}>Total Engagement</div>
-                <div className="t-mono text-2xl font-bold" style={{ color: '#56883E' }}>{totalEngagement.toLocaleString()}</div>
+                <div className="t-mono text-2xl font-bold" style={{ color: 'var(--green)' }}>{totalEngagement.toLocaleString()}</div>
               </div>
               <div className="flex gap-4">
                 {Object.entries(platformBreakdown).map(([platform, data]) => {
@@ -298,10 +298,10 @@ export default function EngagementAnalyticsPage() {
                                 </div>
                               </td>
                               <td className="p-3 text-right t-mono" style={{ color: glass.text }}>{impressions.toLocaleString()}</td>
-                              <td className="p-3 text-right t-mono" style={{ color: '#EF4444' }}>{likes.toLocaleString()}</td>
-                              <td className="p-3 text-right t-mono" style={{ color: '#10B981' }}>{retweets.toLocaleString()}</td>
-                              <td className="p-3 text-right t-mono" style={{ color: '#3B82F6' }}>{replies.toLocaleString()}</td>
-                              <td className="p-3 text-right t-mono font-medium" style={{ color: '#56883E' }}>{rate}%</td>
+                              <td className="p-3 text-right t-mono" style={{ color: 'var(--danger)' }}>{likes.toLocaleString()}</td>
+                              <td className="p-3 text-right t-mono" style={{ color: 'var(--green-bright)' }}>{retweets.toLocaleString()}</td>
+                              <td className="p-3 text-right t-mono" style={{ color: 'var(--info)' }}>{replies.toLocaleString()}</td>
+                              <td className="p-3 text-right t-mono font-medium" style={{ color: 'var(--green)' }}>{rate}%</td>
                             </tr>
                           );
                         })
