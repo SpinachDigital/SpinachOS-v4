@@ -49,8 +49,13 @@ export default function CommandCenter() {
   const setWsConnected = useSpinachStore((s) => s.setWsConnected);
   const agentList = Object.entries(agentStates);
   const workingCount = agentList.filter(([, s]) => s.state === 'working' || s.state === 'thinking').length;
+  // Phase 2: loading + loud-error states (no silent mock fallback)
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [loadedOnce, setLoadedOnce] = useState(false);
 
   // ---- initial load: all bridge endpoints ----
+  // Phase 2 Task 4: no silent mock fallback — API failures surface LOUDLY
+  // (the auth fix re-mints on 401, so only real outages reach this state).
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -64,6 +69,14 @@ export default function CommandCenter() {
           fetch('/api/outputs').then(r => (r.ok ? r.json() : null)),
         ]);
         if (!alive) return;
+        // All-null = the API is unreachable (every call failed) → loud error state
+        if (s === null && a === null && j === null) {
+          setApiError('API :4000 unreachable — panels are offline. Check scripts/start-all.ps1 or run the watchdog (runs every 5 min).');
+          setLoadedOnce(true);
+          return;
+        }
+        setApiError(null);
+        setLoadedOnce(true);
         // stats: [{label, value, icon, delta}] — map label→our keys
         if (Array.isArray(s)) {
           const byLabel: Record<string, any> = {};
@@ -106,7 +119,13 @@ export default function CommandCenter() {
         }
         if (Array.isArray(as)) setAssetCount(as.length);
         if (Array.isArray(o)) setOutputCount(o.length);
-      } catch { /* office offline */ }
+        setApiError(null);
+        setLoadedOnce(true);
+      } catch {
+        // Phase 2 Task 4: real outage → loud, not silent mock fallback
+        setApiError('API :4000 unreachable — panels are offline. Check scripts/start-all.ps1 or run the watchdog (runs every 5 min).');
+        setLoadedOnce(true);
+      }
     })();
     return () => { alive = false; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -146,6 +165,13 @@ export default function CommandCenter() {
   return (
     <>
       {/* ============ STATS ============ */}
+      {apiError && (
+        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239,68,68,0.06)', padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--red)', fontWeight: 600 }}>
+            <span className="d down" /> {apiError}
+          </div>
+        </div>
+      )}
       <section className="stats">
         {(stats.length ? stats : FALLBACK_STATS).map(s => (
           <div className="stat-card" key={s.key}>
@@ -197,7 +223,20 @@ export default function CommandCenter() {
         <div className="panel">
           <div className="panel-head"><h3><span className="live-dot" /> Live Activity</h3></div>
           <div className="feed">
-            {feed.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Quiet office. Run a command above.</div>}
+            {!loadedOnce && feed.length === 0 && (
+              <>
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="feed-item" style={{ opacity: 0.5 }}>
+                    <div className="skeleton" style={{ width: 32, height: 32, borderRadius: 10 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton" style={{ height: 12, width: '50%', marginBottom: 5 }} />
+                      <div className="skeleton" style={{ height: 10, width: '70%' }} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            {loadedOnce && feed.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Quiet office. Run a command above.</div>}
             {feed.map((f, i) => (
               <div className="feed-item" key={i}>
                 <div className={`feed-ic${f.agent === 'director' ? '' : ' green'}`}>
@@ -218,7 +257,20 @@ export default function CommandCenter() {
         <div className="panel">
           <div className="panel-head"><h3>Recent Jobs</h3><button className="link" type="button">View All</button></div>
           <div>
-            {jobs.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No jobs yet — the first command will appear here.</div>}
+            {!loadedOnce && jobs.length === 0 && (
+              <>
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="job" style={{ opacity: 0.5 }}>
+                    <div className="skeleton" style={{ width: 30, height: 30, borderRadius: 10 }} />
+                    <div style={{ flex: 1 }}>
+                      <div className="skeleton" style={{ height: 12, width: '60%', marginBottom: 5 }} />
+                      <div className="skeleton" style={{ height: 10, width: '40%' }} />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+            {loadedOnce && jobs.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No jobs yet — the first command will appear here.</div>}
             {jobs.map(j => (
               <div className="job" key={j.id}>
                 <div className="job-ic">

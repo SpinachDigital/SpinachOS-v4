@@ -13,6 +13,11 @@ export default function RightRail() {
   const [agents, setAgents] = useState<AgentRow[]>([]);
   const [online, setOnline] = useState(0);
   const [health, setHealth] = useState<HealthRow[]>([]);
+  // Phase 2 Task 1: first-paint loading state — the previous code rendered
+  // "checking…"/"Agents offline" for up to 30s before the first fetch landed.
+  const [loadedOnce, setLoadedOnce] = useState(false);
+  // Phase 2 Task 3: API unreachable → fail loudly, not silently
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -33,7 +38,12 @@ export default function RightRail() {
         }
         // health: [{name, state, value}]
         if (Array.isArray(h)) setHealth(h.map((x: any) => ({ name: x.name, status: x.state === 'ok' ? 'ok' : x.state, value: x.value })));
-      } catch { /* office offline */ }
+        setApiError(null);
+        setLoadedOnce(true);
+      } catch {
+        // Phase 2 Task 3: API unreachable → loud error banner (not silent)
+        if (alive) setApiError('API :4000 unreachable — check scripts/start-all.ps1 or run the watchdog.');
+      }
     };
     load();
     const id = setInterval(load, 30_000);
@@ -42,11 +52,25 @@ export default function RightRail() {
 
   return (
     <>
+      {apiError && (
+        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239,68,68,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--red)', fontWeight: 600 }}>
+            <span className="d down" /> {apiError}
+          </div>
+        </div>
+      )}
       <section className="panel">
         <div className="panel-head"><h3>Today</h3><button className="link" type="button">›</button></div>
         <div className="today-date">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
         <div>
-          {today.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No items on today&rsquo;s schedule.</div>}
+          {!loadedOnce && today.length === 0 && (
+            <>
+              <div className="skeleton" style={{ height: 14, width: '80%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 14, width: '60%', marginBottom: 8 }} />
+              <div className="skeleton" style={{ height: 14, width: '70%' }} />
+            </>
+          )}
+          {loadedOnce && today.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No items on today&rsquo;s schedule.</div>}
           {today.map(s => (
             <div className="slot" key={s.id}>
               <button className={`ck${s.done ? ' done' : ''}`} type="button" aria-label="toggle" />
@@ -65,6 +89,20 @@ export default function RightRail() {
           <button className="link" type="button">›</button>
         </div>
         <div>
+          {!loadedOnce && agents.length === 0 && (
+            <>
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} className="agent-row" style={{ opacity: 0.5 }}>
+                  <div className="skeleton" style={{ width: 28, height: 28, borderRadius: 8 }} />
+                  <div style={{ flex: 1 }}>
+                    <div className="skeleton" style={{ height: 12, width: '55%', marginBottom: 5 }} />
+                    <div className="skeleton" style={{ height: 10, width: '75%' }} />
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+          {loadedOnce && agents.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Agents offline — start the office with scripts/start-all.ps1.</div>}
           {agents.slice(0, 8).map(a => (
             <div className="agent-row" key={a.profile}>
               <div className="agent-ic">
@@ -90,8 +128,19 @@ export default function RightRail() {
       <section className="panel">
         <div className="panel-head"><h3>System Health</h3><span className="pill completed">All Operational</span></div>
         <div>
-          {health.length === 0 && (
-            <div className="health-row"><span className="d" /><b>API :4000</b><span className="hv">checking…</span></div>
+          {!loadedOnce && health.length === 0 && (
+            <>
+              {[0, 1, 2].map(i => (
+                <div key={i} className="health-row">
+                  <div className="skeleton" style={{ width: 7, height: 7, borderRadius: '50%' }} />
+                  <div className="skeleton" style={{ height: 11, width: '40%' }} />
+                  <div className="skeleton" style={{ height: 11, width: '20%', marginLeft: 'auto' }} />
+                </div>
+              ))}
+            </>
+          )}
+          {loadedOnce && health.length === 0 && (
+            <div className="health-row"><span className="d down" /><b>API :4000</b><span className="hv">unreachable</span></div>
           )}
           {health.map(h => (
             <div className="health-row" key={h.name}>
