@@ -95,12 +95,13 @@ export default function EngagementAnalyticsPage() {
 
   useEffect(() => { fetchMetrics(); }, [fetchMetrics]);
 
+  // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: 'rgba(15,15,15,0.78)',
-    border: 'rgba(255,255,255,0.08)',
-    text: 'rgba(255,255,255,0.85)',
-    text2: 'rgba(255,255,255,0.45)',
-    text3: 'rgba(255,255,255,0.3)',
+    bg: 'var(--bg-page)',
+    border: 'var(--border-soft)',
+    text: 'var(--ink)',
+    text2: 'var(--ink-3)',
+    text3: 'var(--ink-4)',
   };
 
   // Aggregate metrics

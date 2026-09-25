@@ -4,7 +4,9 @@
 // The API's authMiddleware verifies signature + expiry (jsonwebtoken), so the old hardcoded
 // 'eyJhbG...CVqI' fallback (malformed payload) always 401'd — this helper replaces it everywhere.
 
-const API_BASE = 'http://localhost:4000';
+// Env-driven so the dashboard works against any API host (local dev, LAN, Oracle VM).
+// Falls back to localhost for zero-config local development.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 const CACHE_KEY = 'spinach_token_cache';
 // Refresh 5 minutes before actual expiry so in-flight requests never race the expiry
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;

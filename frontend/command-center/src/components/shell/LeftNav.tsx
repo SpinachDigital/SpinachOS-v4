@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { id: 'office', route: '/', label: 'Office', sub: '3D Command Center', icon: Home },
   { id: 'approvals', route: '/approvals', label: 'Approvals', sub: 'Review & decide', icon: FileText },
   { id: 'projects', route: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: FolderKanban },
+  { id: 'clients', route: '/clients', label: 'Clients', sub: 'Relationships & 360', icon: Users },
   { id: 'agents', route: '/agents', label: 'Agents', sub: 'Your digital team', icon: Bot },
   { id: 'chat', route: '/comms', label: 'Chat', sub: 'Channels & threads', icon: MessageSquare },
   { id: 'calendar', route: '/calendar', label: 'Calendar', sub: 'Brain & scheduling', icon: CalendarIcon },

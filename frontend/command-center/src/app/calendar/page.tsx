@@ -54,12 +54,12 @@ export default function CalendarPage() {
     }
   };
 
-  const isDark = true;
+  // Design-system tokens (dark-first): all glass.* usages now resolve to the shared theme.
   const glass = {
-    bg: isDark ? 'rgba(15,15,15,0.78)' : 'rgba(255,255,255,0.82)',
-    border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,15,15,0.08)',
-    text: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,15,15,0.85)',
-    text2: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(15,15,15,0.45)',
+    bg: 'var(--bg-page)',
+    border: 'var(--border-soft)',
+    text: 'var(--ink)',
+    text2: 'var(--ink-3)',
   };
 
   // Filter events by agent

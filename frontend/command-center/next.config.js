@@ -7,7 +7,6 @@ const nextConfig = {
       // IA v3: consolidated nav — old routes redirect to their new homes (no 404s)
       { source: '/office', destination: '/', permanent: false },
       { source: '/team', destination: '/agents', permanent: false },
-      { source: '/clients', destination: '/projects', permanent: false },
       { source: '/logs', destination: '/analytics', permanent: false },
       { source: '/marketing/calendar', destination: '/marketing', permanent: false },
       { source: '/marketing/engagement', destination: '/marketing', permanent: false },
