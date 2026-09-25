@@ -10,6 +10,11 @@ export function needsBrainstorm(command: string, layaConfidence: number | undefi
   if (layaConfidence !== undefined && layaConfidence < 0.6) return true;
   if (IRREVERSIBLE.some(v => t.includes(v))) return true;
   if (COMPLEX_SIGNALS.some(v => t.includes(v))) return true;
+  // Status QUESTIONS are discussion, not dispatch — "have we posted..." must never
+  // delegate. Question openers (have we/did we/what's/kya) and question marks route
+  // to the brainstorm thread where the founder gets an answer, not a task.
+  if (/^(have we|did we|has the|did the|what's|whats|kya hum|kya)\b/.test(t)) return true;
+  if (/\?\s*$/.test(command)) return true;
   return false;
 }
 

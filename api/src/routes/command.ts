@@ -109,27 +109,6 @@ app.get('/api/v1/warroom/:workflowId', authMiddleware, async (req, res) => {
     tasks: tasks || [],
   });
 });
-app.post('/api/v1/command', authMiddleware, async (req, res) => {
-  try {
-    // XSS/injection sanitization on free-text command input
-    const command = sanitizeText(req.body.command, 2000);
-    const source = sanitizeText(req.body.source, 50) || 'api';
-    if (!command) {
-      return res.status(400).json({ error: 'Missing command' });
-    }
-
-    // PHASE 4: the two-way thread engine handles dispatch/brainstorm first.
-    // Special commands (pipeline/approval/standup/status) still run their
-    // dedicated branches below via specialCommandHandler.
-    const special = await specialCommandHandler(command, req.headers.authorization);
-    if (special) return res.json(special);
-
-    const r = await handleCommandThread(command, req.body.thread_id);
-    res.json({ ok: true, ...r, action: r.mode === 'fast' ? 'laya_routed' : r.mode });
-  } catch (e: any) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 /**
  * specialCommandHandler — the domain branches from the old one-way gateway,

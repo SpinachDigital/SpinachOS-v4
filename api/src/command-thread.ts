@@ -28,16 +28,27 @@ export async function handleCommandThread(command: string, threadId?: string): P
     await supabase.from('thread_messages').insert({
       thread_id: thread.id, sender: 'director', role: 'user', content: command,
     });
-    // continuation: if the thread is in brainstorm and user says yes → delegate the plan
-    if (thread.mode === 'brainstorm' && /^(yes|haan|ha|ok|do it|delegate|go)/i.test(command.trim())) {
-      return delegatePlan(thread);
+    // continuation on an ACTIVE brainstorm thread:
+    //   - 'yes/haan/ok/delegate/go' → delegatePlan (plan approved)
+    //   - rounds < 2 → fall through to the classify block below (round 2 = FINAL)
+    //   - rounds >= 2 with a non-affirmative answer → the FINAL plan is already on
+    //     the table → treat as yes → delegate
+    if (thread.mode === 'brainstorm') {
+      const affirmative = /^(yes|haan|ha|ok|okay|do it|delegate|go|kar do|de do)([s.,!?]+)?$/i.test(command.trim());
+      if (affirmative || (thread.rounds || 0) >= 2) {
+        return delegatePlan(thread);
+      }
     }
   }
 
   // classify
   const decision = await callLaya(command);
   const agent = decision ? (LAYA_DEPARTMENT_MAP[decision.department] || 'orchestrator') : 'orchestrator';
-  const brainstorm = needsBrainstorm(command, (decision as any)?.confidence);
+  // ACTIVE brainstorm thread (mode brainstorm, rounds < 2) → the user is answering
+  // round-1 questions. Continue the discussion (round 2 = FINAL) regardless of
+  // what Laya classifies the ANSWER as — the answer is not a new command.
+  const continuingBrainstorm = thread.mode === 'brainstorm' && (thread.rounds || 0) < 2;
+  const brainstorm = continuingBrainstorm || needsBrainstorm(command, (decision as any)?.confidence);
 
   if (brainstorm) {
     // ---- BRAINSTORM: conversation, not dispatch ----
