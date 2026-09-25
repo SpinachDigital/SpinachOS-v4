@@ -9,22 +9,11 @@ import { buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
 
 import TaskRunsPanel from '@/components/TaskRunsPanel';
+// The 3D diorama touches WebGL — client-only
+const DioramaViewer = dynamic(() => import('@/components/three/DioramaViewer'), { ssr: false });
 import { useSpinachStore } from '@/store/spinach-store';
 
-// The extracted reference office — procedural 141-component scene from spinach-os.html
-const ReferenceOffice = dynamic(() => import('@/components/three/ReferenceOffice'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-      <div className="text-center">
-        <div style={{ color: 'var(--green-bright)', fontSize: 13, marginBottom: 14, fontFamily: 'JetBrains Mono, monospace' }}>Building office…</div>
-        <div style={{ width: 180, height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.08)', margin: '0 auto', overflow: 'hidden' }}>
-          <div style={{ width: '40%', height: '100%', background: 'var(--green)', borderRadius: 999 }} />
-        </div>
-      </div>
-    </div>
-  ),
-});
+// The 3D office diorama (native, no iframe) — module-embedded viewer
 
 type Stat = { key: string; label: string; num: number | string; delta?: string; flat?: boolean };
 type FeedItem = { agent: string; action: string; detail?: string; when: string };
@@ -192,7 +181,7 @@ export default function CommandCenter() {
 
       {/* ============ 3D VIEWPORT (reference procedural office) ============ */}
       <section className="viewport-card" id="viewport">
-        <ReferenceOffice onDeptClick={(id) => setActiveZone(activeZone === id ? null : id)} />
+        <DioramaViewer onZoneClick={(id) => setActiveZone(activeZone === id ? null : id)} />
         {/* agent-state chip overlays the projected tags (tags themselves render inside ReferenceOffice) */}
         <div className="viewport-tags" style={{ pointerEvents: 'none' }}>
           {activeZone && agentStates[activeZone] && (

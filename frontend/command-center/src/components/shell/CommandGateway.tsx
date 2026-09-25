@@ -57,7 +57,16 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
     } catch { /* private mode */ }
   }, []);
 
-  // zone-click prefill (from the 3D diorama) — prefill, never auto-send
+  // zone-click prefill (from the 3D diorama) — prefill, never auto-send.
+  // The office page dispatches 'spinach:prefill'; also accepts a prefill prop.
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'string') setInput(detail);
+    };
+    window.addEventListener('spinach:prefill', onPrefill);
+    return () => window.removeEventListener('spinach:prefill', onPrefill);
+  }, []);
   useEffect(() => {
     if (prefill) setInput(prefill);
   }, [prefill]);
