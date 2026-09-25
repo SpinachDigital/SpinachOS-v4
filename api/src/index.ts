@@ -123,7 +123,9 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (e?.name === 'TokenExpiredError') {
       return res.status(401).json({ error: 'Token expired', code: 'TOKEN_EXPIRED' });
     }
-    return res.status(401).json({ error: 'Invalid token' });
+    // Stale tokens (e.g. signed with a rotated-away JWT_SECRET) must be
+    // distinguishable from "no token at all" so clients know to re-mint.
+    return res.status(401).json({ error: 'Invalid token', code: 'TOKEN_INVALID' });
   }
 }
 

@@ -89,11 +89,13 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
     headers,
   });
 
-  // Token expired mid-session → mint a fresh one and retry exactly once
+  // Any 401 (expired OR stale/invalid — e.g. signed with a rotated-away
+  // JWT_SECRET sitting in localStorage) → drop the cache, re-mint via the
+  // server-side session route, retry exactly once.
   if (res.status === 401) {
     try {
-      const body = await res.clone().json();
-      if (body?.code === 'TOKEN_EXPIRED') {
+      const body = await res.clone().json().catch(() => null);
+      if (!body || body?.code === 'TOKEN_EXPIRED' || body?.code === 'TOKEN_INVALID') {
         const fresh = await refreshAuthToken();
         headers.set('Authorization', `Bearer ${fresh}`);
         res = await fetch(path.startsWith('http') ? path : `${API_BASE}${path}`, {
@@ -102,7 +104,7 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
         });
       }
     } catch {
-      // not a JSON 401 — return as-is
+      // re-mint itself failed — return the original 401 as-is
     }
   }
   return res;
