@@ -30,6 +30,7 @@ import './routes/models';
 import './routes/agents';
 import './routes/cron';
 import './routes/kanban';
+import './routes/tasks';        // Sprint 1: task detail + outputs
 import './routes/approvals';
 import './routes/clients';
 import './routes/knowledge';

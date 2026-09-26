@@ -9,6 +9,7 @@ import {
 } from '../ctx';
 import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from '../bridge';
 import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from '../breaker-telemetry';
+import { extractDeliverable } from '../deliverable-extract';
 
 export const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128/v1';
 export const AGENT_TASK_TIMEOUT_MS = Number(process.env.AGENT_TASK_TIMEOUT_MS || 120000);
@@ -161,6 +162,19 @@ export async function executeAgentTask(agent: string, task: string, source: stri
         .select()
         .single();
       if (upErr) throw upErr;
+      // Sprint 1: persist the DELIVERABLE as a first-class task_outputs row —
+      // the post text is no longer only buried in tasks.metadata.output noise.
+      // Best-effort: an outputs-write failure must not fail the task itself.
+      try {
+        const deliverable = extractDeliverable(output, taskRow.title || task);
+        await supabase.from('task_outputs').insert({
+          task_id: taskRow.id,
+          kind: deliverable.kind,
+          title: deliverable.title,
+          body: deliverable.body,
+          meta: { model, via, task_kind: inferredKind, extracted: deliverable.extracted },
+        });
+      } catch { /* non-fatal */ }
       emitAgentState(agent, 'idle', `Completed: ${task.slice(0, 50)}`);
       emitTaskLifecycle(taskRow.id, agent, 'done', `Completed: ${task.slice(0, 50)}`, { task_id: taskRow.id, model, via });
     } catch (e: any) {

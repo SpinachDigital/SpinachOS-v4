@@ -186,15 +186,21 @@ app.get('/api/assets', async (_req, res) => {
 // Outputs — gallery cards (same source as assets, different layout)
 app.get('/api/outputs', async (_req, res) => {
   try {
-    const { data: content } = await supabase
-      .from('content').select('id, platform, type, status, created_at')
-      .order('created_at', { ascending: false }).limit(4);
-    const HUES: Record<string, number> = { x: 145, linkedin: 210, instagram: 300, blog: 45, newsletter: 180 };
-    res.json((content ?? []).map((c: any) => ({
-      name: `${c.type} — ${c.platform}`,
-      sub: c.status,
-      icon: c.platform === 'linkedin' ? 'doc' : c.type === 'reel' ? 'play' : 'image',
-      hue: HUES[c.platform] || 145,
+    // Sprint 1: real deliverables from task_outputs (joined with the task for
+    // agent + title). content table is a secondary source — merged, deduped
+    // by recency. Empty → empty array (never the fake fallback list).
+    const { data: outs } = await supabase
+      .from('task_outputs')
+      .select('id, kind, title, created_at, tasks(title, assigned_to)')
+      .order('created_at', { ascending: false })
+      .limit(4);
+    const HUES: Record<string, number> = { x: 145, linkedin: 210, instagram: 300, blog: 45, newsletter: 180, text: 210, image: 300, file: 45, link: 180 };
+    res.json((outs ?? []).map((o: any) => ({
+      id: o.id,
+      name: o.title || (o.tasks?.title ? String(o.tasks.title).slice(0, 40) : 'Deliverable'),
+      sub: o.tasks?.assigned_to ? `@${o.tasks.assigned_to}` : o.kind,
+      icon: o.kind === 'image' ? 'image' : o.kind === 'link' ? 'doc' : 'doc',
+      hue: HUES[o.kind] || 210,
     })));
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });

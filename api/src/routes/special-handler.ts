@@ -6,9 +6,67 @@ import { supabase, emitFeed, sanitizeText, emitAgentState, emitApproval, emitTas
 import { executeAgentTask } from '../engines/agent-execution';
 import { resolvePath } from '../bridge';
 
+// Sprint 1: "show me the work" — deliverable retrieval intents. Direct DB
+// lookup, no LLM round-trip (plan §3: factual fast-answers via System 1 style
+// direct lookup). Matches Hinglish + English forms (14/14 unit-tested):
+//   "show me the linkedin post", "linkedin post dikha", "ceo ne kya banaya",
+//   "what did social make", "latest output", "post dikhao", "ceo kya bana raha hai"
+// Creation intents (write/draft/create/banao) NEVER match — retrieval only.
+const SHOW_VERBS = /(show|dikha|dikhao|dekh|kya banaya|kya bana|banaya|what did|latest|recent|kaunsa|which|de do|chahiye|what made)/i;
+const SHOW_NOUNS = /(linkedin|insta|instagram|post|output|deliverable|draft|seo|blog|caption|reel|kaam)/i;
+const AGENT_NAMES = /(social|ceo|cto|engineer|designer|research|sales|seo_specialist|ads_manager|orchestrator)/i;
+const CREATE_VERBS = /(write|draft|create|banao|likho|banana|compose|make me|prepare|generate)/i;
+
+function matchShowOutput(command: string): string | null | false {
+  // false = NOT a show-output intent; null = show-output but no specific
+  // agent (latest across all); string = show-output for that agent
+  if (CREATE_VERBS.test(command)) return false;
+  const hasVerb = SHOW_VERBS.test(command);
+  const hasNoun = SHOW_NOUNS.test(command) || (AGENT_NAMES.test(command) && /(what|kya)/i.test(command));
+  if (!hasVerb || !hasNoun) return false;
+  const agents = ['social', 'ceo', 'cto', 'engineer', 'designer', 'research', 'sales', 'seo_specialist', 'ads_manager', 'orchestrator'];
+  const lower = command.toLowerCase();
+  const agent = agents.find(a => lower.includes(a));
+  return agent || null;
+}
+
 export async function specialCommandHandler(command: string, authHeader?: string): Promise<any | null> {
   {
     const cmdTrim = command.toLowerCase().trim();
+    // Sprint 1: show-me-the-work branch runs BEFORE dispatch branches — a
+    // retrieval intent must never delegate a NEW task.
+    const showAgent = matchShowOutput(command);
+    if (showAgent !== false) {
+      let q = supabase
+        .from('task_outputs')
+        .select('id, task_id, kind, title, body, meta, created_at, tasks(title, assigned_to, status)')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (showAgent) q = q.eq('tasks.assigned_to', showAgent);
+      const { data: outs } = await q;
+      if (!outs || outs.length === 0) {
+        return {
+          ok: true,
+          mode: 'show_output',
+          action: 'empty',
+          reply: showAgent
+            ? `${showAgent} ka koi recorded deliverable nahi hai abhi — task complete hone par yahan dikhega.`
+            : 'Abhi koi recorded deliverable nahi hai — pehla output task complete hote hi yahan dikhega.',
+        };
+      }
+      const o = outs[0];
+      const oTask = Array.isArray(o.tasks) ? o.tasks[0] : o.tasks;
+      return {
+        ok: true,
+        mode: 'show_output',
+        action: 'deliverable',
+        task_id: o.task_id,
+        output: { id: o.id, kind: o.kind, title: o.title, body: o.body, created_at: o.created_at },
+        task: oTask,
+        reply: `Ye latest deliverable${oTask?.assigned_to ? ` (@${oTask.assigned_to})` : ''}: ${o.title || 'output'} — Task page pe poora output hai.`,
+      };
+    }
+
     // Typo/fuzzy-tolerant pipeline intent: match 'pipeline'/'piprlinr' style
     // starts ("start pip*", "new client", "onboard"). A real onboarding intent
     // must NEVER silently fall through to a random department LLM call —

@@ -4,6 +4,7 @@
 // Solves "where do I see the result?" — every task's final output (LLM text, model, timing,
 // error) is fetched from /api/v1/agents/execute/:taskId and rendered here as markdown-ish text.
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/auth';
 import { ChevronDown, ChevronRight, RefreshCw, X, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 
@@ -42,6 +43,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [outputCache, setOutputCache] = useState<Record<string, TaskRow>>({});
+  const router = useRouter();
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -190,6 +192,14 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
                       <div className="t-mono mt-2" style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>
                         started {fmtTime(t.metadata?.started_at || t.created_at)} · finished {fmtTime(t.metadata?.completed_at || t.metadata?.failed_at)}
                       </div>
+                      {/* Sprint 1: full task detail page (timeline + formatted outputs) */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); router.push(`/tasks/${t.id}`); }}
+                        className="mt-2 t-label"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--green-bright)', fontSize: 10, padding: 0 }}
+                      >
+                        Open task detail →
+                      </button>
                     </div>
                   )}
                 </div>

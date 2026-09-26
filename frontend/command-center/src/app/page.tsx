@@ -21,16 +21,17 @@ type Job = { id: string; title: string; agent: string; status: string; when: str
 type Proj = { id: string; name: string; client: string; pct: number };
 
 const HUES = [145, 160, 175, 190, 205, 130, 115, 220];
-const ASSET_FALLBACK = ['Brand Kit', 'Deck v1', 'Logo Suite', 'Palette', 'Type Scale', 'Guidelines'];
-const OUTPUT_FALLBACK = ['Post copy', 'SEO brief', 'Logo SVG', 'Deck page'];
-
 export default function CommandCenter() {
   const [stats, setStats] = useState<Stat[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [projects, setProjects] = useState<Proj[]>([]);
   const [assetCount, setAssetCount] = useState(0);
+  // Sprint 1: real assets from /api/assets (content table) — no fake fallback
+  const [assetsFeed, setAssetsFeed] = useState<{ name: string; sub: string; cat: string; icon: string; hue: number }[]>([]);
   const [outputCount, setOutputCount] = useState(0);
+  // Sprint 1: real deliverables feed (task_outputs via /api/outputs) — no fake fallback
+  const [outputsFeed, setOutputsFeed] = useState<{ id?: string; name: string; sub: string; icon: string; hue: number }[]>([]);
   const [activeZone, setActiveZone] = useState<string | null>(null);
   const [showRuns, setShowRuns] = useState(false);
 
@@ -107,8 +108,8 @@ export default function CommandCenter() {
             pct: x.pct ?? 0,
           })));
         }
-        if (Array.isArray(as)) setAssetCount(as.length);
-        if (Array.isArray(o)) setOutputCount(o.length);
+        if (Array.isArray(as)) { setAssetCount(as.length); setAssetsFeed(as.slice(0, 6)); }
+        if (Array.isArray(o)) { setOutputCount(o.length); setOutputsFeed(o.slice(0, 4)); }
         setApiError(null);
         setLoadedOnce(true);
       } catch {
@@ -306,17 +307,17 @@ export default function CommandCenter() {
             <button className="asset-tab" type="button">Social</button>
           </div>
           <div className="asset-grid">
-            {ASSET_FALLBACK.map((n, i) => (
-              <div className="asset-card" key={n}>
-                <div className="asset-thumb" style={{ background: `hsl(${HUES[i]} 32% 22%)` }}>
+            {assetsFeed.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>No assets yet — deliverables appear here as content lands.</div>}
+            {assetsFeed.map((n, i) => (
+              <div className="asset-card" key={i}>
+                <div className="asset-thumb" style={{ background: `hsl(${n.hue} 32% 22%)` }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m5 18 5-5 3 3 3-3 3 3" />
                   </svg>
                 </div>
-                <div className="am"><b>{n}</b><span>{assetCount ? 'library' : 'template'}</span></div>
+                <div className="am"><b>{n.name}</b><span>{n.sub}</span></div>
               </div>
-            ))}
-          </div>
+            ))}          </div>
         </div>
       </section>
 
@@ -341,17 +342,17 @@ export default function CommandCenter() {
         <div className="panel">
           <div className="panel-head"><h3>Recent Outputs</h3><button className="link" type="button">View All</button></div>
           <div className="output-grid">
-            {OUTPUT_FALLBACK.map((n, i) => (
-              <div className="output-card" key={n} onClick={() => setShowRuns(true)}>
-                <div className="output-thumb" style={{ background: `hsl(${HUES[i + 2]} 30% 20%)` }}>
+            {outputsFeed.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>No deliverables yet — agent outputs appear here when tasks finish.</div>}
+            {outputsFeed.map((n, i) => (
+              <div className="output-card" key={n.id || n.name + i} onClick={() => setShowRuns(true)} title={n.name}>
+                <div className="output-thumb" style={{ background: `hsl(${n.hue} 30% 20%)` }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" />
                   </svg>
                 </div>
-                <div className="om"><b>{n}</b><span>{outputCount ? 'recent' : 'awaiting first run'}</span></div>
+                <div className="om"><b>{n.name}</b><span>{n.sub}</span></div>
               </div>
-            ))}
-          </div>
+            ))}          </div>
         </div>
 
         <div className="panel">
