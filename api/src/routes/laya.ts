@@ -43,33 +43,19 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Missing command' });
     }
 
-    // Bypass Laya for strategic/CEO queries
+    // Bypass Laya for strategic/CEO queries.
+    // §3 BUG FIX: this branch used to INSERT a fake "CEO Query" row into the
+    // real `clients` table (client-data pollution). Strategic queries are
+    // routed WITHOUT touching client data — just dispatch the CEO task.
     if (isCEOQuery(command)) {
-      const { data: client } = await supabase
-        .from('clients')
-        .insert({ name: 'CEO Query', business_type: 'strategy', status: 'active' })
-        .select()
-        .single();
-      if (client) {
-        await supabase
-          .from('workflows')
-          .insert({
-            name: 'ceo_strategy',
-            client_id: client.id,
-            status: 'active',
-            current_step: 'strategy',
-            progress: 0,
-            steps_json: [
-              { name: 'strategy', agent: 'ceo', status: 'in_progress', description: 'Evaluate strategic question' },
-            ],
-          });
-        emitFeed('orchestrator', 'CEO strategy workflow started', { workflow_id: client.id, query: command });
-        emitAgentState('ceo', 'working', `Evaluating: ${command.slice(0, 60)}`);
-      }
+      const taskId = await executeAgentTask('ceo', command, 'laya:ceo-route');
+      emitFeed('orchestrator', 'CEO strategy task started', { task_id: taskId, query: command.slice(0, 100) });
+      emitAgentState('ceo', 'working', `Evaluating: ${command.slice(0, 60)}`);
       return res.json({
         ok: true,
         routed: 'ceo',
         priority: 'high',
+        task_id: taskId,
         message: `Routed to CEO for strategic evaluation: "${command.slice(0, 100)}"`,
       });
     }

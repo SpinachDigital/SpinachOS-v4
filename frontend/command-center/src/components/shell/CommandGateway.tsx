@@ -1,6 +1,9 @@
 'use client';
 
-// CommandGateway — THE canonical command bar (global, mounted in AppShell).
+// CommandGateway — THE canonical command bar.
+// TWO mount modes:
+//   inline (TopBar slot)  — compact pill inside the topbar, on every page
+//   floating (AppShell)   — NOT used anymore (Phase 0: one bar only)
 // Thread persistence: every POST /api/v1/command response's thread_id is saved
 // to localStorage 'spinach_thread_id' and included in the next command body —
 // this is what makes the 2-round brainstorm + "Plan ready — delegate karun?"
@@ -35,7 +38,7 @@ type SpeechRecognitionLike = {
 
 const THREAD_KEY = 'spinach_thread_id';
 
-export default function CommandGateway({ prefill }: { prefill?: string }) {
+export default function CommandGateway({ prefill, inline = false }: { prefill?: string; inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
@@ -59,13 +62,19 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
 
   // zone-click prefill (from the 3D diorama) — prefill, never auto-send.
   // The office page dispatches 'spinach:prefill'; also accepts a prefill prop.
+  // ⌘K from the TopBar focuses the input ('spinach:focus-command').
   useEffect(() => {
     const onPrefill = (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (typeof detail === 'string') setInput(detail);
     };
+    const onFocus = () => inputRef.current?.focus();
     window.addEventListener('spinach:prefill', onPrefill);
-    return () => window.removeEventListener('spinach:prefill', onPrefill);
+    window.addEventListener('spinach:focus-command', onFocus);
+    return () => {
+      window.removeEventListener('spinach:prefill', onPrefill);
+      window.removeEventListener('spinach:focus-command', onFocus);
+    };
   }, []);
   useEffect(() => {
     if (prefill) setInput(prefill);
@@ -179,39 +188,37 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
 
   return (
     <>
-      {/* Floating pill (bottom-center) */}
-      <div className="absolute z-30 flex justify-center" style={{ bottom: 20, left: 0, right: 0 }}>
+      {/* INLINE mode: compact pill that fills the topbar's command-wrap slot.
+          Positioning comes from the parent (.command-wrap) — no absolute. */}
+      {inline ? (
         <div
-          className={`flex items-center gap-2 px-2 py-2 animate-rise${busy ? ' command-bar sending' : ''}`}
+          className="command-bar flex items-center gap-2 px-2 py-1.5"
           style={{
             borderRadius: 999,
-            background: 'rgba(15,15,15,0.85)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+            width: '100%',
+            maxWidth: 560,
           }}
         >
-          {/* Mic button */}
           <button
             onClick={toggleMic}
             className="flex items-center justify-center rounded-full shrink-0"
             style={{
-              width: 38, height: 38,
-              background: listening ? 'var(--listening)' : 'var(--green)',
+              width: 30, height: 30,
+              background: listening ? 'var(--listening)' : 'transparent',
+              color: listening ? '#fff' : 'var(--text-dim)',
               cursor: 'pointer',
               border: 'none',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
             }}
             aria-label={listening ? 'Stop listening' : 'Speak to the office'}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4" />
             </svg>
           </button>
-
-          {/* Text input */}
           <input
             ref={inputRef}
             value={input}
@@ -220,75 +227,73 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
             placeholder={listening ? 'Listening…' : 'Tell the office what to do…'}
             className="t-meta"
             style={{
-              width: 'min(340px, 56vw)',
+              flex: 1,
+              minWidth: 0,
               background: 'transparent',
               border: 'none',
               outline: 'none',
               color: 'rgba(255,255,255,0.9)',
             }}
+            aria-label="Command the office"
+            autoComplete="off"
           />
-
-          {/* Send */}
-          <button
-            onClick={() => void send(input)}
-            disabled={busy || !input.trim()}
-            className="flex items-center justify-center rounded-full shrink-0"
-            style={{
-              width: 34, height: 34,
-              background: input.trim() ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
-              cursor: input.trim() ? 'pointer' : 'default',
-              border: 'none',
-            }}
-            aria-label="Send command"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2" strokeLinecap="round">
-              <path d="m5 12 14 0M13 5l7 7-7 7" />
-            </svg>
-          </button>
-
-          {/* Thread context chip + reset (only when a thread is active) */}
           {threadId && modeLabel && (
             <button
               onClick={resetThread}
-              className="t-mono shrink-0 animate-slide-in"
+              className="t-mono shrink-0"
               style={{
-                fontSize: 10,
+                fontSize: 9,
                 color: 'var(--green-bright)',
                 background: 'var(--green-dim)',
-                border: '1px solid var(--green-dim)',
+                border: 'none',
                 cursor: 'pointer',
-                padding: '3px 10px',
+                padding: '2px 8px',
                 borderRadius: 999,
+                whiteSpace: 'nowrap',
               }}
               title="Reset thread — naya topic"
             >
               {modeLabel} ✕
             </button>
           )}
-
-          {/* History toggle */}
+          <button
+            onClick={() => void send(input)}
+            disabled={busy || !input.trim()}
+            className="flex items-center justify-center rounded-full shrink-0"
+            style={{
+              width: 28, height: 28,
+              background: input.trim() ? 'var(--green)' : 'rgba(255,255,255,0.06)',
+              color: input.trim() ? '#fff' : 'var(--text-faint)',
+              cursor: input.trim() ? 'pointer' : 'default',
+              border: 'none',
+              fontSize: 12,
+            }}
+            aria-label="Send command"
+          >
+            ➤
+          </button>
           <button
             onClick={() => setOpen((v) => !v)}
             className="t-mono shrink-0"
             style={{
-              fontSize: 10,
-              color: 'rgba(255,255,255,0.5)',
+              fontSize: 9,
+              color: 'var(--text-faint)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              padding: '0 8px',
+              padding: '0 6px',
             }}
           >
             {open ? 'hide' : log.length > 0 ? `${log.length}` : 'log'}
           </button>
         </div>
-      </div>
+      ) : null}
 
-      {/* Voice transcript bubble */}
+      {/* Voice transcript bubble (shared by both modes) */}
       {listening && transcript && (
         <div
-          className="absolute z-30 animate-rise"
-          style={{
+          className={inline ? 'relative' : 'absolute z-30 animate-rise'}
+          style={inline ? { marginTop: 6 } : {
             bottom: 76, left: 0, right: 0,
             display: 'flex', justifyContent: 'center', pointerEvents: 'none',
           }}
@@ -308,11 +313,12 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
         </div>
       )}
 
-      {/* Conversation log panel */}
+      {/* Conversation log panel — inline mode drops it below the topbar;
+          floating mode keeps the original bottom-center placement. */}
       {open && (
         <div
-          className="absolute z-30 animate-rise"
-          style={{
+          className={inline ? 'command-log-inline' : 'absolute z-30 animate-rise'}
+          style={inline ? undefined : {
             bottom: 76, left: '50%', transform: 'translateX(-50%)',
             width: 'min(420px, 90vw)',
             maxHeight: 300,
@@ -357,6 +363,27 @@ export default function CommandGateway({ prefill }: { prefill?: string }) {
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(185, 74, 62, 0.5); }
           50% { box-shadow: 0 0 0 8px rgba(185, 74, 62, 0); }
+        }
+        /* inline mode: the log panel drops below the topbar */
+        .command-log-inline {
+          position: fixed;
+          top: var(--topbar-h, 64px);
+          left: 50%;
+          transform: translateX(-50%);
+          width: min(480px, 92vw);
+          max-height: 340px;
+          border-radius: 14px;
+          background: rgba(15,15,15,0.96);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+          overflow-y: auto;
+          padding: 12px;
+          z-index: 50;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .command-log-inline, .command-log-inline * { animation: none !important; }
         }
       `}</style>
     </>

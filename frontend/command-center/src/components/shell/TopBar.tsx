@@ -1,37 +1,42 @@
 'use client';
 
-// TopBar — reference .topbar: greeting + ⚡ command bar (input, mic, send) + icons + user chip + date card.
-// Theme button dispatches office-theme for the 3D rig (day/night).
-import { useEffect, useRef, useState } from 'react';
+// TopBar — greeting + THE canonical command bar (CommandGateway in the topbar
+// slot — thread_id preserved, responses rendered, brainstorm flow works) +
+// icons + user chip + date card. Theme button dispatches office-theme for
+// the 3D rig (day/night).
+// Phase 0: the old inline command implementation (raw fetch, thread_id
+// dropped, response ignored) is DELETED — CommandGateway is the only bar.
+import { useEffect, useState } from 'react';
+import CommandGateway from './CommandGateway';
 
 export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
   const [greeting, setGreeting] = useState('Good evening');
   const [light, setLight] = useState(false);
   const [dateStr, setDateStr] = useState('');
   const [timeStr, setTimeStr] = useState('');
-  const [cmd, setCmd] = useState('');
-  const [sending, setSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setGreeting(h(now) < 12 ? 'Good morning' : h(now) < 17 ? 'Good afternoon' : 'Good evening');
+      const hour = now.getHours();
+      // Greeting by ACTUAL hour — 0–4 AM is "Good night" (the old <12 rule
+      // said "Good morning" at 3 AM, which reads wrong to a founder up late).
+      const g = hour < 4 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Good night';
+      setGreeting(g);
       setDateStr(now.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }));
       setTimeStr(now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase());
     };
-    const h = (d: Date) => d.getHours();
     tick();
     const id = setInterval(tick, 30_000);
     return () => clearInterval(id);
   }, []);
 
-  // ⌘K focuses the command input
+  // ⌘K focuses the command input (dispatch an event — the gateway owns the input)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        inputRef.current?.focus();
+        window.dispatchEvent(new CustomEvent('spinach:focus-command'));
       }
     };
     window.addEventListener('keydown', onKey);
@@ -56,23 +61,6 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
     try { localStorage.setItem('office_light', next ? '1' : '0'); } catch { /* noop */ }
   };
 
-  const send = async () => {
-    const text = cmd.trim();
-    if (!text || sending) return;
-    setSending(true);
-    try {
-      const { getAuthToken } = await import('@/lib/auth');
-      const token = await getAuthToken();
-      await fetch('/api/v1/command', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ command: text, source: 'topbar' }),
-      });
-      setCmd('');
-    } catch { /* office offline */ }
-    finally { setSending(false); }
-  };
-
   return (
     <header className="topbar">
       <button
@@ -89,25 +77,10 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
         <h1>{greeting}, Abhishek 👋</h1>
         <p>Let&rsquo;s build a brighter tomorrow.</p>
       </div>
+      {/* THE canonical command bar — CommandGateway (thread_id, responses,
+          brainstorm, voice). Mounted in the topbar slot on every page. */}
       <div className="command-wrap">
-        <div className="command-bar">
-          <span className="bolt">⚡</span>
-          <input
-            ref={inputRef}
-            value={cmd}
-            onChange={(e) => setCmd(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
-            placeholder="Tell the office what to do…"
-            aria-label="Command the office"
-            autoComplete="off"
-          />
-          <button className="mic" title="Voice (Hermes)" aria-label="voice" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-              <rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-            </svg>
-          </button>
-          <button className="send" onClick={send} aria-label="send" type="button" disabled={sending}>➤</button>
-        </div>
+        <CommandGateway inline />
       </div>
       <div className="topbar-icons">
         <button className="icon-btn" onClick={toggleTheme} title="Day / evening 3D" type="button">◐</button>

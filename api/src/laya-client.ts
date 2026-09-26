@@ -10,15 +10,27 @@ export interface LayaDecision {
 }
 
 export const LAYA_DEPARTMENT_MAP: Record<string, string> = {
-  engineering: 'engineering',
+  // Laya department → REAL Hermes profile (hermes-profiles/ dir names).
+  // §2 CORRECTION: plan rev3 said engineering→engineering, but the real
+  // profile dir + bridge TASK_PATH_MAP key is 'engineer'. The startup
+  // assertion below fails the boot if any value drifts from a real profile.
+  engineering: 'engineer',
   marketing: 'social',
-  design: 'design',
+  design: 'designer',
   sales: 'sales',
-  content: 'content',
+  content: 'social',
   research: 'research',
-  operations: 'ops',
-  ops: 'ops',
+  operations: 'orchestrator',
+  ops: 'orchestrator',
+  ceo: 'ceo',
 };
+
+// Real profiles = hermes-profiles/ dir names (source of truth). Used by the
+// startup assertion and anywhere we need "is this a dispatchable agent?".
+export const REAL_PROFILES = [
+  'ads_manager', 'ceo', 'cto', 'designer', 'engineer', 'orchestrator',
+  'research', 'sales', 'seo_specialist', 'social',
+] as const;
 
 export const CEO_KEYWORDS = ['should we', 'strategy', 'idea', 'plan', 'evaluate', 'direction', 'vision', 'approve'];
 
@@ -46,3 +58,26 @@ export function isCEOQuery(message: string): boolean {
 }
 
 // POST /api/v1/laya/route — Laya routing endpoint (can be called directly or via command gateway)
+
+// STARTUP ASSERTION: every LAYA_DEPARTMENT_MAP value must be a REAL profile
+// (hermes-profiles/ dir). Boot fails loudly if this map drifts stale — the
+// "write a LinkedIn post → executeAgentTask('content'…)" class of bug dies here.
+import { existsSync, readdirSync } from 'fs';
+import { join } from 'path';
+export function assertLayaMapIntegrity(profilesRoot: string): void {
+  let real: string[];
+  try {
+    real = readdirSync(profilesRoot, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+  } catch (e: any) {
+    throw new Error(`[LAYA-MAP] cannot read profiles root ${profilesRoot}: ${e.message}`);
+  }
+  const bad = Object.entries(LAYA_DEPARTMENT_MAP).filter(([, p]) => !real.includes(p));
+  if (bad.length > 0) {
+    throw new Error(
+      `[LAYA-MAP] STALE — departments map to non-existent profiles: ${bad.map(([k, v]) => `${k}→${v}`).join(', ')}. ` +
+      `Real profiles: ${real.join(', ')}. Fix src/laya-client.ts LAYA_DEPARTMENT_MAP.`
+    );
+  }
+}

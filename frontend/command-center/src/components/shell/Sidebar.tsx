@@ -29,16 +29,16 @@ const NAV: NavEntry[] = [
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
   { href: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: I.projects },
   { href: '/agents', label: 'AI Agents', sub: 'Your Digital Team', icon: I.agents },
-  { href: '/team', label: 'Team', sub: 'People & Roles', icon: I.team },
   { href: '/clients', label: 'Clients', sub: 'Relationships', icon: I.clients },
   { href: '/marketing', label: 'Marketing', sub: 'Content & Campaigns', icon: I.marketing },
   { href: '/analytics', label: 'Analytics', sub: 'Growth & Insights', icon: I.analytics },
   { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
-  { href: '/assets', label: 'Assets', sub: 'Brand & Library', icon: I.assets },
-  { href: '/finance', label: 'Finance', sub: 'Revenue & Costs', icon: I.finance },
-  { href: '/knowledge', label: 'Knowledge', sub: 'Docs & SOPs', icon: I.knowledge },
   { href: '/settings', label: 'Settings', sub: 'Workspace', icon: I.settings },
 ];
+// Phase 0 sidebar honesty: Team/Assets/Finance/Knowledge pointed at routes
+// that redirect elsewhere (IA v3). They're REMOVED from the sidebar until
+// their real pages ship (Sprint 5 ships a real /team). The routes/redirects
+// stay — only the lying labels are gone.
 
 export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();

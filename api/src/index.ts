@@ -17,6 +17,12 @@ dotenv.config();
 import { app, httpServer, wss, wsClients, setWss } from './ctx';
 import { WebSocket } from 'ws';
 import { Request, Response, NextFunction } from 'express';
+import { assertLayaMapIntegrity } from './laya-client';
+import { join } from 'path';
+
+// STARTUP GATE: the Laya department→profile map must match hermes-profiles/
+// exactly, or the boot fails loudly (stale-map bugs end here).
+assertLayaMapIntegrity(join(__dirname, '..', '..', 'hermes-profiles'));
 
 // ---- mount all route domains (order preserved from the monolith) ----
 import './routes/auth';        // token minting (P0-secured)
