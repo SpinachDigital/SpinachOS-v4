@@ -4,7 +4,9 @@
 // 5 stat cards → REFERENCE 3D office (procedural: slogan wall, skylights, staff, trees)
 // with projected dept tags → Live Activity / Jobs / Projects / Assets
 // → Progress / Outputs / Calendar / Quote. Live WS feed + TaskRunsPanel output viewer.
+
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Sprint 2: no dead buttons
 import { buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
 
@@ -22,6 +24,7 @@ type Proj = { id: string; name: string; client: string; pct: number };
 
 const HUES = [145, 160, 175, 190, 205, 130, 115, 220];
 export default function CommandCenter() {
+  const router = useRouter(); // Sprint 2: no dead buttons
   const [stats, setStats] = useState<Stat[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -74,7 +77,7 @@ export default function CommandCenter() {
           s.forEach((x: any) => { byLabel[x.label] = x; });
           setStats([
             { key: 'clients', label: 'Active Clients', num: byLabel['Active Clients']?.value ?? 0, delta: byLabel['Active Clients']?.delta || '—' },
-            { key: 'running', label: 'Agents Working', num: byLabel['Tasks Running']?.value ?? workingCount, delta: byLabel['Tasks Running']?.delta || '—' },
+            { key: 'running', label: 'Tasks Running', num: byLabel['Tasks Running']?.value ?? workingCount, delta: byLabel['Tasks Running']?.delta || '—' },
             { key: 'pipelines', label: 'Active Pipelines', num: byLabel['Pipelines']?.value ?? 0, delta: byLabel['Pipelines']?.delta || '—' },
             { key: 'assets', label: 'Agents Online', num: byLabel['Agents Online']?.value ?? 0, delta: byLabel['Agents Online']?.delta || '—' },
             { key: 'approvals', label: 'Pending Approvals', num: byLabel['Pending Approvals']?.value ?? 0, delta: byLabel['Pending Approvals']?.delta || (byLabel['Pending Approvals']?.value ? 'needs you' : 'clear') },
@@ -246,7 +249,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Recent Jobs</h3><button className="link" type="button">View All</button></div>
+          <div className="panel-head"><h3>Recent Jobs</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
           <div>
             {!loadedOnce && jobs.length === 0 && (
               <>
@@ -283,7 +286,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Projects</h3><button className="link" type="button">View All</button></div>
+          <div className="panel-head"><h3>Projects</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
           <div>
             {projects.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No active projects.</div>}
             {projects.map(p => (
@@ -299,7 +302,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Assets</h3><button className="link" type="button">View All</button></div>
+          <div className="panel-head"><h3>Assets</h3><button className="link" type="button" onClick={() => router.push('/settings')}>View All</button></div>
           <div className="asset-tabs">
             <button className="asset-tab active" type="button">All</button>
             <button className="asset-tab" type="button">Logos</button>
@@ -324,7 +327,7 @@ export default function CommandCenter() {
       {/* ============ BOTTOM STRIP ============ */}
       <section className="bottom-strip">
         <div className="panel">
-          <div className="panel-head"><h3>Project Progress</h3><button className="link" type="button">View All</button></div>
+          <div className="panel-head"><h3>Project Progress</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
           <div>
             {projects.map(p => (
               <div className="proj" key={p.id}>
@@ -340,7 +343,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Recent Outputs</h3><button className="link" type="button">View All</button></div>
+          <div className="panel-head"><h3>Recent Outputs</h3><button className="link" type="button" onClick={() => router.push('/marketing')}>View All</button></div>
           <div className="output-grid">
             {outputsFeed.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)', gridColumn: '1 / -1' }}>No deliverables yet — agent outputs appear here when tasks finish.</div>}
             {outputsFeed.map((n, i) => (
@@ -356,7 +359,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>{cal.title}</h3><button className="link" type="button">‹ ›</button></div>
+          <div className="panel-head"><h3>{cal.title}</h3><button className="link" type="button" onClick={() => router.push('/marketing')} aria-label="Open content calendar">›</button></div>
           <table className="cal">
             <thead>
               <tr><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th></tr>
@@ -390,7 +393,7 @@ export default function CommandCenter() {
 
 const FALLBACK_STATS: Stat[] = [
   { key: 'clients', label: 'Active Clients', num: '—', flat: true },
-  { key: 'running', label: 'Agents Working', num: '—', flat: true },
+  { key: 'running', label: 'Tasks Running', num: '—', flat: true },
   { key: 'pipelines', label: 'Active Pipelines', num: '—', flat: true },
   { key: 'assets', label: 'Brand Assets', num: '—', flat: true },
   { key: 'approvals', label: 'Pending Approvals', num: '—', flat: true },

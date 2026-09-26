@@ -9,7 +9,11 @@ import { app, authMiddleware, emitFeed, supabase } from '../ctx';
 import { AGENT_ICONS, DEPT_TAG_DEFS } from '../dashboard-helpers';
 app.get('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
   try {
-    const { date, platform, status, theme, limit } = req.query;
+    const { date, platform, status, theme, limit: qLimit, offset: qOffset } = req.query;
+    // §4 scale rule: limit default 20, max 100 + offset (calendar views request
+    // their window explicitly; default stays bounded)
+    const limit = Math.min(parseInt(String(qLimit)) || 20, 100);
+    const offset = Math.max(parseInt(String(qOffset)) || 0, 0);
     let query = supabase.from('marketing_content_calendar').select('*');
     if (date) query = query.eq('date', date);
     if (platform) query = query.eq('platform', platform);
@@ -18,7 +22,7 @@ app.get('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
     const { data, error } = await query
       .order('date', { ascending: true })
       .order('slot_index', { ascending: true })
-      .limit(parseInt((limit as string) || '200'));
+      .range(offset, offset + limit - 1);
     if (error) throw error;
     res.json(data || []);
   } catch (e: any) {

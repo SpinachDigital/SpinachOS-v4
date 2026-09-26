@@ -8,7 +8,10 @@
 import { app, authMiddleware, emitAgentState, emitWorkflow, supabase } from '../ctx';
 import { DEFAULT_PIPELINE_STEPS } from '../pipeline-steps';
 app.get('/api/v1/workflows', authMiddleware, async (req, res) => {
-  const { data, error } = await supabase.from('workflows').select('*').order('created_at', { ascending: false });
+  // §4 scale rule: paginated — limit default 20, max 100 + offset
+  const limit = Math.min(parseInt(String(req.query.limit)) || 20, 100);
+  const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+  const { data, error } = await supabase.from('workflows').select('*').order('created_at', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
 });

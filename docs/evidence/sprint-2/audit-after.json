@@ -1,0 +1,102 @@
+[
+  {
+    "route": "/",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "Task Runs",
+      "View All",
+      "View All",
+      "View All",
+      "View All"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/projects",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/agents",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/clients",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/marketing",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/analytics",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/approvals",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  },
+  {
+    "route": "/settings",
+    "grade": "yellow",
+    "title": "Good evening, Abhishek 👋",
+    "deadButtons": [
+      "View All Agents"
+    ],
+    "mobile": {
+      "overflowX": false,
+      "offenders": []
+    }
+  }
+]

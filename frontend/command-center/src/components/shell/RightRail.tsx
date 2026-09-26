@@ -3,12 +3,14 @@
 // RightRail — reference right column: Today checklist / AI Agents / System Health.
 // Live data from the :4000 bridge endpoints, 30s refresh.
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation'; // Sprint 2: no dead buttons
 
 type AgentRow = { profile: string; state: string; activity?: string };
 type HealthRow = { name: string; status: string; value?: string };
 type Slot = { id: string; title: string; time?: string; done: boolean };
 
 export default function RightRail() {
+  const router = useRouter(); // Sprint 2: wire View All Agents + Today chevron
   const [today, setToday] = useState<Slot[]>([]);
   const [agents, setAgents] = useState<AgentRow[]>([]);
   const [online, setOnline] = useState(0);
@@ -60,7 +62,7 @@ export default function RightRail() {
         </div>
       )}
       <section className="panel">
-        <div className="panel-head"><h3>Today</h3><button className="link" type="button">›</button></div>
+        <div className="panel-head"><h3>Today</h3><button className="link" type="button" onClick={() => router.push('/settings')} aria-label="Open settings">›</button></div>
         <div className="today-date">{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
         <div>
           {!loadedOnce && today.length === 0 && (
@@ -86,7 +88,7 @@ export default function RightRail() {
       <section className="panel">
         <div className="panel-head">
           <h3>AI Agents <span style={{ color: 'var(--green-bright)', fontSize: 11, fontWeight: 600 }}>{online ? `${online} online` : ''}</span></h3>
-          <button className="link" type="button">›</button>
+          <button className="link" type="button" onClick={() => router.push('/agents')} aria-label="Open agents">›</button>
         </div>
         <div>
           {!loadedOnce && agents.length === 0 && (
@@ -122,7 +124,7 @@ export default function RightRail() {
           ))}
           {agents.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Agents offline.</div>}
         </div>
-        <button className="hud-btn" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} type="button">View All Agents</button>
+        <button className="hud-btn" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} type="button" onClick={() => router.push('/agents')}>View All Agents</button>
       </section>
 
       <section className="panel">

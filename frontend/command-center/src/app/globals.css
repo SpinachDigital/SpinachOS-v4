@@ -194,6 +194,10 @@ body {
   padding: 0 22px;
   border-bottom: 1px solid var(--border-soft);
   background: var(--bg);
+  /* Sprint 2: 768–900px me topbar-icons (200px) + user-chip content ko
+     force karne se rokta hai — min-width:0 + wrap. */
+  min-width: 0;
+  flex-wrap: wrap;
 }
 .greeting h1 { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .greeting p { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
@@ -343,7 +347,7 @@ body {
 /* ---------- tablet (<=1100px): sidebar → drawer, 2-col grids ---------- */
 @media (max-width: 1100px) {
   .app {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     /* Phase 1 fix: natural page scroll below 1100px — same rationale as the
        phone block: 100vh grid + minmax(0,1fr) main squeezes real content
        when the uncapped right rail grows. All rows auto. */
@@ -882,8 +886,9 @@ body {
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 /* ---------- card grids ---------- */
-.week-grid { overflow-x: auto; }
-@media (min-width: 768px) { .week-grid { min-width: 980px; } }
+/* Sprint 2: .week-grid overflow-x/min-width:980px hack REMOVED — the calendar
+   is now genuinely responsive (fluid 7-col grid on desktop, stacked day cards
+   under 768px via isMobile in marketing/calendar/page.tsx). */
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }

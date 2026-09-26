@@ -1,0 +1,189 @@
+[
+  {
+    "route": "/",
+    "label": "Command Center",
+    "grade": "green",
+    "desktop": {
+      "url": "/",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 400,
+      "mainPreview": "8 | Active Clients | ↑ live | 15 | Agents Working | ↑ now | 56 | Active Pipelines | ↑ live | 15 | Agents Online | ● real DB count | 0 | Pending Ap",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/projects",
+    "label": "Projects",
+    "grade": "green",
+    "desktop": {
+      "url": "/projects",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 399,
+      "mainPreview": "Projects |  | Workflows & lead pipeline |  | 55 | Active | 7 | Completed | Refresh | WORKFLOWS | 63 total | client_pipeline | active | 0% | → strate",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/agents",
+    "label": "AI Agents",
+    "grade": "green",
+    "desktop": {
+      "url": "/agents",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 199,
+      "mainPreview": "AI Agents |  | 12 agents · 63 workflows |  | Live | Refresh | Grid | Hierarchy | Agent Status | C | CEO |  | C | CTO |  | O | ORCHESTRATOR |  | R | RESEARCH |  | ",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/clients",
+    "label": "Clients",
+    "grade": "green",
+    "desktop": {
+      "url": "/clients",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 400,
+      "mainPreview": "Clients |  | 61 total · 8 active · 0 paused |  | Live | Refresh | CLIENT\tINDUSTRY\tLOCATION\tPACKAGE\tSTATUS\tONBOARDED | keo karpin\tgener",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 1,
+      "tableRows": 61
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/marketing",
+    "label": "Marketing",
+    "grade": "green",
+    "desktop": {
+      "url": "/marketing",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 400,
+      "mainPreview": "Marketing |  | Content calendar & engagement analytics |  | Content Calendar | Engagement | Content Calendar |  | 70 posts · 0 published",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 3,
+      "topOffenders": [
+        "DIV.flex",
+        "SELECT.px-3"
+      ]
+    }
+  },
+  {
+    "route": "/analytics",
+    "label": "Analytics",
+    "grade": "green",
+    "desktop": {
+      "url": "/analytics",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 399,
+      "mainPreview": "Insights |  | Agent throughput & audit trail |  | Overview | Audit Log | 4 | Working now | 1 | Blocked | 100% | Success rate | AGENT STATES | 16 a",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/approvals",
+    "label": "Approvals",
+    "grade": "green",
+    "desktop": {
+      "url": "/approvals",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 151,
+      "mainPreview": "Approvals |  | Review and approve pending items from your AI team |  | Live | Refresh | 0 | Pending | 0 | Approved | 0 | Rejected | 0 | Total | Appr",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  },
+  {
+    "route": "/settings",
+    "label": "Settings",
+    "grade": "green",
+    "desktop": {
+      "url": "/settings",
+      "redirected": false,
+      "title": "Good night, Abhishek 👋",
+      "mainLen": 347,
+      "mainPreview": "Settings |  | Integrations, models, appearance, and advanced options |  | Live | Integrations | Models & Brains | Theme | API Keys | Advan",
+      "hasError": false,
+      "emptyOnly": false,
+      "overflowX": false,
+      "tables": 0,
+      "tableRows": 0
+    },
+    "mobile": {
+      "overflowX": false,
+      "scrollW": 360,
+      "offenderCount": 0,
+      "topOffenders": []
+    }
+  }
+]

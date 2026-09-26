@@ -56,9 +56,22 @@ export default function ContentCalendarPage() {
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
+  // Sprint 2: genuinely responsive calendar — no overflow-x/min-width hacks.
+  // Desktop (≥768px): fluid 7-col grid that shrinks with the container.
+  // Mobile (<768px): single-column stacked day cards (a calendar you can read).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const on = () => setIsMobile(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, []);
+
   const fetchItems = useCallback(async () => {
     try {
-      const res = await apiFetch('/api/v1/marketing/calendar');
+      // §4: paginated API — month/week view explicitly requests its window (max 100)
+      const res = await apiFetch('/api/v1/marketing/calendar?limit=100');
       if (res.ok) {
         const data = await res.json();
         setItems(data);
@@ -129,7 +142,7 @@ export default function ContentCalendarPage() {
           <button onClick={() => setView('week')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'week' ? 'font-medium' : ''}`} style={{ background: view === 'week' ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === 'week' ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>Week</button>
           <button onClick={() => setView('month')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'month' ? 'font-medium' : ''}`} style={{ background: view === 'month' ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === 'month' ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>Month</button>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className={isMobile ? 'flex flex-wrap gap-2 w-full' : 'flex items-center gap-2 ml-auto'}>
           <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="px-3 py-1.5 text-sm rounded-lg border" style={{ background: glass.bg, borderColor: glass.border, color: glass.text }} />
           <select value={filterTheme} onChange={e => setFilterTheme(e.target.value)} className="px-3 py-1.5 text-sm rounded-lg border" style={{ background: glass.bg, borderColor: glass.border, color: glass.text }}>
             <option value="all">All Themes</option>
@@ -151,16 +164,16 @@ export default function ContentCalendarPage() {
         {loading ? (
           <div className="flex items-center justify-center h-64" style={{ color: glass.text2 }}><div className="t-mono">Loading calendar…</div></div>
         ) : view === 'week' ? (
-          <div className="grid grid-cols-7 gap-1 week-grid">
+          <div className={isMobile ? 'flex flex-col gap-2' : 'grid gap-1'} style={isMobile ? undefined : { gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
             {weekDates.map((date, dayIdx) => {
               const dayItems = filteredItems.filter(i => i.date === date);
               return (
-                <div key={date} className="flex flex-col" style={{ background: glass.bg, border: `1px solid ${glass.border}`, borderRadius: 8, minHeight: 500 }}>
+                <div key={date} className="flex flex-col" style={{ background: glass.bg, border: `1px solid ${glass.border}`, borderRadius: 8, minHeight: isMobile ? 0 : 500 }}>
                   <div className="px-3 py-2 border-b" style={{ borderColor: glass.border }}>
                     <div className="t-label" style={{ color: glass.text }}>{new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                     <div className="t-mono" style={{ color: glass.text2, fontSize: 11 }}>{dayItems.length} posts</div>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                  <div className="flex-1 p-2 space-y-2">
                     {dayItems.length === 0 ? (
                       <div className="text-center py-8" style={{ color: glass.text3 }}>
                         <div className="t-meta">No posts</div>
@@ -209,25 +222,27 @@ export default function ContentCalendarPage() {
               }
               if (week.length > 0) { while (week.length < 7) { const next = new Date(week[week.length - 1]); next.setDate(next.getDate() + 1); week.push(next); } weeks.push(week); }
               return weeks.map((w, wi) => (
-                <div key={wi} className="grid grid-cols-7 gap-1">
+                <div key={wi} className={isMobile ? 'flex flex-col gap-1' : 'grid gap-1'} style={isMobile ? undefined : { gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
                   {w.map((day, di) => {
                     const dateStr = day.toISOString().split('T')[0];
                     const isCurrentMonth = day.getMonth() === new Date(selectedDate).getMonth();
                     const dayItems = filteredItems.filter(i => i.date === dateStr);
+                    const shown = isMobile ? dayItems.slice(0, 5) : dayItems.slice(0, 3);
                     return (
-                      <div key={dateStr} className="flex flex-col" style={{ background: isCurrentMonth ? glass.bg : 'rgba(15,15,15,0.4)', border: `1px solid ${glass.border}`, borderRadius: 8, minHeight: 180 }}>
+                      <div key={dateStr} className="flex flex-col" style={{ background: isCurrentMonth ? glass.bg : 'rgba(15,15,15,0.4)', border: `1px solid ${glass.border}`, borderRadius: 8, minHeight: isMobile ? 0 : 180, opacity: isCurrentMonth ? 1 : 0.4 }}>
                         <div className={`px-2 py-1 text-right ${!isCurrentMonth ? 'opacity-30' : ''}`} style={{ color: glass.text2 }}>
                           <span className="t-mono">{day.getDate()}</span>
+                          {isMobile && <span className="t-mono ml-2" style={{ fontSize: 10 }}>{day.toLocaleDateString('en-US', { weekday: 'short' })}</span>}
                         </div>
-                        <div className="flex-1 overflow-y-auto p-1 space-y-1">
-                          {dayItems.slice(0, 3).map(item => (
+                        <div className="flex-1 p-1 space-y-1">
+                          {shown.map(item => (
                             <div key={item.id} className="p-1.5 rounded border" style={{ background: THEME_COLORS[item.theme] + '15', borderColor: THEME_COLORS[item.theme] + '40', fontSize: 11 }}>
-                              <div className="flex items-center gap-1 mb-0.5">{PLATFORM_ICONS[item.platform]}<span style={{ color: THEME_COLORS[item.theme] }}>{slotLabels[item.slot_index]?.slice(0, 8)}</span></div>
+                              <div className="flex items-center gap-1 mb-0.5">{PLATFORM_ICONS[item.platform]}<span style={{ color: THEME_COLORS[item.theme] }}>{isMobile ? (slotLabels[item.slot_index] || `Slot ${item.slot_index}`) : slotLabels[item.slot_index]?.slice(0, 8)}</span></div>
                               <div className="truncate" style={{ color: glass.text }}>{item.content_text?.slice(0, 40)}</div>
                               <span className="px-1 py-0 rounded text-[8px]" style={{ background: STATUS_COLORS[item.status] + '30', color: STATUS_COLORS[item.status] }}>{item.status.slice(0, 3)}</span>
                             </div>
                           ))}
-                          {dayItems.length > 3 && <div className="text-center text-[10px]" style={{ color: glass.text3, marginTop: 4 }}>+{dayItems.length - 3} more</div>}
+                          {dayItems.length > (isMobile ? 5 : 3) && <div className="text-center text-[10px]" style={{ color: glass.text3, marginTop: 4 }}>+{dayItems.length - (isMobile ? 5 : 3)} more</div>}
                         </div>
                       </div>
                     );

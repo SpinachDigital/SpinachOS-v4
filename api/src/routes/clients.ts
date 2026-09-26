@@ -35,9 +35,12 @@ app.post('/api/v1/clients', authMiddleware, async (req, res) => {
 
 app.get('/api/v1/clients', authMiddleware, async (req, res) => {
   const { status } = req.query;
+  // §4 scale rule: every list endpoint paginated — limit default 20, max 100 + offset
+  const limit = Math.min(parseInt(String(req.query.limit)) || 20, 100);
+  const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
   let query = supabase.from('clients').select('*');
   if (status) query = query.eq('status', status);
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
   if (error) return res.status(500).json({ error: error.message });
   res.json(data || []);
 });
