@@ -377,11 +377,15 @@ body {
 
 /* ---------- phone (<=680px): single column, compact topbar ---------- */
 @media (max-width: 680px) {
-  :root { --topbar-h: 108px; }
-  .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
+  /* Phase 0: topbar wraps to 2 rows (row 1: hamburger+greeting+icons,
+     row 2: full-width command bar) — grid row must grow with content,
+     not a fixed 108px that clips/overlaps the tabs row. */
+  :root { --topbar-h: auto; }
+  .app { grid-template-rows: auto 48px minmax(0, 1fr); }
+  .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 14px; align-content: start; }
   .topbar .greeting h1 { font-size: 17px; }
   .topbar .greeting p { display: none; }
-  .command-wrap { order: 3; width: 100%; }
+  .command-wrap { order: 3; width: 100%; flex: 1 1 100%; }
   .command-bar input { min-width: 0; }
   .tabs { overflow-x: auto; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
@@ -390,6 +394,10 @@ body {
   .main { padding: 14px 14px 18px; }
   .right { max-height: none; }
   .panel { padding: 13px; }
+  /* hamburger appears on phone (hidden on desktop by default rule).
+     .topbar .hamburger = higher specificity than the base .hamburger{display:none}
+     that appears later in this file. */
+  .topbar .hamburger { display: flex; align-items: center; justify-content: center; }
 }
 
 /* hamburger is hidden on desktop */
