@@ -30,9 +30,9 @@ interface TaskRow {
 
 const STATE_DOT: Record<string, string> = {
   done: 'var(--green)',
-  running: '#004B63',
-  blocked: '#B94A3E',
-  review: '#B98A2F',
+  running: 'var(--info)',
+  blocked: 'var(--listening)',
+  review: 'var(--gold)',
   todo: 'rgba(255,255,255,0.3)',
   ready: 'rgba(255,255,255,0.3)',
 };
@@ -154,8 +154,8 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
                       </span>
                     </span>
                     {t.status === 'done' && <CheckCircle2 style={{ width: 12, height: 12, color: 'var(--green)', flexShrink: 0 }} />}
-                    {t.status === 'blocked' && <AlertTriangle style={{ width: 12, height: 12, color: '#B94A3E', flexShrink: 0 }} />}
-                    {t.status === 'running' && <Loader2 className="animate-spin" style={{ width: 12, height: 12, color: '#004B63', flexShrink: 0 }} />}
+                    {t.status === 'blocked' && <AlertTriangle style={{ width: 12, height: 12, color: 'var(--listening)', flexShrink: 0 }} />}
+                    {t.status === 'running' && <Loader2 className="animate-spin" style={{ width: 12, height: 12, color: 'var(--info)', flexShrink: 0 }} />}
                   </button>
 
                   {/* Expanded: FULL OUTPUT */}
@@ -163,7 +163,7 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
                     <div className="px-3 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                       {error ? (
                         <div className="mt-2 rounded-md p-2.5" style={{ background: 'rgba(185,74,62,0.12)' }}>
-                          <span className="t-label" style={{ fontSize: 9, color: '#D97A6F' }}>Error</span>
+                          <span className="t-label" style={{ fontSize: 9, color: 'var(--listening)' }}>Error</span>
                           <p className="t-mono mt-1" style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.7)', whiteSpace: 'pre-wrap' }}>{error}</p>
                         </div>
                       ) : output ? (

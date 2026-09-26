@@ -18,7 +18,9 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    const api = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // ONE canonical env var: NEXT_PUBLIC_API_BASE (documented in README).
+    // The old NEXT_PUBLIC_API_URL name is retired.
+    const api = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
     return [
       // dashboard bridge endpoints (NO /v1): stats, agents, health, activity, jobs, projects…
       {
