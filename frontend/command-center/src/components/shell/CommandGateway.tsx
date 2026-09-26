@@ -207,7 +207,7 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
             style={{
               width: 30, height: 30,
               background: listening ? 'var(--listening)' : 'transparent',
-              color: listening ? '#fff' : 'var(--text-dim)',
+              color: listening ? 'var(--text)' : 'var(--text-dim)',
               cursor: 'pointer',
               border: 'none',
               animation: listening ? 'micPulse 1.2s ease-in-out infinite' : 'none',
@@ -263,7 +263,7 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
             style={{
               width: 28, height: 28,
               background: input.trim() ? 'var(--green)' : 'rgba(255,255,255,0.06)',
-              color: input.trim() ? '#fff' : 'var(--text-faint)',
+              color: input.trim() ? 'var(--text)' : 'var(--text-faint)',
               cursor: input.trim() ? 'pointer' : 'default',
               border: 'none',
               fontSize: 12,
@@ -304,7 +304,7 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
               padding: '8px 16px',
               borderRadius: 12,
               background: 'rgba(185,74,62,0.9)',
-              color: '#fff',
+              color: 'var(--text)',
               maxWidth: 420,
             }}
           >

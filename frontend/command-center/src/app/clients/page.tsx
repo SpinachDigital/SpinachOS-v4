@@ -99,7 +99,7 @@ export default function ClientsPage() {
           </span>
           <input
             className="input"
-            style={{ width: 220 }}
+            style={{ width: 220, minWidth: 0, flex: '1 1 140px', maxWidth: 260 }}
             placeholder="Search clients…"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -148,21 +148,21 @@ export default function ClientsPage() {
               <tbody>
                 {visible.map((c) => (
                   <tr key={c.id} className="clickable" onClick={() => router.push(`/clients/${c.id}`)}>
-                    <td>
+                    <td data-label="Client">
                       <span className="cell-main">{c.name}</span>
                       {c.goal && <div className="cell-dim">{c.goal.slice(0, 60)}{c.goal.length > 60 ? '…' : ''}</div>}
                     </td>
-                    <td>{c.business_type || '—'}</td>
-                    <td>{c.location || '—'}</td>
-                    <td>
+                    <td data-label="Industry">{c.business_type || '—'}</td>
+                    <td data-label="Location">{c.location || '—'}</td>
+                    <td data-label="Package">
                       {c.metadata?.package_key ? (
                         <span className="badge badge-green">{c.metadata.package_key.replace(/_/g, ' ')}</span>
                       ) : (
                         <span className="cell-dim">—</span>
                       )}
                     </td>
-                    <td>{statusPill(c.status)}</td>
-                    <td className="cell-dim">{fmtDate(c.created_at)}</td>
+                    <td data-label="Status">{statusPill(c.status)}</td>
+                    <td data-label="Onboarded" className="cell-dim">{fmtDate(c.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

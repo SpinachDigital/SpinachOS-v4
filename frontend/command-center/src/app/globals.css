@@ -344,7 +344,11 @@ body {
 @media (max-width: 1100px) {
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows: var(--topbar-h) 48px minmax(0, 1fr) auto;
+    /* Phase 1 fix: natural page scroll below 1100px — same rationale as the
+       phone block: 100vh grid + minmax(0,1fr) main squeezes real content
+       when the uncapped right rail grows. All rows auto. */
+    height: auto;
+    grid-template-rows: auto 48px auto auto;
     grid-template-areas: "topbar" "tabs" "main" "right";
   }
   /* sidebar becomes an overlay drawer (toggle via hamburger) */
@@ -372,6 +376,7 @@ body {
   .mid-row, .bottom-strip, .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .viewport-card { height: 320px; }
   .topbar .date-card { display: none; }
+  .main { overflow: visible; }
   .right { border-left: none; border-top: 1px solid var(--border-soft); max-height: 40vh; }
 }
 
@@ -381,7 +386,12 @@ body {
      row 2: full-width command bar) — grid row must grow with content,
      not a fixed 108px that clips/overlaps the tabs row. */
   :root { --topbar-h: auto; }
-  .app { grid-template-rows: auto 48px minmax(0, 1fr); }
+  /* Phase 1 fix: at phone width the grid must NOT be a 100vh squeeze —
+     minmax(0,1fr) main + uncapped right rail collapsed main to ~32px
+     (right rail filled the viewport, real page content unreachable).
+     Natural page scroll instead: all rows auto, document scrolls. */
+  .app { height: auto; grid-template-rows: auto 48px auto auto; }
+  .main { overflow: visible; }
   .topbar { flex-wrap: wrap; gap: 10px; padding: 12px 14px; align-content: start; }
   .topbar .greeting h1 { font-size: 17px; }
   .topbar .greeting p { display: none; }
@@ -398,6 +408,9 @@ body {
      .topbar .hamburger = higher specificity than the base .hamburger{display:none}
      that appears later in this file. */
   .topbar .hamburger { display: flex; align-items: center; justify-content: center; }
+  /* 360px gate: page-head actions must be allowed to shrink + wrap */
+  .page-head { flex-direction: column; align-items: stretch; gap: 10px; }
+  .page-head .actions { flex: 1 1 100%; width: 100%; }
 }
 
 /* hamburger is hidden on desktop */
@@ -698,6 +711,7 @@ body {
   font-size: 13px;
   color: var(--text);
   width: 100%;
+  min-width: 0; /* flex children can shrink below content size */
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .input::placeholder { color: var(--text-faint); }
@@ -763,7 +777,11 @@ body {
 }
 .page-head h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
 .page-head .sub { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
-.page-head .actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.page-head .actions { display: flex; align-items: center; gap: 10px; flex: none; flex-wrap: wrap; max-width: 100%; }
+/* 360px gate: let the actions row shrink + its children wrap to a new line
+   instead of pushing past the viewport (page-head is space-between). */
+.page-head { min-width: 0; }
+.page-head .head-text { min-width: 0; }
 .page-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 .section-title {
   font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
@@ -778,6 +796,26 @@ body {
   background: var(--panel);
 }
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+/* Phase 1 (360px gate): phone me table = stacked cards — 560px min-width table
+   ko scroll karwane ki jagah rows khud ko explain karti hain. */
+@media (max-width: 680px) {
+  .data-table, .data-table thead, .data-table tbody, .data-table tr, .data-table td { display: block; min-width: 0; }
+  .data-table thead { display: none; }
+  .data-table tr { border-bottom: 1px solid var(--border-soft); padding: 10px 0; }
+  .data-table td {
+    border-bottom: none; padding: 3px 14px; text-align: left;
+    white-space: normal;
+  }
+  /* label each stacked cell by its column (needs data-label on td) */
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    display: inline-block; min-width: 82px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-faint); margin-right: 8px;
+  }
+  .data-table td:first-child { padding-top: 10px; }
+  .data-table td:last-child { padding-bottom: 10px; }
+}
 .data-table th {
   text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--text-faint);
