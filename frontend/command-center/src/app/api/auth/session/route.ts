@@ -11,6 +11,11 @@
 // same trust boundary as the original design.
 import { NextResponse } from 'next/server';
 
+// Sprint 3 fix: Next 14 App Router caches GET route handlers statically unless
+// marked dynamic — the session route's mint response was served from build
+// cache (stale token from a previous API secret rotation → 401s everywhere).
+export const dynamic = 'force-dynamic';
+
 let cached: { token: string; expires_at_ms: number } | null = null;
 
 export async function GET() {

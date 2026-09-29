@@ -395,7 +395,7 @@ const FALLBACK_STATS: Stat[] = [
   { key: 'clients', label: 'Active Clients', num: '—', flat: true },
   { key: 'running', label: 'Tasks Running', num: '—', flat: true },
   { key: 'pipelines', label: 'Active Pipelines', num: '—', flat: true },
-  { key: 'assets', label: 'Brand Assets', num: '—', flat: true },
+  { key: 'assets', label: 'Agents Online', num: '—', flat: true },
   { key: 'approvals', label: 'Pending Approvals', num: '—', flat: true },
 ];
 

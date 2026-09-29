@@ -195,7 +195,7 @@ async function runGatewayTask(profile: string, task: string): Promise<{ output: 
           { role: 'system', content: soul },
           { role: 'user', content: task },
         ],
-        max_tokens: 800,
+        max_tokens: 1600, // Sprint 3: 800 truncated the cap-round plan summary (finish_reason: length)
         temperature: 0.7,
       }),
     });
@@ -242,7 +242,7 @@ export async function runSpecialistTask(
           { role: 'system', content: soul },
           { role: 'user', content: task },
         ],
-        max_tokens: 800,
+        max_tokens: 1600, // Sprint 3: 800 truncated the cap-round plan summary (finish_reason: length)
         temperature: 0.7,
       }),
     });
