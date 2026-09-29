@@ -11,19 +11,20 @@ interface WorkflowData {
   pipelineId: string;
   steps: WorkflowStep[];
   currentStep: number;
+  clientName?: string | null;
+  subtitle?: string;
 }
 
 export default function PipelineHeader({ workflow }: { workflow: WorkflowData }) {
   const { pipelineId } = useParams<{ pipelineId: string }>();
-  // In a real app, we would fetch client details from the workflow or a separate API
-  const clientName = 'Mira Road Gym'; // Placeholder
+  // Sprint 4: real client name from the pipeline payload (was a hardcoded placeholder)
 
   return (
     <div className="bg-[var(--panel)] rounded-lg p-4 border border-[var(--panel-2)] mb-4">
       <div className="flex justify-between items-start mb-4">
         <div>
-          <h2 className="text-xl font-bold text-[var(--text)]">{clientName}</h2>
-          <p className="text-[var(--text-dim)]">Growth Strategy & Launch</p>
+          <h2 className="text-xl font-bold text-[var(--text)]">{workflow.clientName || `Pipeline ${pipelineId.slice(0, 8)}`}</h2>
+          <p className="text-[var(--text-dim)]">{workflow.subtitle || 'Client pipeline'}</p>
         </div>
         <div className="text-right">
           <div className="flex items-baseline gap-4">
@@ -31,7 +32,7 @@ export default function PipelineHeader({ workflow }: { workflow: WorkflowData })
               <svg className="h-5 w-5 text-[var(--green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3" />
               </svg>
-              <p className="text-sm font-medium text-[var(--text)]">{workflow.currentStep + 1}/8</p>
+              <p className="text-sm font-medium text-[var(--text)]">{workflow.currentStep + 1}/{workflow.steps.length}</p>
             </div>
             <div className="flex items-center gap-2">
               <svg className="h-5 w-5 text-[var(--text-dim)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -102,3 +102,85 @@ app.post('/api/v1/pipeline/advance', authMiddleware, async (req, res) => {
 // ============================================================
 
 // Which packages are monthly retainers
+
+
+// ============================================================
+// SPRINT 4 — PIPELINE GET (status, stages, history)
+// ============================================================
+// pipelines = workflows rows (schema.sql — workflows IS the pipeline table,
+// steps_json = stages). GET returns the full detail page payload:
+//   task (the workflow row), timeline (created/started/completed per step),
+//   outputs (Sprint 1 task_outputs for any delegated step tasks).
+// History (workflow_updates / step events) is paginated per §4.
+import { emitAgentState as _emitA, emitWorkflow as _emitW, emitFeed as _emitF } from '../ctx';
+
+app.get('/api/v1/pipelines/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // §4: history paginated — default 20, max 100, offset
+    const limit = Math.min(parseInt(String(req.query.limit)) || 20, 100);
+    const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);
+
+    const { data: pipeline, error } = await supabase
+      .from('workflows')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!pipeline) return res.status(404).json({ error: 'pipeline not found' });
+
+    // stages = steps_json with computed progress
+    const steps = pipeline.steps_json || [];
+    const stages = steps.map((s: any, i: number) => ({
+      index: i,
+      name: s.name,
+      status: s.status,
+      agent: s.agent,
+      description: s.description,
+      started_at: s.started_at || null,
+      completed_at: s.completed_at || null,
+    }));
+    const completed = stages.filter((s: any) => s.status === 'completed').length;
+    const currentStep = stages.findIndex((s: any) => s.status === 'in_progress');
+
+    // client name for the header (single bounded lookup)
+    let clientName: string | null = null;
+    if (pipeline.client_id) {
+      const { data: c } = await supabase.from('clients').select('name').eq('id', pipeline.client_id).single();
+      clientName = c?.name || null;
+    }
+
+    // history = the workflow's own update trail (steps_json carries per-step
+    // started/completed marks — the durable history). Bounded + paginated.
+    const history = stages
+      .filter((s: any) => s.started_at || s.completed_at)
+      .flatMap((s: any) => {
+        const events: any[] = [];
+        if (s.started_at) events.push({ at: s.started_at, event: 'started', detail: `${s.name} — assigned to ${s.agent}` });
+        if (s.completed_at) events.push({ at: s.completed_at, event: 'completed', detail: `${s.name} completed` });
+        return events;
+      })
+      .sort((a: any, b: any) => new Date(a.at).getTime() - new Date(b.at).getTime())
+      .slice(offset, offset + limit);
+
+    res.json({
+      pipeline: {
+        id: pipeline.id,
+        name: pipeline.name,
+        client_id: pipeline.client_id,
+        client_name: clientName,
+        status: pipeline.status,
+        progress: pipeline.progress,
+        current_step: pipeline.current_step,
+        total_steps: stages.length,
+        completed_steps: completed,
+        current_step_index: currentStep,
+        created_at: pipeline.created_at,
+      },
+      stages,
+      history,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
