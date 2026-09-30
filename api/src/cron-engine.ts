@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import { supabase, emitFeed, JWT_SECRET } from './ctx';
 import { executeAgentTask } from './engines/agent-execution';
 import { RETAINER_CRON_RUNNING, setRetainerCronRunning } from './retainer-cron-state';
+import { startHrWatcher } from './hr-watcher';
 
 export const WAKE_BRAINS: Array<{ id: string; schedule: string; agent: string; task: string }> = [
   { id: 'standup-daily-0930', schedule: '30 9 * * 1-5', agent: 'orchestrator',
@@ -67,4 +68,5 @@ export const startRetainerCron = () => {
   }
 };
 startRetainerCron();
+startHrWatcher(); // Sprint 5c: HR watcher — flags only, never pauses/stops/reassigns
 

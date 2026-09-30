@@ -1,7 +1,7 @@
-﻿# Spinach OS — Phase 1 Reliability: watchdog health-check
+# Spinach OS - Phase 1 Reliability: watchdog health-check
 # watchdog.ps1: checks all three services; restarts any that are down.
 # Designed to run every 5 min from Windows Scheduled Task (see README.md).
-# Silent when everything is healthy — only logs/writes when it acts.
+# Silent when everything is healthy - only logs/writes when it acts.
 #
 # Usage:  powershell -ExecutionPolicy Bypass -File scripts\watchdog.ps1
 
@@ -19,8 +19,8 @@ function Test-Http([string]$url) {
 }
 
 function Restart-IfDown([string]$name, [string]$url, [scriptblock]$start, [string]$logFile) {
-  if (Test-Http $url) { return }  # healthy — silent
-  Write-Host "[$stamp] $name DOWN — restarting"
+  if (Test-Http $url) { return }  # healthy - silent
+  Write-Host "[$stamp] $name DOWN - restarting"
   $log = Join-Path $logDir $logFile
   & $start $log
   $ok = $false
@@ -28,8 +28,9 @@ function Restart-IfDown([string]$name, [string]$url, [scriptblock]$start, [strin
     Start-Sleep -Seconds 2
     if (Test-Http $url) { $ok = $true; break }
   }
-  if ($ok) { Write-Host "[$stamp] $name RECOVERED ($($i * 2)s)" }
-  else     { Write-Host "[$stamp] $name STILL DOWN after restart — check $log" }
+  $secs = $i * 2
+  if ($ok) { Write-Host "[$stamp] $name RECOVERED (${secs}s)" }
+  else     { Write-Host "[$stamp] $name STILL DOWN after restart - check $log" }
 }
 
 Restart-IfDown 'Laya :8000' 'http://localhost:8000/health' `

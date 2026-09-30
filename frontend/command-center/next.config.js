@@ -6,7 +6,7 @@ const nextConfig = {
     return [
       // IA v3: consolidated nav — old routes redirect to their new homes (no 404s)
       { source: '/office', destination: '/', permanent: false },
-      { source: '/team', destination: '/agents', permanent: false },
+      // Sprint 5f: /team redirect REMOVED — the real /team page ships (HR department).
       { source: '/logs', destination: '/analytics', permanent: false },
       { source: '/marketing/calendar', destination: '/marketing', permanent: false },
       { source: '/marketing/engagement', destination: '/marketing', permanent: false },

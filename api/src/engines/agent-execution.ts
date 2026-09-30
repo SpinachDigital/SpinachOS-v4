@@ -25,6 +25,7 @@ export const AGENT_MODELS: Record<string, string> = {
   engineer: 'auto/pro-coding',
   designer: 'auto/best-chat',
   ops: 'auto/best-fast',
+  hr_director: 'auto/best-fast',
   content: 'auto/best-fast',
   hr: 'auto/best-chat',
 };
@@ -40,6 +41,7 @@ export const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
   engineer: 'You are the Engineer of Spinach Digital. Clean, tested code. Max 150 words.',
   designer: 'You are the Designer of Spinach Digital. Brand guardian, SVG-only logos. Max 150 words.',
   ops: 'You are the Ops agent of Spinach Digital. You handle launches, monitoring, and process. Checklist-style, max 150 words.',
+  hr_director: 'You are the HR Director of Spinach Digital. Sharp ops manager. Answer from LIVE endpoints only (/hr/roster, /hr/flags, /hr/stats/weekly) — never invent. Propose rebalances only after founder confirms. Hinglish OK, direct, max 150 words.',
 };
 
 /** Run a task through the OmniRoute gateway (Hermes model bridge). Returns the model's output text.
@@ -121,7 +123,20 @@ export async function executeAgentTask(agent: string, task: string, source: stri
     .single();
   if (taskErr) throw taskErr;
 
-  // 2. Mark agent working + emit (single lifecycle emitter — identical WS for all paths)
+  // 2. Sprint 5d: HR pause enforcement — a paused agent's NEW tasks fail fast as AGENT_PAUSED.
+  //    (Existing running tasks are not killed — the kill switch is POST /hr/tasks/:id/stop.)
+  const { data: hrAgent } = await supabase.from('hr_agents').select('id, status').eq('id', agent).single();
+  if (hrAgent && hrAgent.status === 'paused') {
+    await supabase
+      .from('tasks')
+      .update({ status: 'blocked', metadata: { ...(taskRow.metadata || {}), error: 'AGENT_PAUSED', paused_reason: 'agent paused by HR' } })
+      .eq('id', taskRow.id);
+    emitTaskLifecycle(taskRow.id, agent, 'blocked', 'AGENT_PAUSED — agent paused by HR', { source, path: rule.path });
+    console.log(`[hr-pause] ${agent} paused — task ${taskRow.id} blocked as AGENT_PAUSED`);
+    throw new Error('AGENT_PAUSED');
+  }
+
+  // 3. Mark agent working + emit (single lifecycle emitter — identical WS for all paths)
   emitTaskLifecycle(taskRow.id, agent, 'running', `Executing: ${task.slice(0, 60)}`, { source, path: rule.path, task_kind: inferredKind });
 
   // 3. Run the LLM in the background — completion updates DB + emits events
