@@ -1,0 +1,1 @@
+{"description":"Procedural 3D Spinach Labs office diorama as an embeddable ES module (no iframe).","exports":{".":"./src/viewer.js"},"license":"UNLICENSED","main":"src/viewer.js","name":"spinach-office-diorama","peerDependencies":{"three":">=0.160.0"},"type":"module","version":"1.0.0"}
