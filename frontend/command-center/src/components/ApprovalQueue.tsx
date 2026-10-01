@@ -1,12 +1,18 @@
 'use client';
 
+/*
+ * ApprovalQueue — Sprint 7 "Approvals that show the work".
+ * Deliverable PREVIEWS render in-card (OutputPreview: post like a post,
+ * image renders, file downloads) — never a raw JSON dump.
+ * Warm light tokens (design v6 vars) — old dead dark-* classes removed.
+ * One-tap approve/reject, mobile-first: 44px touch targets, 360px clean.
+ */
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { 
-  FileText, MessageSquare, Megaphone, DollarSign, 
+import {
+  FileText, MessageSquare, Megaphone, DollarSign,
   Cpu, Palette, Code, Check, X, Clock, AlertCircle,
-  Eye, Edit, Download, MoreHorizontal
 } from 'lucide-react';
+import OutputPreview from '@/components/OutputPreview';
 
 interface ApprovalItem {
   id: string;
@@ -16,17 +22,27 @@ interface ApprovalItem {
   platform?: string;
   status: string;
   client_id?: string;
+  requested_by?: string;
   payload_json?: any;
+  created_at?: string;
 }
 
-const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  content: { icon: <FileText className="w-4 h-4" />, color: 'indigo-500', label: 'Content' },
-  outreach: { icon: <MessageSquare className="w-4 h-4" />, color: 'blue-500', label: 'Outreach' },
-  campaign: { icon: <Megaphone className="w-4 h-4" />, color: 'pink-500', label: 'Campaign' },
-  spend: { icon: <DollarSign className="w-4 h-4" />, color: 'amber-500', label: 'Spend' },
-  strategy: { icon: <Cpu className="w-4 h-4" />, color: 'purple-500', label: 'Strategy' },
-  design: { icon: <Palette className="w-4 h-4" />, color: 'cyan-500', label: 'Design' },
-  code: { icon: <Code className="w-4 h-4" />, color: 'emerald-500', label: 'Code' },
+const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: string }> = {
+  content: { icon: <FileText className="w-4 h-4" />, tint: 'rgba(99,102,241,0.14)', label: 'Content' },
+  outreach: { icon: <MessageSquare className="w-4 h-4" />, tint: 'rgba(59,130,246,0.14)', label: 'Outreach' },
+  campaign: { icon: <Megaphone className="w-4 h-4" />, tint: 'rgba(236,72,153,0.14)', label: 'Campaign' },
+  spend: { icon: <DollarSign className="w-4 h-4" />, tint: 'rgba(245,158,11,0.16)', label: 'Spend' },
+  strategy: { icon: <Cpu className="w-4 h-4" />, tint: 'rgba(168,85,247,0.14)', label: 'Strategy' },
+  design: { icon: <Palette className="w-4 h-4" />, tint: 'rgba(6,182,212,0.14)', label: 'Design' },
+  code: { icon: <Code className="w-4 h-4" />, tint: 'rgba(16,185,129,0.14)', label: 'Code' },
+};
+
+const STATUS_STYLE: Record<string, React.CSSProperties> = {
+  pending: { background: 'rgba(245,158,11,0.15)', color: '#b45309' },
+  approved: { background: 'rgba(34,197,94,0.15)', color: '#15803d' },
+  rejected: { background: 'rgba(239,68,68,0.12)', color: '#b91c1c' },
+  changes_requested: { background: 'rgba(245,158,11,0.15)', color: '#b45309' },
+  expired: { background: 'rgba(100,116,139,0.12)', color: '#475569' },
 };
 
 interface ApprovalQueueProps {
@@ -38,119 +54,134 @@ interface ApprovalQueueProps {
 
 export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }: ApprovalQueueProps) {
   const pendingApprovals = approvals.filter(a => a.status === 'pending');
-  
+
   return (
     <section className="animate-in">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 text-amber-500" />
-          Approval Queue
-        </h2>
+        <h2 className="t-title" style={{ fontSize: 16, color: 'var(--text)' }}>Approval Queue</h2>
         {pendingApprovals.length > 0 && (
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
+          <span className="t-mono" style={{
+            padding: '2px 10px', borderRadius: 99, fontSize: 11, fontWeight: 600,
+            background: 'rgba(245,158,11,0.15)', color: '#b45309',
+          }}>
             {pendingApprovals.length} pending
           </span>
         )}
       </div>
-      
+
       {approvals.length === 0 ? (
-        <div className="bg-dark-300/50 rounded-2xl p-8 text-center">
-          <AlertCircle className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-          <p className="text-muted-foreground">No approvals needed</p>
+        <div style={{
+          padding: 32, textAlign: 'center', borderRadius: 16,
+          background: 'var(--bg-2, transparent)', border: '1px solid var(--border-hairline, #eee)',
+        }}>
+          <AlertCircle style={{ width: 40, height: 40, margin: '0 auto 12px', color: 'var(--text-faint)', opacity: 0.4 }} />
+          <p className="t-meta" style={{ color: 'var(--text-faint)' }}>No approvals needed</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {approvals.map((approval) => {
-            const config = TYPE_CONFIG[approval.type] || { icon: <FileText className="w-4 h-4" />, color: 'gray-500', label: approval.type };
+            const config = TYPE_CONFIG[approval.type] || { icon: <FileText className="w-4 h-4" />, tint: 'rgba(100,116,139,0.14)', label: approval.type };
             const isPending = approval.status === 'pending';
-            
+
             return (
-              <article 
-                key={approval.id} 
-                className={cn(
-                  'bg-dark-300/50 rounded-2xl border border-border/50 p-4',
-                  'hover:border-spinach-500/30 transition-all duration-300',
-                  isPending && 'border-amber-500/30 bg-amber-500/5'
-                )}
+              <article
+                key={approval.id}
+                style={{
+                  borderRadius: 16, padding: 16, border: '1px solid var(--border-hairline, #eee)',
+                  background: 'var(--card, #fff)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 4px 12px -6px rgba(0,0,0,0.06)',
+                  transition: 'border-color 0.2s ease',
+                  borderColor: isPending ? 'rgba(245,158,11,0.35)' : 'var(--border-hairline, #eee)',
+                }}
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <div className={cn(
-                    'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
-                    `bg-${config.color}/20 text-${config.color}`
-                  )}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: config.tint, color: 'var(--text-dim, #333)',
+                  }}>
                     {config.icon}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-foreground truncate">{approval.title}</h4>
-                      <span className={cn(
-                        'px-2 py-0.5 rounded-full text-xs font-medium',
-                        isPending 
-                          ? 'bg-amber-500/20 text-amber-400' 
-                          : approval.status === 'approved' 
-                            ? 'bg-spinach-500/20 text-spinach-400'
-                            : 'bg-red-500/20 text-red-400'
-                      )}>
-                        {isPending ? 'Pending' : approval.status}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
+                      <h4 className="t-meta" style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14, wordBreak: 'break-word' }}>
+                        {approval.title}
+                      </h4>
+                      <span className="t-mono" style={{
+                        padding: '1px 8px', borderRadius: 99, fontSize: 10.5, fontWeight: 600,
+                        ...(STATUS_STYLE[approval.status] || STATUS_STYLE.pending),
+                      }}>
+                        {approval.status}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground capitalize">{config.label}</p>
+                    <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
+                      {config.label}
+                      {approval.requested_by && ` · requested by @${approval.requested_by}`}
+                    </p>
                     {approval.platform && (
-                      <p className="text-xs text-muted-foreground">Platform: {approval.platform}</p>
+                      <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Platform: {approval.platform}</p>
                     )}
                   </div>
-                  {isPending && (
-                    <Clock className="w-5 h-5 text-amber-400 mt-1 shrink-0" />
-                  )}
+                  {isPending && <Clock style={{ width: 16, height: 16, color: '#b45309', flexShrink: 0, marginTop: 2 }} />}
                 </div>
-                
+
                 {approval.description && (
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{approval.description}</p>
+                  <p className="t-meta" style={{ fontSize: 12.5, color: 'var(--text-dim)', marginBottom: 12, lineHeight: 1.5 }}>
+                    {approval.description}
+                  </p>
                 )}
-                
-                {/* Preview payload */}
-                {approval.payload_json && (
-                  <details className="mb-3 group">
-                    <summary className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
-                      <Eye className="w-3 h-3" />
-                      Preview content
-                    </summary>
-                    <pre className="mt-2 p-3 bg-dark-200 rounded-lg text-xs text-muted-foreground overflow-auto max-h-32">
-                      {JSON.stringify(approval.payload_json, null, 2)}
-                    </pre>
-                  </details>
-                )}
-                
-                {/* Actions */}
-                                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-                                  {isPending && (
-                                    <>
-                                      <button
-                                        className="flex-1 px-3 py-2 min-h-[44px] bg-spinach-500 text-white rounded-lg text-sm font-medium hover:bg-spinach-400 transition-colors flex items-center justify-center gap-2"
-                                        onClick={() => onApprove?.(approval.id)}
-                                        disabled={actionPending === approval.id}
-                                      >
-                                        <Check className="w-4 h-4" />
-                                        {actionPending === approval.id ? 'Approving…' : 'Approve'}
-                                      </button>
-                                      <button
-                                        className="flex-1 px-3 py-2 min-h-[44px] bg-red-500/20 text-red-400 rounded-lg text-sm font-medium hover:bg-red-500/30 transition-colors flex items-center justify-center gap-2"
-                                        onClick={() => onReject?.(approval.id)}
-                                        disabled={actionPending === approval.id}
-                                      >
-                                        <X className="w-4 h-4" />
-                                        {actionPending === approval.id ? 'Rejecting…' : 'Reject'}
-                                      </button>
-                                    </>
-                                  )}
-                  {!isPending && (
-                    <div className="flex gap-2">
-                      <button className="px-3 py-2 bg-dark-200 text-foreground rounded-lg text-sm hover:bg-dark-100 transition-colors flex items-center gap-1" title="View">
-                        <Eye className="w-4 h-4" />
+
+                {/* In-card deliverable preview — Sprint 1 pattern, never a JSON dump */}
+                <div style={{
+                  padding: 12, borderRadius: 12, marginBottom: 12,
+                  background: 'var(--bg-2, #fafaf7)', border: '1px solid var(--border-soft, #eee)',
+                }}>
+                  <OutputPreview
+                    payload={approval.payload_json}
+                    agent={approval.requested_by}
+                    kind={approval.type}
+                    title={approval.title}
+                  />
+                </div>
+
+                {/* One-tap actions — 44px touch targets */}
+                <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid var(--border-soft, #eee)' }}>
+                  {isPending ? (
+                    <>
+                      <button
+                        className="flex-1"
+                        style={{
+                          padding: '10px 12px', minHeight: 44, borderRadius: 10,
+                          background: '#004B63', color: '#fff', fontSize: 13.5, fontWeight: 600,
+                          border: 'none', cursor: actionPending === approval.id ? 'wait' : 'pointer',
+                          opacity: actionPending === approval.id ? 0.7 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                        onClick={() => onApprove?.(approval.id)}
+                        disabled={actionPending === approval.id}
+                      >
+                        <Check className="w-4 h-4" />
+                        {actionPending === approval.id ? 'Approving…' : 'Approve'}
                       </button>
-                      <button className="px-3 py-2 bg-dark-200 text-foreground rounded-lg text-sm hover:bg-dark-100 transition-colors flex items-center gap-1" title="Edit">
-                        <Edit className="w-4 h-4" />
+                      <button
+                        className="flex-1"
+                        style={{
+                          padding: '10px 12px', minHeight: 44, borderRadius: 10,
+                          background: 'rgba(239,68,68,0.1)', color: '#b91c1c', fontSize: 13.5, fontWeight: 600,
+                          border: '1px solid rgba(239,68,68,0.25)', cursor: actionPending === approval.id ? 'wait' : 'pointer',
+                          opacity: actionPending === approval.id ? 0.7 : 1,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                        onClick={() => onReject?.(approval.id)}
+                        disabled={actionPending === approval.id}
+                      >
+                        <X className="w-4 h-4" />
+                        {actionPending === approval.id ? 'Rejecting…' : 'Reject'}
                       </button>
+                    </>
+                  ) : (
+                    <div className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
+                      Reviewed {approval.created_at ? new Date(approval.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : '—'}
                     </div>
                   )}
                 </div>
@@ -162,3 +193,5 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
     </section>
   );
 }
+
+export default ApprovalQueue;
