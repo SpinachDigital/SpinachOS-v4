@@ -38,7 +38,7 @@ app.post('/api/v1/daily-standup', authMiddleware, async (req, res) => {
 
       for (const workflow of workflows) {
         const steps = workflow.steps_json || [];
-        const pendingStep = steps.find(s => s.status === 'pending');
+        const pendingStep = steps.find((s: any) => s.status === 'pending');
         if (!pendingStep) continue;
 
         // Auto-create approval for pending approval_review step
@@ -72,7 +72,7 @@ app.post('/api/v1/daily-standup', authMiddleware, async (req, res) => {
         }
 
         // Mark step as in_progress if still pending
-        const updatedSteps = steps.map(step =>
+        const updatedSteps = steps.map((step: any) =>
           step.status === 'pending' && step.name === pendingStep.name
             ? { ...step, status: 'in_progress', started_at: new Date().toISOString() }
             : step

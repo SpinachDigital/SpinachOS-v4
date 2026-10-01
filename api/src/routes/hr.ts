@@ -31,45 +31,32 @@ app.patch('/api/v1/agent-states/:profile', authMiddleware, async (req, res) => {
 });
 
 // ============================================
-// HR DEPARTMENT & MULTI-AGENT SYSTEM
+// HR DEPARTMENT & MULTI-AGENT SYSTEM — Sprint 6 MUST-FIX (a): fully DB-backed.
+// The old in-memory agentRegistry + static departmentLeads + fake performance_score
+// are GONE: every endpoint reads/writes hr_agents (the seeded roster = one identity:
+// agent_states.profile = hermes-profiles dir name). Hiring = EXISTING profiles only.
 // ============================================
 
-// In-memory agent registry (in production, store in Supabase)
-const agentRegistry = new Map<string, any>();
-
-// Initialize with department leads
-const departmentLeads = {
-  ceo: { id: 'ceo', name: 'CEO', department: 'executive', role: 'Chief Executive Officer', specialization: 'Strategy & Vision', skills: ['leadership', 'strategy', 'fundraising'], status: 'active' },
-  cto: { id: 'cto', name: 'CTO', department: 'technology', role: 'Chief Technology Officer', specialization: 'Architecture & Engineering', skills: ['system_design', 'scalability', 'technical_leadership'], status: 'active' },
-  orchestrator: { id: 'orchestrator', name: 'Orchestrator', department: 'operations', role: 'Chief Operating Officer', specialization: 'Workflow Orchestration', skills: ['project_management', 'process_optimization', 'cross_functional_coordination'], status: 'active' },
-  research: { id: 'research', name: 'Head of Research', department: 'research', role: 'Research Lead', specialization: 'Market Intelligence', skills: ['market_research', 'competitive_analysis', 'trend_analysis'], status: 'active' },
-  social: { id: 'social', name: 'Head of Social', department: 'marketing', role: 'Social Media Lead', specialization: 'Growth & Engagement', skills: ['social_media', 'content_strategy', 'community_building'], status: 'active' },
-  hr: { id: 'hr', name: 'HR Director', department: 'hr', role: 'Human Resources Director', specialization: 'Talent Acquisition & Agent Management', skills: ['recruiting', 'agent_onboarding', 'performance_management', 'organizational_design'], status: 'active' },
-  engineering: { id: 'engineering', name: 'Engineering Lead', department: 'engineering', role: 'Engineering Manager', specialization: 'Software Development', skills: ['full_stack', 'architecture', 'devops', 'code_review'], status: 'active' },
-  design: { id: 'design', name: 'Design Lead', department: 'design', role: 'Design Director', specialization: 'Product & Brand Design', skills: ['ui_ux', 'brand_identity', 'design_systems', 'prototyping'], status: 'active' },
-  sales: { id: 'sales', name: 'Sales Lead', department: 'sales', role: 'Sales Director', specialization: 'Revenue Generation', skills: ['b2b_sales', 'lead_qualification', 'deal_closing', 'pipeline_management'], status: 'active' },
-  marketing: { id: 'marketing', name: 'Marketing Lead', department: 'marketing', role: 'Marketing Director', specialization: 'Growth Marketing', skills: ['paid_ads', 'seo', 'email_marketing', 'analytics'], status: 'active' },
-  content: { id: 'content', name: 'Content Lead', department: 'marketing', role: 'Content Director', specialization: 'Content Strategy & Production', skills: ['copywriting', 'video_production', 'editorial_calendar', 'seo_content'], status: 'active' },
-  ops: { id: 'ops', name: 'Operations Lead', department: 'operations', role: 'Operations Manager', specialization: 'Systems & Processes', skills: ['automation', 'monitoring', 'incident_response', 'scalability'], status: 'active' },
-};
-
-// Initialize registry
-Object.values(departmentLeads).forEach(lead => {
-  agentRegistry.set(lead.id, { ...lead, employees: [], created_at: new Date().toISOString() });
-});
-
-app.get('/api/v1/hr/departments', authMiddleware, async (req, res) => {
+// GET /hr/departments — departments from hr_agents (live roster)
+app.get('/api/v1/hr/departments', authMiddleware, async (_req, res) => {
   try {
-    const departments = Array.from(new Set(Object.values(departmentLeads).map(l => l.department)));
-    const deptDetails = departments.map(dept => {
-      const lead = Object.values(departmentLeads).find(l => l.department === dept);
-      const agents = Array.from(agentRegistry.values()).filter(a => a.department === dept);
+    const { data: agents, error } = await supabase
+      .from('hr_agents')
+      .select('id, name, department, role, specialization, status, created_at')
+      .order('department')
+      .order('created_at');
+    if (error) return res.status(500).json({ error: error.message });
+
+    const deptNames = Array.from(new Set((agents || []).map(a => a.department)));
+    const deptDetails = deptNames.map(dept => {
+      const deptAgents = (agents || []).filter(a => a.department === dept);
+      const lead = deptAgents[0]; // first-hired = lead
       return {
         name: dept,
         lead: lead?.id,
         lead_name: lead?.name,
-        agent_count: agents.length,
-        agents: agents.map(a => ({ id: a.id, name: a.name, role: a.role, status: a.status })),
+        agent_count: deptAgents.length,
+        agents: deptAgents.map(a => ({ id: a.id, name: a.name, role: a.role, status: a.status })),
       };
     });
     res.json(deptDetails);
@@ -78,19 +65,23 @@ app.get('/api/v1/hr/departments', authMiddleware, async (req, res) => {
   }
 });
 
+// GET /hr/agents — roster from hr_agents (filters: department, status)
 app.get('/api/v1/hr/agents', authMiddleware, async (req, res) => {
   try {
     const { department, status } = req.query;
-    let agents = Array.from(agentRegistry.values());
-    if (department) agents = agents.filter(a => a.department === department);
-    if (status) agents = agents.filter(a => a.status === status);
-    res.json(agents);
+    let q = supabase.from('hr_agents').select('id, name, department, role, specialization, skills, status, created_at');
+    if (department) q = q.eq('department', department);
+    if (status) q = q.eq('status', status);
+    q = q.order('department').order('created_at');
+    const { data, error } = await q;
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// GET /api/v1/hierarchy — the org tree: leadership → HODs → benches (Part B in-app representation)
+// GET /hierarchy — the org tree: leadership → HODs → benches (Part B in-app representation)
 // Data: agent_states (tier/reports_to/is_dormant/bench) + live state; bench = per-dept specialist slots.
 app.get('/api/v1/hierarchy', authMiddleware, async (_req, res) => {
   const { data: rows, error } = await supabase
@@ -123,7 +114,7 @@ app.get('/api/v1/hierarchy', authMiddleware, async (_req, res) => {
         bench: (BENCHES[h.profile] || []).map((slot: string) => ({
           profile: slot,
           tier: 'executive',
-          status: 'available', // on-demand: loaded per task from the 279 specialist pool
+          status: 'available', // on-demand: loaded per task from the specialist pool
           current_task: null,
         })),
       })),
@@ -135,67 +126,62 @@ app.get('/api/v1/hierarchy', authMiddleware, async (_req, res) => {
   res.json({ leadership: tree, orphans, total_hods: hods.length, dormant: hods.filter((h: any) => h.is_dormant).map((h: any) => h.profile) });
 });
 
+// POST /hr/hire — Sprint 6 MUST-FIX: hire ONLY an EXISTING hermes-profiles agent.
+// No fake ids, no invented agents, no hardcoded performance_score. The request
+// names an agent id that must already exist in hr_agents (the seeded roster);
+// re-hiring an offboarded/paused agent re-activates it. Everything DB-backed.
 app.post('/api/v1/hr/hire', authMiddleware, async (req, res) => {
   const parse = HireAgentSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.format() });
 
   try {
-    const { department, role, specialization, skills, agent_config } = parse.data;
-    
-    // Get department lead
-    const lead = Object.values(departmentLeads).find(l => l.department === department);
-    if (!lead) return res.status(404).json({ error: 'Department not found' });
+    // The schema's `department`/`role` fields are treated as the EXISTING agent id
+    // (department = hermes-profiles dir name). Accept both shapes:
+    //   { department: 'engineer', role: '...' }  or { agent_id: 'engineer' }
+    const requestedId = String(parse.data.agent_id || parse.data.department || '').trim().toLowerCase();
+    if (!requestedId) return res.status(400).json({ error: 'agent_id (existing hermes-profiles dir name) required' });
 
-    // Create new agent ID
-    const agentId = `${department}_${role.toLowerCase().replace(/\s+/g, '_')}_${Date.now().toString(36)}`;
-    
-    const newAgent = {
-      id: agentId,
-      name: `${role} (${department})`,
-      department,
-      role,
-      specialization: specialization || `Specialist in ${role}`,
-      skills: skills || [],
-      agent_config: agent_config || { model: 'nemotron-3-ultra', temperature: 0.7 },
-      status: 'active',
-      lead_id: lead.id,
-      hired_at: new Date().toISOString(),
-      tasks_completed: 0,
-      performance_score: 100,
-    };
-
-    agentRegistry.set(agentId, { ...newAgent, employees: [] });
-
-    // Add to lead's employees
-    const leadAgent = agentRegistry.get(lead.id);
-    if (leadAgent) {
-      leadAgent.employees.push(agentId);
-    }
-
-    // Update agent_states table — surface errors (profile CHECK may reject dynamic ids)
-    const { error: onboardErr } = await supabase
-      .from('agent_states')
-      .upsert({
-        profile: agentId,
-        state: 'idle',
-        activity: 'Onboarding complete - ready for tasks',
-        metadata: { department, role, lead_id: lead.id }
-      });
-    if (onboardErr) {
-      console.error('Hire agent_states upsert failed:', onboardErr.message);
-      // Registry still has the agent — return it with a warning instead of a silent partial hire
-      return res.status(201).json({
-        success: true,
-        agent: newAgent,
-        warning: `Agent registered in memory but agent_states persist failed: ${onboardErr.message}`,
+    const { data: agent, error: fetchErr } = await supabase
+      .from('hr_agents')
+      .select('id, name, department, role, specialization, skills, status')
+      .eq('id', requestedId)
+      .single();
+    if (fetchErr || !agent) {
+      return res.status(400).json({
+        error: `Agent '${requestedId}' does not exist. Hiring creates nothing — only existing hermes-profiles agents can be hired. Seed via scripts/seed-hr-agents.ts first.`,
       });
     }
 
-    // Emit event
-    emitFeed('hr', 'Agent hired', { agent_id: agentId, name: newAgent.name, department, role });
-    emitAgentState(agentId, 'idle', 'Onboarding complete - ready for tasks');
+    if (agent.status === 'active') {
+      return res.status(409).json({ error: `Agent '${requestedId}' is already active`, agent });
+    }
 
-    res.status(201).json({ success: true, agent: newAgent });
+    const actor = (req as any).user?.role === 'founder' ? 'founder' : 'hr_director';
+    const { data: updated, error: upErr } = await supabase
+      .from('hr_agents')
+      .update({ status: 'active' })
+      .eq('id', requestedId)
+      .select()
+      .single();
+    if (upErr) return res.status(500).json({ error: upErr.message });
+
+    await supabase.from('agent_states').upsert({
+      profile: requestedId,
+      state: 'idle',
+      activity: 'Hired (re-activated) — ready for tasks',
+    });
+    emitAgentState(requestedId, 'idle', 'Hired (re-activated) — ready for tasks');
+    emitFeed('hr', `Agent hired: ${agent.name}`, { agent_id: requestedId, department: agent.department });
+
+    // audit trail
+    await supabase.from('hr_actions').insert({
+      actor,
+      action: 'hire',
+      agent_id: requestedId,
+      reason: `hired (status was ${agent.status})`,
+    });
+
+    res.status(201).json({ success: true, agent: updated });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -208,12 +194,15 @@ app.post('/api/v1/hr/agent-message', authMiddleware, async (req, res) => {
   try {
     const { from_agent, to_agent, message, type, payload, requires_response } = parse.data;
 
-    // Validate agents exist
-    const fromAgent = agentRegistry.get(from_agent);
-    const toAgent = agentRegistry.get(to_agent);
-    
-    if (!fromAgent) return res.status(404).json({ error: `From agent ${from_agent} not found` });
-    if (!toAgent) return res.status(404).json({ error: `To agent ${to_agent} not found` });
+    // Validate BOTH agents exist in hr_agents (DB-backed — no registry)
+    const { data: agents, error: aErr } = await supabase
+      .from('hr_agents')
+      .select('id, name, department')
+      .in('id', [from_agent, to_agent]);
+    if (aErr) return res.status(500).json({ error: aErr.message });
+    const found = new Map((agents || []).map(a => [a.id, a]));
+    if (!found.has(from_agent)) return res.status(404).json({ error: `From agent ${from_agent} not found` });
+    if (!found.has(to_agent)) return res.status(404).json({ error: `To agent ${to_agent} not found` });
 
     // Log the message
     const messageRecord = {
@@ -260,7 +249,7 @@ app.post('/api/v1/hr/agent-message', authMiddleware, async (req, res) => {
       });
     }
 
-    res.json({ success: true, message: messageRecord, to_agent: toAgent.name });
+    res.json({ success: true, message: messageRecord, to_agent: found.get(to_agent)!.name });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -286,48 +275,33 @@ app.post('/api/v1/hr/bulk-action', authMiddleware, async (req, res) => {
 
   try {
     const { department, agents: agentIds, action } = parse.data;
-    let targetAgents = Array.from(agentRegistry.values());
-    
-    if (department) targetAgents = targetAgents.filter(a => a.department === department);
-    if (agentIds && agentIds.length > 0) targetAgents = targetAgents.filter(a => agentIds.includes(a.id));
+    let q = supabase.from('hr_agents').select('id, name, department, status');
+    if (department) q = q.eq('department', department);
+    if (agentIds && agentIds.length > 0) q = q.in('id', agentIds);
+    const { data: targets, error: tErr } = await q;
+    if (tErr) return res.status(500).json({ error: tErr.message });
+    if (!targets || targets.length === 0) return res.status(404).json({ error: 'No agents matched' });
 
     const results = [];
-    for (const agent of targetAgents) {
-      let newState = agent.status;
-      let activity = agent.activity || 'Idle';
-      
-      switch (action) {
-        case 'start':
-          newState = 'active';
-          activity = 'Started by bulk action';
-          break;
-        case 'stop':
-          newState = 'paused';
-          activity = 'Stopped by bulk action';
-          break;
-        case 'pause':
-          newState = 'paused';
-          activity = 'Paused by bulk action';
-          break;
-        case 'resume':
-          newState = 'active';
-          activity = 'Resumed by bulk action';
-          break;
-        case 'status':
-          // Just return current status
-          break;
+    for (const agent of targets) {
+      const newState = action === 'start' || action === 'resume' ? 'active' : action === 'stop' || action === 'pause' ? 'paused' : agent.status;
+      const activity =
+        action === 'start' ? 'Started by bulk action'
+        : action === 'stop' ? 'Stopped by bulk action'
+        : action === 'pause' ? 'Paused by bulk action'
+        : action === 'resume' ? 'Resumed by bulk action'
+        : `Status: ${newState}`;
+
+      if (newState !== agent.status) {
+        const { error: uErr } = await supabase.from('hr_agents').update({ status: newState }).eq('id', agent.id);
+        if (uErr) { results.push({ id: agent.id, name: agent.name, error: uErr.message }); continue; }
       }
 
-      agent.status = newState;
-      agentRegistry.set(agent.id, agent);
-
-      // Update agent_states table
-      await supabase.from('agent_states').upsert({ 
-        profile: agent.id, 
-        state: action === 'stop' || action === 'pause' ? 'idle' : 'working', 
-        activity 
+      await supabase.from('agent_states').upsert({
+        profile: agent.id,
+        state: action === 'stop' || action === 'pause' ? 'idle' : 'working',
+        activity,
       });
-
       emitAgentState(agent.id, action === 'stop' || action === 'pause' ? 'idle' : 'working', activity);
       results.push({ id: agent.id, name: agent.name, status: newState, activity });
     }
@@ -341,9 +315,15 @@ app.post('/api/v1/hr/bulk-action', authMiddleware, async (req, res) => {
 app.post('/api/v1/hr/agent-task', authMiddleware, async (req, res) => {
   try {
     const { agent_id, task_title, task_description, priority = 0, dependencies = [] } = req.body;
-    
-    const agent = agentRegistry.get(agent_id);
-    if (!agent) return res.status(404).json({ error: `Agent ${agent_id} not found` });
+    if (!agent_id || !task_title) return res.status(400).json({ error: 'agent_id + task_title required' });
+
+    // Validate the agent exists in hr_agents (DB-backed — no registry)
+    const { data: agent, error: aErr } = await supabase
+      .from('hr_agents')
+      .select('id, name, department, status')
+      .eq('id', agent_id)
+      .single();
+    if (aErr || !agent) return res.status(404).json({ error: `Agent ${agent_id} not found` });
 
     const { data: task, error } = await supabase
       .from('tasks')
@@ -358,21 +338,17 @@ app.post('/api/v1/hr/agent-task', authMiddleware, async (req, res) => {
       })
       .select()
       .single();
-    
+
     if (error) throw error;
 
     // Update agent state
-    await supabase.from('agent_states').upsert({ 
-      profile: agent_id, 
-      state: 'working', 
+    await supabase.from('agent_states').upsert({
+      profile: agent_id,
+      state: 'working',
       activity: `Working on: ${task_title}`,
-      current_task_id: task.id 
+      current_task_id: task.id,
     });
     emitAgentState(agent_id, 'working', `Working on: ${task_title}`);
-
-    // Update agent performance
-    agent.tasks_completed = (agent.tasks_completed || 0) + 1;
-    agentRegistry.set(agent_id, agent);
 
     emitFeed(agent.department === 'executive' ? 'ceo' : agent.department, 'Task assigned', { agent_id, task_id: task.id, title: task_title });
 
@@ -382,52 +358,32 @@ app.post('/api/v1/hr/agent-task', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/v1/hr/org-chart', authMiddleware, async (req, res) => {
+// GET /hr/org-chart — org tree from hr_agents (leads = first-hired per dept) + hired reports
+app.get('/api/v1/hr/org-chart', authMiddleware, async (_req, res) => {
   try {
-    const orgChart = {
-      executive: {
-        ceo: { ...departmentLeads.ceo, reports: [] },
-      },
-      technology: {
-        cto: { ...departmentLeads.cto, reports: [] },
-      },
-      operations: {
-        orchestrator: { ...departmentLeads.orchestrator, reports: [] },
-        ops: { ...departmentLeads.ops, reports: [] },
-      },
-      research: {
-        research: { ...departmentLeads.research, reports: [] },
-      },
-      marketing: {
-        social: { ...departmentLeads.social, reports: [] },
-        marketing: { ...departmentLeads.marketing, reports: [] },
-        content: { ...departmentLeads.content, reports: [] },
-      },
-      engineering: {
-        engineering: { ...departmentLeads.engineering, reports: [] },
-      },
-      design: {
-        design: { ...departmentLeads.design, reports: [] },
-      },
-      sales: {
-        sales: { ...departmentLeads.sales, reports: [] },
-      },
-      hr: {
-        hr: { ...departmentLeads.hr, reports: [] },
-      },
-    };
+    const { data: agents, error } = await supabase
+      .from('hr_agents')
+      .select('id, name, department, role, status, created_at')
+      .order('department')
+      .order('created_at');
+    if (error) return res.status(500).json({ error: error.message });
 
-    // Add hired employees to their leads
-    agentRegistry.forEach(agent => {
-      if (agent.lead_id && orgChart[agent.department]?.[agent.lead_id]) {
-        orgChart[agent.department][agent.lead_id].reports.push({
-          id: agent.id,
-          name: agent.name,
-          role: agent.role,
-          status: agent.status,
-        });
+    const orgChart: Record<string, Record<string, any>> = {};
+    for (const a of agents || []) {
+      if (!orgChart[a.department]) orgChart[a.department] = {};
+      const deptAgents = (agents || []).filter(x => x.department === a.department);
+      if (deptAgents[0]?.id === a.id) {
+        orgChart[a.department][a.id] = { ...a, reports: [] };
       }
-    });
+    }
+    // non-lead agents become reports of their dept lead
+    for (const a of agents || []) {
+      const deptAgents = (agents || []).filter(x => x.department === a.department);
+      const lead = deptAgents[0];
+      if (lead && lead.id !== a.id && orgChart[a.department]?.[lead.id]) {
+        orgChart[a.department][lead.id].reports.push({ id: a.id, name: a.name, role: a.role, status: a.status });
+      }
+    }
 
     res.json(orgChart);
   } catch (e: any) {

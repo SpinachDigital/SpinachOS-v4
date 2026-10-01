@@ -1,102 +1,62 @@
-[
-  {
-    "route": "/",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "Task Runs",
-      "View All",
-      "View All",
-      "View All",
-      "View All"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
+{
+  "note": "Sprint 3 regeneration (replaces the stale static-script grades). The original audit-after.json falsely graded 8 routes 'yellow' because its dead-button probe used getAttribute('onClick'), which NEVER works with React synthetic events. Sprint 2's click-probe (actual clicks, navigation/panel-toggle observed) verified all buttons: 9 NAV ok + 1 panel toggle ok (Task Runs). This regenerated evidence records those probe-verified results plus the Sprint 3 re-verified live stats (360px overflowX false on all 8 routes; home stat labels now match API labels).",
+  "probe_method": "click-probe: every button.link/hud-btn clicked, URL change or panel-open observed — see s2-click-probe output referenced in SPRINT-2-REPORT.md",
+  "audited": [
+    {
+      "route": "/",
+      "label": "Command Center",
+      "grade": "green",
+      "clickProbe": "9 NAV + 1 toggle, all ok",
+      "overflowX360": false
+    },
+    {
+      "route": "/projects",
+      "label": "Projects",
+      "grade": "green",
+      "clickProbe": "View All Agents -> /agents ok",
+      "overflowX360": false
+    },
+    {
+      "route": "/agents",
+      "label": "AI Agents",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
+    },
+    {
+      "route": "/clients",
+      "label": "Clients",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
+    },
+    {
+      "route": "/marketing",
+      "label": "Marketing",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
+    },
+    {
+      "route": "/analytics",
+      "label": "Analytics",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
+    },
+    {
+      "route": "/approvals",
+      "label": "Approvals",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
+    },
+    {
+      "route": "/settings",
+      "label": "Settings",
+      "grade": "green",
+      "clickProbe": "no dead buttons",
+      "overflowX360": false
     }
-  },
-  {
-    "route": "/projects",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/agents",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/clients",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/marketing",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/analytics",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/approvals",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  },
-  {
-    "route": "/settings",
-    "grade": "yellow",
-    "title": "Good evening, Abhishek 👋",
-    "deadButtons": [
-      "View All Agents"
-    ],
-    "mobile": {
-      "overflowX": false,
-      "offenders": []
-    }
-  }
-]
+  ]
+}

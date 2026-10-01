@@ -154,11 +154,15 @@ export const AgentSearchSchema = z.object({ query: z.string().min(1) });
 export const AgentLoadSchema = z.object({ slug: z.string().min(1), task: z.string().min(1) });
 export const ApprovalActionSchema = z.object({ id: z.string().uuid() });
 export const HireAgentSchema = z.object({
-  department: z.enum(['ceo', 'cto', 'orchestrator', 'research', 'social', 'hr', 'engineering', 'design', 'sales', 'marketing', 'content', 'ops']),
-  role: z.string().min(1),
+  // Sprint 6 MUST-FIX: hire targets an EXISTING hermes-profiles agent id.
+  // `department` is now the free-form profile dir name (validated against hr_agents);
+  // `agent_id` accepted as the primary shape. No invented enum, no fake agents.
+  department: z.string().min(1).optional(),
+  agent_id: z.string().min(1).optional(),
+  role: z.string().min(1).optional(),
   specialization: z.string().optional(),
   skills: z.array(z.string()).optional(),
-  agent_config: z.object({ model: z.string().optional() }).optional(),
+  agent_config: z.object({ model: z.string().optional() }).optional().optional(),
 });
 export const AgentMessageSchema = z.object({ from_agent: z.string().min(1), to_agent: z.string().min(1), type: z.string().min(1), message: z.string().min(1), payload: z.record(z.any()).optional(), requires_response: z.boolean().optional(), });
 export const BulkAgentActionSchema = z.object({ action: z.enum(["pause", "resume", "restart", "start", "stop", "status"]), profiles: z.array(z.string()).optional(), agents: z.array(z.string()).optional(), department: z.string().optional(), });
