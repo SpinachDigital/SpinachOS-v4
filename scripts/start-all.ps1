@@ -1,4 +1,4 @@
-# Spinach OS — Phase 1 Reliability: service health + auto-restart
+﻿# Spinach OS — Phase 1 Reliability: service health + auto-restart
 # start-all.ps1: starts API (:4000), Laya (:8000), frontend (:3000); waits for
 # health checks; logs to logs/. Idempotent — already-running services are skipped.
 #
@@ -48,10 +48,10 @@ Start-ServiceIfDown 'API :4000' `
   { param($log) Start-Process -FilePath 'npx' -ArgumentList 'tsx','src/index.ts' -WorkingDirectory (Join-Path $root 'api') -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError ($log + '.err') } `
   'api-start.log'
 
-# ---- 3. Frontend (:3000) — Next start ----
+# ---- 3. Frontend (:3000) — Next dev ----
 Start-ServiceIfDown 'Frontend :3000' `
   { Test-Http 'http://localhost:3000/' } `
-  { param($log) Start-Process -FilePath 'npx' -ArgumentList 'next','start','-p','3000' -WorkingDirectory (Join-Path $root 'frontend/command-center') -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError ($log + '.err') } `
+  { param($log) Start-Process -FilePath 'npx' -ArgumentList 'next','dev','-p','3000' -WorkingDirectory (Join-Path $root 'frontend/command-center') -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError ($log + '.err') } `
   'frontend-start.log'
 
 # ---- summary ----

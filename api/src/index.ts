@@ -11,7 +11,6 @@
  * This file is THIN BOOTSTRAP only: import ctx (which creates app/middleware),
  * mount routes, WS upgrade routing, error handler, listen. No behavior changes.
  */
-import 'express-async-errors';
 import dotenv from 'dotenv';
 dotenv.config();
 

@@ -8,7 +8,6 @@ from typing import Optional, List
 import uvicorn
 import re
 import json
-import httpx
 
 app = FastAPI(title="Laya - System 1 Router")
 
@@ -74,12 +73,6 @@ DEPARTMENT_PATTERNS = {
     ],
 }
 
-# Pre-compiled word-boundary patterns for accurate matching
-DEPARTMENT_PATTERNS_RE = {
-    dept: [re.compile(rf'\b{re.escape(kw)}\b', re.IGNORECASE) for kw in keywords]
-    for dept, keywords in DEPARTMENT_PATTERNS.items()
-}
-
 # Content-creation verbs: when tied, these prefer marketing/content over engineering
 # ("generate a post", "make a tweet" — 'create'/'make' alone don't make it engineering)
 CONTENT_CREATION_VERBS = ['generate', 'generate a', 'make', 'write', 'draft', 'post', 'create a post']
@@ -118,8 +111,8 @@ def classify_department(message: str) -> tuple[str, float]:
     Score = number of keyword hits per department (ties broken toward content-creation)."""
     msg = message.lower()
     scores: dict[str, int] = {}
-    for dept, patterns in DEPARTMENT_PATTERNS_RE.items():
-        score = sum(1 for p in patterns if p.search(msg))
+    for dept, keywords in DEPARTMENT_PATTERNS.items():
+        score = sum(1 for kw in keywords if kw in msg)
         if score > 0:
             scores[dept] = score
 
@@ -216,8 +209,9 @@ def detect_and_create_tasks(message: str) -> List[TaskObject]:
     
     return tasks
 
-
 async def llm_fallback_classify(message: str) -> dict:
+    """System 1.5: LLM fallback when confidence is low.
+    Uses OmniRoute gateway (same as agent execution)."""
     try:
         prompt = f"""Classify this task into one department and priority.
 Return ONLY JSON: {{"department": "...", "priority": "high|medium|low"}}
@@ -226,25 +220,28 @@ Departments: engineering, marketing, design, sales, content, research, operation
 Priority: high, medium, low
 
 Task: {message}"""
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(
-                'http://localhost:20128/v1/chat/completions',
-                json={
-                    'model': 'auto/best-fast',
-                    'messages': [
-                        {'role': 'system', 'content': 'You are a fast task classifier. Return only JSON.'},
-                        {'role': 'user', 'content': prompt}
-                    ],
-                    'max_tokens': 100,
-                    'temperature': 0.1,
-                }
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            output = data['choices'][0]['message']['content']
-            result = json.loads(output)
-            return result
+        
+        import urllib.request, json
+        req = urllib.request.Request(
+            'http://localhost:20128/v1/chat/completions',
+            data=json.dumps({
+                'model': 'auto/best-fast',
+                'messages': [
+                    {'role': 'system', 'content': 'You are a fast task classifier. Return only JSON.'},
+                    {'role': 'user', 'content': prompt}
+                ],
+                'max_tokens': 100,
+                'temperature': 0.1,
+            }).encode(),
+            headers={'Content-Type': 'application/json'}, method='POST'
+        )
+        resp = urllib.request.urlopen(req, timeout=10)
+        data = json.loads(resp.read().decode())
+        output = data['choices'][0]['message']['content']
+        result = json.loads(output)
+        return result
     except Exception as e:
+        # Final fallback
         return {'department': 'engineering', 'priority': 'medium'}
 
 @app.post("/decide", response_model=DecideResponse)
