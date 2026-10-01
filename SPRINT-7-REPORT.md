@@ -36,6 +36,22 @@ Round-trip test data: "X post — Sprint 7 ship note" (approved), "X post — Di
 - WhatsApp wa.me sharing — in-app only this sprint (later phase).
 - Morning briefing, notifications, global search, voice input, Client 360 verification, publishing (Buffer/Publora), new pages/agents/integrations, Track A automations, hiring UI — none touched.
 
+## FINAL REPORT — Sprints 4–7 (commits + remaining gaps)
+
+| Sprint | Scope | feat commit | report commit | Evidence |
+|---|---|---|---|---|
+| 4 | Pipeline end-to-end (GET /pipelines/:id + detail page) | `4c8e907` | `d01b364` | 1.5s acceptance + 409 guard |
+| 5 | HR Department (tables + seed + watcher + /team) | `687de6d` | `f4e3d0d` | 11/11 seed, 4 watcher flags, pause/resume round-trip |
+| 6 | Living Office (diorama labels + MUST-FIXes) | `9d28e0e` | `bf0162a` | 4 screenshots, hire-endpoint fix, audit-after regen |
+| 7 | Approvals that show the work | `749b431` | this file | 6 screenshots, approve/reject DB round-trip, 360px clean |
+
+### Remaining gaps (honest)
+
+1. **Hiring UI (5g)** — won't-do per plan; `/api/v1/hr/hire` fixed in Sprint 6 (real profiles only, DB-backed) but no hiring surface exists.
+2. **prod build discipline** — `next build` corrupts the dev server's `.next` (Sprint 7 CSS incident); prod deploy needs a build-then-restart or separate dist flow.
+3. **Preview coverage by payload shape** — image/file approvals exist in schema but no real image/file payload has flowed through yet; OutputPreview supports them but they're untested against real data.
+4. **Sprint 2 audit-after.json** — regenerated in Sprint 6 with a real click-probe; keep it fresh going forward.
+
 ## Next (plan §Sprint 8, jab bolo)
 
 - Sprint 8 per hermes-product-plan-v2-full-prompt.md.
