@@ -42,5 +42,5 @@ Restart-IfDown 'API :4000' 'http://localhost:4000/health' `
   'api-watchdog.log'
 
 Restart-IfDown 'Frontend :3000' 'http://localhost:3000/' `
-  { param($log) Start-Process -FilePath 'npx' -ArgumentList 'next','dev','-p','3000' -WorkingDirectory (Join-Path $root 'frontend/command-center') -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError ($log + '.err') } `
+  { param($log) Start-Process -FilePath 'npx' -ArgumentList 'next','start','-p','3000' -WorkingDirectory (Join-Path $root 'frontend/command-center') -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError ($log + '.err') } `
   'frontend-watchdog.log'

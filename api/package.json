@@ -10,6 +10,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
+    "express-async-errors": "^3.1.1",
     "@supabase/supabase-js": "^2.39.0",
     "@types/node-cron": "^3.0.11",
     "cors": "^2.8.5",
