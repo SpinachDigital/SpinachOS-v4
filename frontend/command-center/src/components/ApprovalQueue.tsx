@@ -25,6 +25,7 @@ interface ApprovalItem {
   requested_by?: string;
   payload_json?: any;
   created_at?: string;
+  reviewed_at?: string;
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: string }> = {
@@ -181,7 +182,7 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
                     </>
                   ) : (
                     <div className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
-                      Reviewed {approval.created_at ? new Date(approval.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : '—'}
+                      Reviewed {approval.reviewed_at ? new Date(approval.reviewed_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true }) : '—'}
                     </div>
                   )}
                 </div>

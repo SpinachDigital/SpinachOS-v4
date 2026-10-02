@@ -112,7 +112,14 @@ def classify_department(message: str) -> tuple[str, float]:
     msg = message.lower()
     scores: dict[str, int] = {}
     for dept, keywords in DEPARTMENT_PATTERNS.items():
-        score = sum(1 for kw in keywords if kw in msg)
+        # Sprint 8: word-boundary matching — substring matching caused false
+        # positives ("post" matched inside "postpone", "ad" inside "add").
+        # Multi-word keywords keep substring semantics (regex-escaped).
+        def kw_hit(kw: str) -> bool:
+            if ' ' in kw:
+                return kw in msg
+            return re.search(r'\b' + re.escape(kw) + r'\b', msg) is not None
+        score = sum(1 for kw in keywords if kw_hit(kw))
         if score > 0:
             scores[dept] = score
 
@@ -221,22 +228,25 @@ Priority: high, medium, low
 
 Task: {message}"""
         
-        import urllib.request, json
-        req = urllib.request.Request(
-            'http://localhost:20128/v1/chat/completions',
-            data=json.dumps({
-                'model': 'auto/best-fast',
-                'messages': [
-                    {'role': 'system', 'content': 'You are a fast task classifier. Return only JSON.'},
-                    {'role': 'user', 'content': prompt}
-                ],
-                'max_tokens': 100,
-                'temperature': 0.1,
-            }).encode(),
-            headers={'Content-Type': 'application/json'}, method='POST'
-        )
-        resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(resp.read().decode())
+        import json
+        # Sprint 8: async httpx — blocking urllib stalled the event loop
+        # (FastAPI async path). httpx.AsyncClient keeps the loop free.
+        import httpx
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                'http://localhost:20128/v1/chat/completions',
+                json={
+                    'model': 'auto/best-fast',
+                    'messages': [
+                        {'role': 'system', 'content': 'You are a fast task classifier. Return only JSON.'},
+                        {'role': 'user', 'content': prompt}
+                    ],
+                    'max_tokens': 100,
+                    'temperature': 0.1,
+                },
+                headers={'Content-Type': 'application/json'},
+            )
+        data = resp.json()
         output = data['choices'][0]['message']['content']
         result = json.loads(output)
         return result

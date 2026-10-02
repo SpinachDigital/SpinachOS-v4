@@ -42,6 +42,7 @@ import './routes/retainer';
 import './routes/command';
 import './routes/laya';
 import './routes/calendar';
+import './routes/images';      // Sprint 8 §6: image-gen wiring (Hermes plugin path)
 import './routes/comms';
 import './routes/scrapers';
 import './routes/telegram';

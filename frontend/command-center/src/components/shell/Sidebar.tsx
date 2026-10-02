@@ -26,6 +26,7 @@ const I = {
 type NavEntry = { href: string; label: string; sub: string; icon: React.ReactNode };
 
 const NAV: NavEntry[] = [
+  { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
   { href: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: I.projects },
   { href: '/agents', label: 'AI Agents', sub: 'Your Digital Team', icon: I.agents },

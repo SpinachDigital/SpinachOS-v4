@@ -256,7 +256,10 @@ export async function handleCommandThread(command: string, threadId?: string): P
   const reply = dispatchReply(agent, task_id);
   broadcast('thread_message', { thread_id: thread.id, sender: 'system', role: 'system', content: reply });
   emitFeed('orchestrator', 'DISPATCHED', { thread: thread.id, agent, task_id });
-  return { thread_id: thread.id, reply, mode: 'fast' };
+  // Sprint 8 §2 UI contract: the fast path MUST return task_id — the chat
+  // surface's inline TaskCard consumes it (observed: task dispatched, reply
+  // carried "Task #…", but task_id was empty → card never rendered).
+  return { thread_id: thread.id, reply, mode: 'fast', task_id };
 }
 
 /** After a "yes" to the plan: delegate the plan via the bridge, close thread. */

@@ -7,6 +7,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { apiFetch } from '@/lib/auth';
+import TaskLiveStrip from '@/components/chat/TaskLiveStrip';
+import TaskChat from '@/components/chat/TaskChat';
 
 type Output = {
   id: string; kind: 'text' | 'image' | 'file' | 'link';
@@ -15,7 +17,7 @@ type Output = {
 };
 type Task = {
   id: string; title: string; status: string; progress: number;
-  assigned_to: string | null; metadata: Record<string, any>; created_at: string;
+  assigned_to: string | null; metadata: Record<string, any>; created_at: string; updated_at?: string;
 };
 type Detail = { task: Task; timeline: { at: string; event: string; detail: string }[]; outputs: Output[] };
 
@@ -150,6 +152,9 @@ export default function TaskDetail() {
       </div>
 
       <div className="page-body">
+        {/* Sprint 8 §3: live visibility — current step, last activity, agent, 10s staleness */}
+        <TaskLiveStrip taskId={id} initial={{ status: t.status, assigned_to: t.assigned_to, updated_at: t.updated_at || t.created_at }} />
+
         {/* timeline */}
         <div className="section-title">Timeline</div>
         <div className="panel" style={{ padding: 14 }}>
@@ -188,6 +193,10 @@ export default function TaskDetail() {
             </div>
           </>
         )}
+
+        {/* Sprint 8 §4: task-scoped chat — this task only, persists on the task */}
+        <div className="section-title">Task chat</div>
+        <TaskChat taskId={id} agent={t.assigned_to} taskTitle={t.title} />
       </div>
     </div>
   );

@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: [],
+  // Sprint 8 build fix: next build and next dev SHARE .next and collide
+  // (Sprint 7 CSS incident: a build wiped the dev server's manifest → layout.css 404).
+  // Production builds go to .next-prod; dev keeps .next. No more corruption.
+  distDir: process.env.NODE_ENV === 'production' ? '.next-prod' : '.next',
   async redirects() {
     return [
       // IA v3: consolidated nav — old routes redirect to their new homes (no 404s)
