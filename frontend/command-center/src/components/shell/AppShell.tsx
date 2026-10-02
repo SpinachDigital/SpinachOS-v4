@@ -23,9 +23,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <Sidebar drawerOpen={drawerOpen} onNavigate={close} />
       {drawerOpen && <div className="drawer-scrim" onClick={close} aria-hidden />}
       <TopBar onHamburger={() => setDrawerOpen((v) => !v)} />
-      <nav className="tabs" id="tabs">
-        <button className="tab active" type="button">Overview</button>
-      </nav>
+      {/* Sprint 10 P2: the dead "Overview" tab removed — one tab with no
+          handler is dead UI (audit 2026-10-02). The sidebar already labels
+          the current route; the tabs row added nothing. */}
       <main className="main">{children}</main>
       <aside className="right">
         <RightRail />

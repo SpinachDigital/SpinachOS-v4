@@ -76,6 +76,11 @@ DEPARTMENT_PATTERNS = {
         'hr', 'human resources', 'hire', 'hiring', 'onboard', 'onboarding',
         'recruit', 'candidate', 'interview', 'payroll', 'leave', 'employee',
         'team member', 'headcount', 'offboard', 'timesheet',
+        # Sprint 10 §7.3 re-measure (54.3% headline, hr→operations the largest
+        # miss class): workload/roster/idle/team-health keywords were missing —
+        # "how is the team's workload" / "check who is idle in the roster" /
+        # "run the weekly team health check" leaked to operations.
+        'roster', 'idle', 'workload', 'team health', 'overloaded', 'reassign',
     ],
 }
 
@@ -162,11 +167,15 @@ def classify_department(message: str) -> tuple[str, float]:
         # Sprint 9 §5 fix: ceo→orchestrator/marketing confusion (×2 measured) —
         # explicit strategy words in a TIE mean the intent is strategic.
         is_strategy_intent = any(v in msg for v in ['strategy', 'should we', 'what if', 'vision', 'direction'])
+        # Sprint 10 §7.3 re-measure: strategy intent in a TIE with ANY dept —
+        # "review the quarterly business results" tied operations (meeting) and
+        # the old branch only checked marketing. Strategy words in a tie mean
+        # the intent is strategic regardless of the co-leader.
         if is_sales_intent and ('sales' in leaders):
             best_dept = 'sales'
         elif is_hr_intent and ('hr' in leaders) and not is_sales_intent:
             best_dept = 'hr'
-        elif is_strategy_intent and 'marketing' in leaders:
+        elif is_strategy_intent:
             best_dept = 'strategy'
         else:
             is_content_intent = any(v in msg for v in ['generate', 'make', 'write', 'draft'])

@@ -10,11 +10,15 @@ const nextConfig = {
     return [
       // IA v3: consolidated nav — old routes redirect to their new homes (no 404s)
       // Sprint 5f: /team redirect REMOVED — the real /team page ships (HR department).
-      // Sprint 6: /office redirect REMOVED — the Living Office (3D diorama) ships at /office.
+      // Sprint 10 §5 (2026-10-02 audit): /office rendered the SAME diorama as /
+      // and wasn't in the nav — the orphan page is DELETED; this redirect
+      // catches any stale links/bookmarks. (Sprint 6's "Living Office ships
+      // at /office" is superseded — / renders the diorama + dept tags.)
+      { source: '/office', destination: '/', permanent: false },
+      { source: '/assets', destination: '/settings', permanent: false },
       { source: '/logs', destination: '/analytics', permanent: false },
       { source: '/marketing/calendar', destination: '/marketing', permanent: false },
       { source: '/marketing/engagement', destination: '/marketing', permanent: false },
-      { source: '/assets', destination: '/settings', permanent: false },
       { source: '/finance', destination: '/analytics', permanent: false },
       { source: '/knowledge', destination: '/settings', permanent: false },
       { source: '/terminal', destination: '/', permanent: false },

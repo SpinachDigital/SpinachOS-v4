@@ -69,6 +69,7 @@ export default function Client360Page({ params }: Props) {
   const [packages, setPackages] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [approvalHistory, setApprovalHistory] = useState<any[]>([]);
+  const [filedAssets, setFiledAssets] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Sprint 9 §3: onboarding — the API (POST /api/v1/onboard) is real but had no
@@ -111,13 +112,14 @@ export default function Client360Page({ params }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const [ctxRes, dnaRes, retRes, pkgRes, invRes, apprRes] = await Promise.all([
+      const [ctxRes, dnaRes, retRes, pkgRes, invRes, apprRes, filedRes] = await Promise.all([
         apiFetch(`/api/v1/clients/${id}`),
         apiFetch(`/api/v1/knowledge/context/${id}`),
         apiFetch('/api/v1/retainer/schedule'),
         apiFetch('/api/v1/packages'),
         apiFetch(`/api/v1/invoices?client_id=${id}`),          // P1 Task 1
         apiFetch(`/api/v1/approvals?client_id=${id}&limit=50`), // P1 Task 2
+        apiFetch(`/api/v1/deliverables?client_id=${id}`),       // Sprint 10 §4: filed assets
       ]);
       if (!ctxRes.ok) throw new Error(`client context: API ${ctxRes.status}`);
       const ctxData = await ctxRes.json();
@@ -139,6 +141,14 @@ export default function Client360Page({ params }: Props) {
       if (apprRes.ok) {
         const hist = await apprRes.json();
         setApprovalHistory(Array.isArray(hist) ? hist : []);
+      }
+      // Sprint 10 §4: filed assets (approved-gate deliverables) — the twin's
+      // assets panel reads the deliverables table, not the legacy content array.
+      if (filedRes && filedRes.ok) {
+        const filed = await filedRes.json();
+        setFiledAssets(Array.isArray(filed) ? filed : []);
+      } else {
+        setFiledAssets([]); // endpoint missing → honest empty, never fake
       }
     } catch (e: any) {
       setError(e?.message || 'Failed to load client');
@@ -414,26 +424,50 @@ export default function Client360Page({ params }: Props) {
           )}
         </div>
 
-        {/* ---------- deliverables ---------- */}
+        {/* ---------- deliverables: FILED assets (Sprint 10 §4) + pipeline content ---------- */}
         <div className="panel">
           <div className="panel-head"><h3>Deliverables & assets</h3></div>
-          {content.length === 0 ? (
-            <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
-              No deliverables yet — they appear here as the pipeline produces them.
-            </div>
-          ) : (
-            <div className="grid-3">
-              {content.map((c: any) => (
-                <div key={c.id} className="card" style={{ padding: 12 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{c.title || 'Untitled'}</div>
-                  <div className="t-meta" style={{ color: 'var(--text-faint)', marginTop: 4 }}>
-                    {c.kind || c.type || 'content'} · {fmtDate(c.created_at)}
-                  </div>
-                  <div style={{ marginTop: 8 }}>{statusPill(c.status)}</div>
-                </div>
-              ))}
-            </div>
+          {/* FILED deliverables (approved-gate filed, released_by/version) */}
+          {filedAssets && filedAssets.length > 0 && (
+            <>
+              <div className="section-title">Filed (approved gates)</div>
+              <div className="table-wrap" style={{ marginBottom: 14 }}>
+                <table className="data-table">
+                  <thead><tr><th>Deliverable</th><th>Kind</th><th>Version</th><th>Released</th></tr></thead>
+                  <tbody>
+                    {filedAssets.map((d: any) => (
+                      <tr key={d.id}>
+                        <td><span className="cell-main">{d.title}</span>{d.file_url && <a href={d.file_url} className="link" style={{ marginLeft: 8 }}>file →</a>}</td>
+                        <td className="cell-dim">{d.kind}</td>
+                        <td className="cell-dim">v{d.version}</td>
+                        <td className="cell-dim">{d.released_by ? `${d.released_by} · ${fmtDate(d.released_at)}` : fmtDate(d.released_at || d.created_at)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
+          {content.length === 0 && (!filedAssets || filedAssets.length === 0) ? (
+            <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
+              No deliverables yet — they are filed here after the gate approves (version + released_by logged).
+            </div>
+          ) : content.length > 0 ? (
+            <>
+              <div className="section-title">Pipeline content</div>
+              <div className="grid-3">
+                {content.map((c: any) => (
+                  <div key={c.id} className="card" style={{ padding: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{c.title || 'Untitled'}</div>
+                    <div className="t-meta" style={{ color: 'var(--text-faint)', marginTop: 4 }}>
+                      {c.kind || c.type || 'content'} · {fmtDate(c.created_at)}
+                    </div>
+                    <div style={{ marginTop: 8 }}>{statusPill(c.status)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className="grid-2" style={{ alignItems: 'start' }}>

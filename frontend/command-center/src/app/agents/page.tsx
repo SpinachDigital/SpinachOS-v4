@@ -66,8 +66,8 @@ export default function AgentsPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>AI Agents</h1>
-          <p className="sub">{Object.keys(agents).length} agents · {workflows.length} workflows</p>
+          <h1>Agent Fleet</h1>
+          <p className="sub">{Object.keys(agents).length} AI agents · {workflows.length} live workflows</p>
         </div>
         <div className="actions">
           <span className="live-badge">

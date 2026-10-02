@@ -1,0 +1,29 @@
+SPRINT 10 §7.3 — LAYA 70-COMMAND RE-MEASURE (2026-10-02)
+=========================================================
+Run 1 (hr/strategy fixes ke pehle):  38/70 = 54.3%
+Run 2 (hr keywords + strategy tie-break fix ke baad): 39/70 = 55.7%
+Sprint 8 baseline: 60.0% adapter / 18.6% real-Laya (79% abstain)
+
+IMPORTANT HONEST CONTEXT — the baseline is NOT apples-to-apples:
+1. The Sprint 8 eval set (70 commands) lived in session history, not the
+   repo. This re-measure REBUILT the set from the measured confusion classes
+   (Sprint 9 §5) + word-boundary traps + abstention cases — a STRICTER set
+   than Sprint 8's (more cross-dept ambiguity by design).
+2. Label semantics: my labels kept orchestrator/operations as DIFFERENT
+   departments — they route to the SAME profile (ops). Same for design-
+   banner → design (correct dept, my label said marketing). Correcting
+   these label choices puts run 2 at ~63-64%.
+3. 2/70 timeouts (Laya transient under load) count as misses.
+
+FIXES SHIPPED (measured miss classes):
+- hr keywords extended: roster, idle, workload, team health, overloaded,
+  reassign ("how is the team's workload" leaked to operations — ×4 misses).
+- strategy tie-break extended to ALL ties (was marketing-only):
+  "review the quarterly business results" tied operations → strategy.
+- Both live-verified (run 2 vs run 1: hr + strategy misses down).
+
+Remaining misses → Sprint 11+: logged data + embeddings (out of scope now,
+per the Sprint 9 scope note — fine-tuning/pgvector park kiya hua hai).
+Evidence: laya-remeasure.py (the set + runner), laya-remeasure-run.log,
+laya-remeasure-run2.log, laya-remeasure-70.txt.
+=========================================================

@@ -1,0 +1,19 @@
+SPRINT 10 §2 — GATE CHAIN LIVE TEST (2026-10-02, all gates deny-by-default)
+============================================================================
+1. POST /gates (unknown action "launch_missiles")     → 400 deny-by-default ✓
+2. POST /gates (advance_stage, write, payload w/ password)
+                                                      → 201 gate registered ✓
+   GET /gates payload preview: password [REDACTED] ✓ | payload_hash present ✓
+3. POST /gates/:id/run (BEFORE approval)              → 403 ✓ (deny-by-default)
+4. POST /gates/:id/approve                            → 200 (approved_by=founder,
+   reviewed_at set) ✓
+5. POST /gates/:id/run (after approval)               → advance_stage executed ✓
+   next_step=content_creation, progress=13
+   pipeline_events: gate_paused → gate_approved → auto_advance (actor=gate:pre_advance_test) ✓
+6. POST /gates/:id/run (re-run)                       → 409 idempotent ✓
+7. file_deliverable chain: register → run-before-approval 403 ✓ → approve 200 ✓
+   → run → deliverables row (id=19d8fe4a…, version=1, released_by=founder,
+   released_at, gate_action_id link) ✓ + pipeline_events 'filed' ✓
+============================================================================
+WORKFLOW: bc269ae5 (lead_generation → content_creation auto-advanced)
+CLIENT:  3a1f71c4 (twin link via client_id on gates + deliverables + events)

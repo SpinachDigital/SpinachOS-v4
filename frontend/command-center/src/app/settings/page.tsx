@@ -144,9 +144,16 @@ export default function SettingsPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span className={`dot ${int.connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-                    <button className="btn btn-secondary btn-sm" onClick={() => {}}>
-                      {int.connected ? 'Disconnect' : 'Configure'}
-                    </button>
+                    {/* Sprint 10 P1: dead button fixed — these integrations are
+                        infra status (Supabase/gateway = live by wiring), and the
+                        not-connected ones (Telegram/Postiz/X/LinkedIn) have no
+                        setup flow in this UI yet. Honest state: the button says
+                        what it does instead of silently doing nothing. */}
+                    {int.connected ? (
+                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>wired</span>
+                    ) : (
+                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>not set up</span>
+                    )}
                   </div>
                 </div>
               ))}
