@@ -7,6 +7,7 @@ export const LAYA_URL = process.env.LAYA_URL || 'http://localhost:8000';
 export interface LayaDecision {
   department: string;
   priority: 'high' | 'medium' | 'low';
+  confidence?: number; // Sprint 9 §5: abstention rule reads this (<0.6 → LLM fallback)
 }
 
 export const LAYA_DEPARTMENT_MAP: Record<string, string> = {

@@ -1,0 +1,6 @@
+draft an outreach message for the client   → sales        conf=0.95
+hire a new designer                        → hr           conf=0.8
+what is our growth strategy                → strategy     conf=1.0
+fix the postpone bug                       → engineering  conf=0.95
+onboard the new client                     → hr           conf=0.8
+write a LinkedIn post                      → marketing    conf=0.95

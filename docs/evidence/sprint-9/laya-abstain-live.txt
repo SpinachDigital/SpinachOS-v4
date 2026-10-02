@@ -1,0 +1,3 @@
+abstain LIVE: "we need to discuss our vision for q4" (0 keyword hits)
+→ LLM fallback (abstention rule) → department: strategy, conf: 1.0
+NOT the old engineering-0.3 guess. Laya :8000, Sprint 9 §5.

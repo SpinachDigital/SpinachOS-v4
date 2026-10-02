@@ -86,6 +86,15 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+    // Sprint 9 §2: outreach drafts ride the SAME object — approving the card
+    // moves the linked draft to 'approved' so /outreach/send can fire.
+    // (Observed: approval row went 'approved' but the draft stayed
+    // 'pending_approval' → send correctly blocked forever. Sync bug.)
+    if ((data as any)?.payload_json?.kind === 'outreach' && (data as any)?.payload_json?.draft_id) {
+      await supabase.from('outreach_drafts').update({
+        status: 'approved', updated_at: new Date().toISOString(),
+      }).eq('id', (data as any).payload_json.draft_id);
+    }
     emitApproval({ ...data, action: 'approved' });
     res.json(data);
   } catch (e: any) {
@@ -95,6 +104,7 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
 
 app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
   try {
+    const { reason } = req.body || {};
     const { data, error } = await supabase
       .from('approvals')
       .update({ status: 'rejected', approved_by: 'director', reviewed_at: new Date().toISOString() })
@@ -102,7 +112,15 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
-    emitApproval({ ...data, action: 'rejected' });
+    // Sprint 9 §2: rejection reason on reject (UI passes it) — stored on the
+    // approval row + linked outreach draft moves to 'rejected'.
+    if ((data as any)?.payload_json?.kind === 'outreach' && (data as any)?.payload_json?.draft_id) {
+      await supabase.from('outreach_drafts').update({
+        status: 'rejected', updated_at: new Date().toISOString(),
+        qualification: { ...((data as any).payload_json.qualification || {}), rejection_reason: reason || null },
+      }).eq('id', (data as any).payload_json.draft_id);
+    }
+    emitApproval({ ...data, action: 'rejected', rejection_reason: reason || null });
     res.json(data);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

@@ -17,7 +17,7 @@
  */
 import { supabase, emitFeed, sanitizeText, broadcast } from './ctx';
 import { runGatewayTask } from './bridge';
-import { needsBrainstorm, dispatchReply } from './command-intent';
+import { needsBrainstorm, dispatchReply, stripSafetyLeak } from './command-intent';
 import { executeAgentTask } from './engines/agent-execution';
 import { callLaya, LAYA_DEPARTMENT_MAP } from './laya-client';
 import { hybridRetrieve } from './knowledge-helper';
@@ -147,7 +147,7 @@ async function fastAnswer(command: string): Promise<string | null> {
   return null; // not a fast-answer question
 }
 
-export async function handleCommandThread(command: string, threadId?: string): Promise<{ thread_id: string; reply: string; mode: string }> {
+export async function handleCommandThread(command: string, threadId?: string): Promise<{ thread_id: string; reply: string; mode: string; task_id?: string }> {
   // open or extend the thread
   let thread: any;
   if (threadId) {
@@ -194,6 +194,22 @@ export async function handleCommandThread(command: string, threadId?: string): P
 
   // classify
   const decision = await callLaya(command);
+  // Sprint 9 §5: adapter abstention — Laya unavailable OR no strong keyword
+  // match (confidence < 0.6) → LLM fallback via the brainstorm thread instead
+  // of guessing a department. A wrong department is worse than a slow one.
+  if (decision && decision.confidence !== undefined && decision.confidence < 0.6) {
+    const { ragBlock: abstRag } = await buildRoundContext(command);
+    const abstPrompt = `${FOUNDER_PREFS}\n\nThe founder of Spinach Digital says: "${command}"\n\n${abstRag ? 'KNOWN CONTEXT:\n' + abstRag : ''}\n\nThis command is ambiguous — our fast router could not confidently classify it. Ask 2-3 sharp clarifying questions (each with a smart default). Max 100 words.`;
+    const { output: abstOut } = await runGatewayTask('orchestrator', abstPrompt);
+    const abstReply = stripSafetyLeak(String(abstOut || 'Thoda clear karo — kis department/kaam ki baat hai?')).slice(0, 1200);
+    await supabase.from('thread_messages').insert({
+      thread_id: thread.id, sender: 'orchestrator', role: 'agent', content: abstReply,
+      metadata: { abstained: true, laya_confidence: decision.confidence },
+    });
+    broadcast('thread_message', { thread_id: thread.id, sender: 'orchestrator', role: 'agent', content: abstReply });
+    await supabase.from('command_threads').update({ mode: 'brainstorm', metadata: { ...(thread.metadata || {}), abstained: true } }).eq('id', thread.id);
+    return { thread_id: thread.id, reply: abstReply, mode: 'brainstorm' };
+  }
   const agent = decision ? (LAYA_DEPARTMENT_MAP[decision.department] || 'orchestrator') : 'orchestrator';
   // ACTIVE brainstorm thread → the user is ANSWERING round-N questions. Continue
   // the SAME brainstorm regardless of what Laya classifies the ANSWER as —
@@ -224,7 +240,7 @@ export async function handleCommandThread(command: string, threadId?: string): P
       : `You are the chief of staff thinking WITH the founder BEFORE executing. Ask 2-4 sharp clarifying questions — each question must include a SMART DEFAULT grounded in the KNOWN CONTEXT above (e.g. "Budget — Spinach ka retainer ₹25k/mo tier theek hai, ya alag budget?"). Never ask generic questions. Max 120 words.`}`;
 
     const { output } = await runGatewayTask(brain, prompt);
-    const reply = String(output || 'Ek clarification chahiye — kaunsa client aur kitna budget?').slice(0, 1600);
+    const reply = stripSafetyLeak(String(output || 'Ek clarification chahiye — kaunsa client aur kitna budget?')).slice(0, 1600);
 
     // Sprint 3: track answered slots so questions never repeat — the founder's
     // own reply covers slots too (e.g. "budget 40k" answers budget), and the
@@ -263,7 +279,7 @@ export async function handleCommandThread(command: string, threadId?: string): P
 }
 
 /** After a "yes" to the plan: delegate the plan via the bridge, close thread. */
-export async function delegatePlan(thread: any): Promise<{ thread_id: string; reply: string; mode: string }> {
+export async function delegatePlan(thread: any): Promise<{ thread_id: string; reply: string; mode: string; task_id?: string }> {
   // pull the last agent message (the proposed plan)
   const { data: msgs } = await supabase.from('thread_messages')
     .select('*').eq('thread_id', thread.id).eq('role', 'agent')

@@ -41,11 +41,11 @@ DEPARTMENT_PATTERNS = {
         'architecture', 'fix', 'bug', 'refactor', 'html',
     ],
     'marketing': [
-        'campaign', 'ad', 'ads', 'instagram', 'facebook', 'meta', 'google ads',
+        'campaign', 'ads', 'instagram', 'facebook', 'meta', 'google ads',
         'seo', 'content calendar', 'social media', 'post', 'reel', 'story',
-        'engagement', 'growth', 'promote', 'launch', 'brand awareness', 'viral',
+        'engagement', 'growth', 'promote', 'brand awareness', 'viral',
         'advertise', 'tweet', 'tweetx', 'twitter', 'x post', 'linkedin',
-        'threads', 'social', 'follower', 'hashtag', 'announcement', 'announcement',
+        'threads', 'social', 'follower', 'hashtag', 'announcement',
     ],
     'design': [
         'design', 'ui', 'ux', 'figma', 'prototype', 'mockup', 'wireframe',
@@ -53,9 +53,10 @@ DEPARTMENT_PATTERNS = {
         'creative', 'asset', 'banner', 'graphic', 'icon',
     ],
     'sales': [
-        'sell', 'pitch', 'outreach', 'cold email', 'lead', 'prospect', 'client',
+        'sell', 'pitch', 'outreach', 'cold email', 'lead', 'prospect',
         'deal', 'proposal', 'quote', 'demo', 'close', 'pipeline', 'revenue',
-        'account',
+        'account', 'sales', 'quota', 'cold outreach', 'lead gen',
+        'lead generation', 'win', 'client acquisition', 'follow up',
     ],
     'content': [
         'write', 'copy', 'blog', 'article', 'script', 'caption', 'newsletter',
@@ -68,8 +69,13 @@ DEPARTMENT_PATTERNS = {
     ],
     'operations': [
         'ops', 'operation', 'process', 'workflow', 'automation', 'schedule',
-        'calendar', 'standup', 'meeting', 'admin', 'hr', 'hire', 'onboard',
-        'policy', 'compliance',
+        'calendar', 'standup', 'meeting', 'admin', 'hire', 'onboard',
+        'policy', 'compliance', 'status update', 'task status', 'progress',
+    ],
+    'hr': [
+        'hr', 'human resources', 'hire', 'hiring', 'onboard', 'onboarding',
+        'recruit', 'candidate', 'interview', 'payroll', 'leave', 'employee',
+        'team member', 'headcount', 'offboard', 'timesheet',
     ],
 }
 
@@ -78,6 +84,8 @@ DEPARTMENT_PATTERNS = {
 CONTENT_CREATION_VERBS = ['generate', 'generate a', 'make', 'write', 'draft', 'post', 'create a post']
 
 # Agent mapping
+# Sprint 9 §5: hr is a real department now (hr_director profile) — hr commands
+# used to fall through to operations→orchestrator (×3 measured confusion).
 DEPARTMENT_TO_AGENT = {
     'engineering': 'engineering',
     'marketing': 'social',
@@ -86,6 +94,7 @@ DEPARTMENT_TO_AGENT = {
     'content': 'social',
     'research': 'research',
     'operations': 'ops',
+    'hr': 'hr_director',
 }
 
 # Priority keywords
@@ -131,20 +140,45 @@ def classify_department(message: str) -> tuple[str, float]:
 
     if len(leaders) == 1:
         best_dept = leaders[0]
+        # Sprint 9 §5 fix: ceo→marketing confusion (×2 measured) — a SINGLE weak
+        # leader (1 hit) with an explicit strategy word means the intent is
+        # strategic ("what is our growth strategy" hit only 'growth'→marketing).
+        # Strong leaders (2+ hits) keep their department.
+        weak = best_score < 2
+        if weak and any(v in msg for v in ['strategy', 'should we', 'what if', 'vision', 'direction']):
+            best_dept = 'strategy'
+            scores['strategy'] = best_score  # keep best_score lookup valid
     else:
         # TIE-BREAK: content-creation verbs (generate/make/post) prefer marketing/content
         # over engineering. "create a social media post" ties 2-2 (create+post vs social+media)
         # → marketing wins because the INTENT is content creation, not building.
-        is_content_intent = any(v in msg for v in ['generate', 'make', 'write', 'draft'])
-        if is_content_intent and ('marketing' in leaders):
-            best_dept = 'marketing'
-        elif is_content_intent and ('content' in leaders):
-            best_dept = 'content'
-        elif 'engineering' in leaders and best_score >= 2:
-            # 2+ engineering hits without content intent → engineering (clear build task)
-            best_dept = 'engineering'
+        # Sprint 9 §5 fix: sales/outreach tie-breaks — "outreach post" / "sales post"
+        # used to go marketing (×6 measured confusion: sales→social). Explicit
+        # sales intent keywords win the tie BEFORE content verbs apply.
+        # HR tie-break: hiring/onboarding intent → hr over operations
+        # (both share hire/onboard keywords — measured hr→operations ×3).
+        is_sales_intent = any(v in msg for v in ['outreach', 'cold email', 'cold outreach', 'lead gen', 'prospect', 'pitch', 'follow up', 'quota'])
+        is_hr_intent = any(v in msg for v in ['hire', 'hiring', 'onboard', 'onboarding', 'recruit', 'candidate', 'interview', 'payroll', 'offboard'])
+        # Sprint 9 §5 fix: ceo→orchestrator/marketing confusion (×2 measured) —
+        # explicit strategy words in a TIE mean the intent is strategic.
+        is_strategy_intent = any(v in msg for v in ['strategy', 'should we', 'what if', 'vision', 'direction'])
+        if is_sales_intent and ('sales' in leaders):
+            best_dept = 'sales'
+        elif is_hr_intent and ('hr' in leaders) and not is_sales_intent:
+            best_dept = 'hr'
+        elif is_strategy_intent and 'marketing' in leaders:
+            best_dept = 'strategy'
         else:
-            best_dept = leaders[0]  # first in dept order
+            is_content_intent = any(v in msg for v in ['generate', 'make', 'write', 'draft'])
+            if is_content_intent and ('marketing' in leaders):
+                best_dept = 'marketing'
+            elif is_content_intent and ('content' in leaders):
+                best_dept = 'content'
+            elif 'engineering' in leaders and best_score >= 2:
+                # 2+ engineering hits without content intent → engineering (clear build task)
+                best_dept = 'engineering'
+            else:
+                best_dept = leaders[0]  # first in dept order
 
     best_score = scores[best_dept]
     total = sum(scores.values())
@@ -223,7 +257,7 @@ async def llm_fallback_classify(message: str) -> dict:
         prompt = f"""Classify this task into one department and priority.
 Return ONLY JSON: {{"department": "...", "priority": "high|medium|low"}}
 
-Departments: engineering, marketing, design, sales, content, research, operations
+Departments: engineering, marketing, design, sales, content, research, operations, hr
 Priority: high, medium, low
 
 Task: {message}"""
@@ -314,10 +348,15 @@ async def decide(req: DecideRequest):
             primary_dept = dept
             primary_priority = priority
     
-    # System 1.5: LLM fallback for low confidence - ONLY if truly low
-    # With confidence override, clear engineering tasks should have >= 0.85
-    if max_confidence < 0.5 and all_tasks:
-        print(f"[DEBUG] Fallback triggered: max_confidence={max_confidence}, tasks={len(all_tasks)}")
+    # Sprint 9 §5: ABSTENTION rule — no strong keyword match (no dept scored 2+
+    # and top confidence < 0.6) → LLM fallback INSTEAD of guessing. A wrong
+    # department is worse than a slow one. The old default returned
+    # 'engineering' at 0.3 confidence for ANY unmatched input.
+    if all_tasks and max_confidence < 0.6 and not any(
+        s >= 2 for d, s in
+        (lambda msg: {d: sum(1 for kw in kws if ((' ' in kw and kw in msg) or (' ' not in kw and re.search(r'\b' + re.escape(kw) + r'\b', msg)))) for d, kws in DEPARTMENT_PATTERNS.items()})(message.lower()).items()
+    ):
+        print(f"[LAYA] abstain: max_confidence={max_confidence} → LLM fallback")
         try:
             fallback = await llm_fallback_classify(message)
             primary_dept = fallback.get('department', primary_dept)

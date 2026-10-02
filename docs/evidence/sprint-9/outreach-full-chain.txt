@@ -1,0 +1,19 @@
+SPRINT 9 WIN — FULL CHAIN LIVE TEST (2026-10-02)
+Lead: f2e76692 (TestCo, CTO, github source)
+
+1. QUALIFY (unqualified): rules visible — budget:no, intent:no, fit:yes → NOT qualified
+   §2 SAFETY: draft correctly BLOCKED (400) for unqualified lead
+2. Lead metadata updated with real budget+intent text → re-qualify: 3/3, qualified=True
+3. DRAFT created: f300e936 (email, subject+body, qualification rules stored)
+4. QUEUE → THE INBOX: ApprovalCard b93a7c2e created (payload_json.kind=outreach)
+5. SEND BEFORE APPROVAL: correctly BLOCKED (403) — the gate works
+6. FOUNDER APPROVES: approval row approved, approved_by=director, reviewed_at stamped
+   BUG FOUND+FIXED: draft stayed pending_approval (sync bug) — approvals/:id/approve
+   now syncs the linked outreach draft to 'approved' (approvals.ts). Rejection
+   reason also stored on reject.
+7. SEND (post-approval): OK — outreach_messages row: sent_by=founder,
+   approved_by=director, sent_at=2026-10-02T05:56:46Z, delivery=manual (ToS-clean)
+8. SEND AGAIN: blocked (dup guard + status='sent')
+9. AUDIT TRAIL: 1 message, full lead/draft/approver/timestamp chain
+
+Result: PASS — every safety gate live-verified.

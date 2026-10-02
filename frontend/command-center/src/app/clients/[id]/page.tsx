@@ -71,6 +71,41 @@ export default function Client360Page({ params }: Props) {
   const [approvalHistory, setApprovalHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Sprint 9 §3: onboarding — the API (POST /api/v1/onboard) is real but had no
+  // UI action. Button lives here (client detail, after deal won): package select
+  // → onboard → pipeline created + kickoff visible + confirmation.
+  const [onboardPkg, setOnboardPkg] = useState<string>('');
+  const [onboarding, setOnboarding] = useState(false);
+  const [onboardResult, setOnboardResult] = useState<any>(null);
+  const [onboardError, setOnboardError] = useState<string | null>(null);
+
+  const runOnboard = async () => {
+    if (!onboardPkg) { setOnboardError('Pehle package select karo.'); return; }
+    setOnboarding(true);
+    setOnboardError(null);
+    setOnboardResult(null);
+    try {
+      const c = ctx?.client || {};
+      const res = await apiFetch('/api/v1/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: c.name || 'Client', package_key: onboardPkg,
+          has_logo: !!(c.metadata?.has_logo), industry: c.business_type || undefined,
+          location: c.location || undefined, contact: c.metadata?.contact_person || undefined,
+          email: c.metadata?.email || undefined, goal: c.goal || undefined,
+          intake_notes: `Onboarded from Client 360 (client ${id}) after deal won.`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setOnboardError(data.error || `API ${res.status}`); return; }
+      setOnboardResult(data); // whole chain observable: client + workflow + dormant + next
+    } catch (e: any) {
+      setOnboardError(e?.message || 'Onboard failed');
+    } finally {
+      setOnboarding(false);
+    }
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -219,6 +254,44 @@ export default function Client360Page({ params }: Props) {
       </div>
 
       <div className="page-body">
+        {/* ---------- Sprint 9 §3: ONBOARDING (after deal won) ---------- */}
+        {!onboardResult && (
+          <div style={{ padding: 14, marginBottom: 14, background: 'var(--card, #fff)', border: '1px solid var(--border-soft, #eee)', borderRadius: 10 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #111)', marginBottom: 4 }}>Onboard this client</div>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground, #666)', marginBottom: 10 }}>
+              Deal won? Package select karo — pipeline auto-create + orchestrator kickoff (whole chain observable).
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <select value={onboardPkg} onChange={(e) => setOnboardPkg(e.target.value)}
+                style={{ minHeight: 44, padding: '0 10px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, background: 'var(--card, #fff)', color: 'var(--text, #111)', fontSize: 13 }}>
+                <option value="">Select package…</option>
+                {packages.map((p: any) => (
+                  <option key={p.key} value={p.key}>{p.name} — ₹{p.price_inr}/{p.billing === 'monthly' ? 'mo' : 'one-time'}</option>
+                ))}
+              </select>
+              <button onClick={() => void runOnboard()} disabled={onboarding || !onboardPkg}
+                style={{ minHeight: 44, padding: '0 18px', border: 'none', borderRadius: 8, background: '#004B63', color: '#fff', fontSize: 13, cursor: onboarding || !onboardPkg ? 'not-allowed' : 'pointer', opacity: onboarding || !onboardPkg ? 0.6 : 1 }}>
+                {onboarding ? 'Onboarding…' : 'Onboard'}
+              </button>
+            </div>
+            {onboardError && (
+              <div role="alert" style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: '#fdf2f2', border: '1px solid #e5b8b8', color: '#8a2b2b', fontSize: 12 }}>
+                {onboardError}
+              </div>
+            )}
+          </div>
+        )}
+        {onboardResult && (
+          <div role="status" style={{ padding: 14, marginBottom: 14, background: '#f2fbf4', border: '1px solid #b8e0c2', borderRadius: 10 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: '#1c5c34', marginBottom: 6 }}>✓ Onboarded — {onboardResult.client?.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--text, #111)', lineHeight: 1.7 }}>
+              Pipeline: <Link href={`/pipeline/${onboardResult.workflow?.id || ''}`} style={{ color: '#004B63' }}>{onboardResult.workflow?.name || onboardResult.workflow?.id?.slice(0, 8) || '—'}</Link>
+              {' '}· step 1 in_progress · kickoff: {onboardResult.next || 'orchestrator planning'}
+              {onboardResult.dormant_trigger?.triggered ? ' · ads_manager provisioned (scale)' : ''}
+            </div>
+          </div>
+        )}
+
         {/* ---------- stat strip ---------- */}
         <div className="grid-4">
           {[

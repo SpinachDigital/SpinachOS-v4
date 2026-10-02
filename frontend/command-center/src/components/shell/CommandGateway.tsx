@@ -42,6 +42,8 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
   const [open, setOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  // Sprint 9 §7.3: TTS replies toggle (default ON — voice mode speaks the reply)
+  const [ttsEnabled, setTtsEnabled] = useState(true);
   const [input, setInput] = useState('');
   const [log, setLog] = useState<Array<{ role: 'you' | 'office'; text: string; time: string }>>([]);
   const [busy, setBusy] = useState(false);
@@ -139,6 +141,22 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
         reply = 'Office is offline — command logged, will run when it\'s back.';
       }
       setLog((l) => [...l, { role: 'office', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      // Sprint 9 §7.3: TTS replies — voice drives the SAME gateway; what you can
+      // type you can hear. Speaks only when the command came from voice (or the
+      // user left TTS on). Transcript already visible in the log.
+      if (ttsEnabled && (source === 'voice' || source === 'text')) {
+        try {
+          const synth = window.speechSynthesis;
+          if (synth) {
+            // strip markdown/table noise for cleaner speech
+            const spoken = reply.replace(/[#*`>_|-]/g, ' ').replace(/\s+/g, ' ').slice(0, 600);
+            const u = new SpeechSynthesisUtterance(spoken);
+            u.lang = 'en-IN';
+            u.rate = 1.02;
+            synth.speak(u);
+          }
+        } catch { /* TTS unavailable — transcript still shows the reply */ }
+      }
       if (data.mode === 'brainstorm' || data.mode === 'delegated') setOpen(true);
     } catch {
       setLog((l) => [...l, { role: 'office', text: 'Gateway error — command logged.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
@@ -217,6 +235,34 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4" />
+            </svg>
+          </button>
+          {/* Sprint 9 §7.3: TTS toggle — replies spoken aloud when on */}
+          <button
+            onClick={() => setTtsEnabled((v) => !v)}
+            className="flex items-center justify-center rounded-full shrink-0"
+            style={{
+              width: 30, height: 30,
+              background: 'transparent',
+              color: ttsEnabled ? 'var(--accent, #004B63)' : 'var(--text-dim)',
+              cursor: 'pointer',
+              border: 'none',
+            }}
+            aria-label={ttsEnabled ? 'Mute spoken replies' : 'Speak replies aloud'}
+            title={ttsEnabled ? 'Replies spoken aloud — click to mute' : 'Replies muted — click to hear them'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {ttsEnabled ? (
+                <>
+                  <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+                  <path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13" />
+                </>
+              ) : (
+                <>
+                  <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+                  <path d="m23 9-6 6M17 9l6 6" />
+                </>
+              )}
             </svg>
           </button>
           <input

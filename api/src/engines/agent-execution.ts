@@ -137,7 +137,7 @@ export async function executeAgentTask(agent: string, task: string, source: stri
   }
 
   // 3. Mark agent working + emit (single lifecycle emitter — identical WS for all paths)
-  emitTaskLifecycle(taskRow.id, agent, 'running', `Executing: ${task.slice(0, 60)}`, { source, path: rule.path, task_kind: inferredKind });
+  emitTaskLifecycle(taskRow.id, agent, 'running', `Executing: ${task.slice(0, 60)}`, { source, path: rule.path, task_kind: inferredKind, title: (taskRow.title || task).slice(0, 120), current_step: `Executing: ${task.slice(0, 50)}` });
 
   // 3. Run the LLM in the background — completion updates DB + emits events
   void (async () => {

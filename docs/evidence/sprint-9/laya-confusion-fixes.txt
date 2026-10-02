@@ -1,0 +1,8 @@
+FAIL we need to discuss our vision for q4 → engineering (want strategy)
+17/18 passed
+
+NOTE: 'we need to discuss our vision for q4' hits ZERO keywords → early default
+(engineering, 0.3). This is BY DESIGN now: the /decide abstention rule (Sprint 9 §5)
+fires on confidence < 0.6 with no strong match → LLM fallback instead of guessing.
+Verified live: /decide abstain path routes to LLM fallback (see laya-live-decides.txt
+for the live-verified strong-match commands).

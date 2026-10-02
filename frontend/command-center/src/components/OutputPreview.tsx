@@ -23,6 +23,8 @@ const PLATFORM_LABEL: Record<string, string> = {
   google_ads: 'Google Ads',
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
+  email: 'Email',
+  threads: 'Threads',
 };
 
 function pick(payload: any): Shape {
@@ -34,6 +36,15 @@ function pick(payload: any): Shape {
     return { kind: 'text', body: s };
   }
   if (typeof payload === 'object') {
+    // Sprint 9 §2: outreach draft shape { kind:'outreach', channel, subject, body }
+    // renders like a message — subject bold + body pre-wrap. Not a JSON dump.
+    if (payload.kind === 'outreach' && typeof payload.body === 'string') {
+      return {
+        kind: 'text',
+        body: (payload.subject ? `${payload.subject}\n\n` : '') + payload.body,
+        platform: typeof payload.channel === 'string' ? payload.channel : undefined,
+      } as any;
+    }
     const text = typeof payload.text === 'string' ? payload.text
       : typeof payload.body === 'string' ? payload.body : null;
     const url = typeof payload.url === 'string' ? payload.url : null;

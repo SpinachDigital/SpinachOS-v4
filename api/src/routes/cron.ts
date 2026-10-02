@@ -17,6 +17,11 @@ app.get('/api/v1/cron/jobs', authMiddleware, async (req, res) => {
       { id: 'a483291191ff', name: 'X daily drafts - approval required', profile: 'social', schedule: '0 14 * * *', enabled: true },
       { id: '03e95988f304', name: 'LinkedIn replies - access blocked', profile: 'social', schedule: 'interval 720m', enabled: false },
       { id: 'retainer-daily-0900', name: 'Retainer due-runs check (D2)', profile: 'orchestrator', schedule: '0 9 * * *', enabled: RETAINER_CRON_RUNNING, internal: true },
+      // Sprint 9 §1: WIN crons — visible cadence for the lead inbox
+      // ("A schedule nobody can see is not a schedule")
+      { id: 'seo-weekly-opportunities', name: 'SEO opportunities scan (Mon 9:00)', profile: 'seo_specialist', schedule: '0 9 * * 1', enabled: true, internal: true },
+      { id: 'social-daily-drafts', name: 'X daily drafts — approval required (daily 14:00)', profile: 'social', schedule: '0 14 * * *', enabled: true, internal: true },
+      { id: 'sales-lead-ingest', name: 'Lead ingest via scrapers (Wed 9:00)', profile: 'sales', schedule: '0 9 * * 3', enabled: true, internal: true },
       { id: 'standup-daily-0930', name: 'Orchestrator standup (weekday 9:30)', profile: 'orchestrator', schedule: '30 9 * * 1-5', enabled: !!WAKE_CRON_STATES['standup-daily-0930'], internal: true },
       { id: 'cto-weekly-review', name: 'CTO weekly tech review (Mon 10:00)', profile: 'cto', schedule: '0 10 * * 1', enabled: !!WAKE_CRON_STATES['cto-weekly-review'], internal: true },
       { id: 'ceo-monthly-strategy', name: 'CEO monthly strategy (1st, 11:00)', profile: 'ceo', schedule: '0 11 1 * *', enabled: !!WAKE_CRON_STATES['ceo-monthly-strategy'], internal: true },

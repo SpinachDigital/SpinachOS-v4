@@ -32,6 +32,7 @@ import './routes/cron';
 import './routes/kanban';
 import './routes/tasks';        // Sprint 1: task detail + outputs
 import './routes/approvals';
+import './routes/outreach';   // Sprint 9 §2: SAFE approval-gated outreach (WIN)
 import './routes/clients';
 import './routes/knowledge';
 import './routes/workflows';

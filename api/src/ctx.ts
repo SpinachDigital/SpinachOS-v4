@@ -128,7 +128,17 @@ export function emitWorkflow(workflow: any) {
 
 export function emitTaskLifecycle(taskId: string, agent: string, status: 'running' | 'done' | 'blocked', activity: string, details?: any) {
   broadcast('task_lifecycle', { task_id: taskId, agent, status, activity, details, timestamp: new Date().toISOString() });
-  emitTaskUpdate({ id: taskId, agent, status, activity });
+  // Sprint 9 §4 Profile Schema v2: emitTaskUpdate now carries the FULL Sprint 8
+  // UI event contract shape (TaskCard { id, title, status, current_step, agent,
+  // progress, updated_at }) — every profile's task events render honest live
+  // data in inline cards; cards show "no live step data" only when absent.
+  emitTaskUpdate({
+    id: taskId, agent, status,
+    title: details?.title ?? undefined,
+    current_step: details?.current_step ?? (details?.activity ? String(details.activity).slice(0, 60) : undefined),
+    progress: typeof details?.progress === 'number' ? details.progress : undefined,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 // ---- sanitize (XSS/injection) ----

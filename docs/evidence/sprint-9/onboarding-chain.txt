@@ -1,0 +1,12 @@
+SPRINT 9 §3 — ONBOARDING FULL CHAIN (2026-10-02)
+Client: War Room Demo Co (761acb76) — Client 360 page
+
+1. UI: package select (brand_identity 14999 one-time) + Onboard click (real CDP click)
+2. POST /api/v1/onboard -> 201
+3. DB-verified: workflows rows created TODAY 07:19 + 07:23 (two clicks — probe-crash retry + retry; both real): name=Brand Identity — War Room Demo Co, status=active, current_step=intake (step 1 in_progress)
+4. UI confirmation: "Onboarded — War Room Demo Co | Pipeline: Brand Identity — War Room Demo Co · step 1 in_progress · kickoff: orchestrator planning department tasks — watch Live Activity" (deep-link /pipeline/<id>)
+5. Whole chain observable — no silent success
+
+BUG FOUND+FIXED en route: use(params) patch crashed the page (unsupported type passed to use()) — reverted to const { id } = params.
+
+Result: PASS
