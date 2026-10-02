@@ -2,7 +2,7 @@
 
 **Plan:** hermes-sprint-9-prompt.md (blueprint v2-aligned)
 **Date:** 2026-10-02
-**Commits:** feat(sprint-9) + docs (this report) — pushed `main`
+**Commits:** `dcf1c7b` (feat sprint-9) + `db4531c` (hr-watcher fix) + docs (this report) — pushed `main`, origin verified
 
 ---
 
@@ -70,6 +70,12 @@
 - Voice: push-to-talk/continuous-mode refinement (mic + transcript + TTS replies all work).
 - Lead "Details" deep-links to `/tasks?lead=<id>` (task page filter) — a dedicated lead-detail page is later-phase.
 - Laya measured accuracy re-run on the 70-command set not repeated (top confusions fixed + verified individually; full re-measure folds into Sprint 10).
+
+## Infrastructure incidents resolved (during sprint, post-report)
+| Incident | Root cause | Fix | Verification |
+|---|---|---|---|
+| CTO worker crash loop (6 crashes, runs 1–6) | **Stale orphaned gateway** (PID 8032, 10/1 boot, parent dead) spawned workers without `HERMES_BIN` → `ModuleNotFoundError: No module named 'hermes_cli'` (worker python = tools python, cwd = task workspace, `hermes_cli` not importable there). | `setx HERMES_BIN` (venv `hermes.exe` — resolver checks `HERMES_BIN` before `find_spec`, cwd-independent) + orphaned gateway killed (safe — live gateway was 27768/8184) + manual `hermes kanban dispatch` pass. | Resolver self-test: `resolved argv: [.../venv/Scripts/hermes.exe]` ✓ → run 7 **COMPLETED** (4m): "Decomposed Design System & Component Library for War Room Demo Co into 5 child tasks with full dependencies." Task `t_bd557029` done. |
+| hr-watcher FK crash (API process died, exit 1) | Idle loop destructure-on-strings: `for (const [agentId] of Array.from(activeAgents.keys()))` — `keys()` yields strings, destructure took the first **character** (`"sales"` → `s`) → `liveStates.get("s")` → undefined → idle 999h → `hr_flags` insert with single-letter id → FK violation (`hr_flags_agent_id_fkey`). Log showed exactly the 11 first letters (s/a/c/d/e/h/o/r). | `for (const agentId of Array.from(activeAgents.keys()))` — full id (commit `db4531c`). | API restart 09:04:49 → cron first run 09:05:00 inserted **8 idle flags with full agent ids**, zero violations; second run 09:14:59 idempotent; run-once probe `created=0 resolved=0`. Evidence: `docs/evidence/sprint-6/hr-watcher-fix-verify.txt`. |
 
 ## Deliberately not built (per §8)
 DELIVER/Client Twin (Sprint 10), CREATE, GROW/publishing (Sprint 13), hiring UI, client portal, webhooks, Telegram/WhatsApp, task queue/retry (pg-boss later), RLS hardening beyond migration defaults, RAG embeddings.
