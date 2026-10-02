@@ -22,6 +22,9 @@ __pycache__/
 # logs & OS junk
 *.log
 logs/
+# Sprint evidence logs are COMMITTED (§7.1 build-log discipline — the
+# "build green" claim counts only with the log in the repo)
+!docs/evidence/**/*.log
 .DS_Store
 Thumbs.db
 *.tmp
