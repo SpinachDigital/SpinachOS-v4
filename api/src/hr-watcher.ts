@@ -122,7 +122,9 @@ export const runHrWatcherOnce = async (): Promise<{ created: number; resolved: n
     });
   }
 
-  for (const [agentId] of Array.from(activeAgents.keys())) {
+  // keys() yields strings — destructure would take the first CHARACTER
+  // ("sales" → "s"), which FK-violated hr_flags (hr_flags_agent_id_fkey).
+  for (const agentId of Array.from(activeAgents.keys())) {
     const st = liveStates.get(agentId);
     const lastActivity = st?.updated_at || st?.activity;
     const idleHours = lastActivity ? (now - new Date(lastActivity).getTime()) / 3600000 : 999;
