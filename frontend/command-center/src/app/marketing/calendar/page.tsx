@@ -117,6 +117,52 @@ export default function ContentCalendarPage() {
 
   const weekDates = view === 'week' ? getWeekDates(selectedDate) : [];
 
+  // Sprint 13 GOAL 2/3: the GROW actions — Generate (planned→review) and
+  // Submit-for-approval (review→publish card in THE INBOX). One click each.
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const flash = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const generate = async (item: any) => {
+    setActionBusy(item.id);
+    try {
+      const res = await apiFetch(`/api/v1/grow/generate/${item.id}`, { method: 'POST' });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      if (res.ok && body.ok) {
+        flash(`Draft generated (${body.mode === 'dry-run' ? 'publishing not connected — dry run' : 'live'}) — now in review`);
+        void fetchItems();
+      } else {
+        flash(body.error || 'Generate failed');
+      }
+    } catch (e: any) {
+      flash(e?.message || 'Generate failed');
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const submitForApproval = async (item: any) => {
+    setActionBusy(item.id);
+    try {
+      const res = await apiFetch(`/api/v1/grow/submit/${item.id}`, { method: 'POST' });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      if (res.ok && body.ok) {
+        flash('Publish card sent to THE INBOX — approve at /approvals');
+        void fetchItems();
+      } else {
+        flash(body.error || 'Submit failed');
+      }
+    } catch (e: any) {
+      flash(e?.message || 'Submit failed');
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
   const slotLabels = ['Morning Brief', 'Market Update', 'Deep Dive', 'Community', 'Case Study', 'Thought Leadership', 'Weekend Wrap', 'Personal', 'Team Highlight', 'Experiment'];
 
   return (
@@ -190,6 +236,30 @@ export default function ContentCalendarPage() {
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: STATUS_COLORS[item.status] + '20', color: STATUS_COLORS[item.status] }}>{item.status}</span>
                             {item.scheduled_at && <span className="t-mono ml-auto text-[10px]" style={{ color: glass.text3 }}>{new Date(item.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
                           </div>
+                          {/* Sprint 13: GROW actions — Generate (planned) / Submit (review) */}
+                          {(item.status === 'planned' || item.status === 'review') && (
+                            <div className="flex items-center gap-2 mt-2">
+                              {item.status === 'planned' ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); void generate(item); }}
+                                  disabled={actionBusy === item.id}
+                                  className="t-mono"
+                                  style={{ minHeight: 44, padding: '6px 12px', borderRadius: 8, fontSize: 11.5, cursor: 'pointer', border: '1px solid var(--border-hairline)', background: 'var(--card)', color: 'var(--text)' }}
+                                >
+                                  {actionBusy === item.id ? 'Generating…' : '✨ Generate'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); void submitForApproval(item); }}
+                                  disabled={actionBusy === item.id}
+                                  className="t-mono"
+                                  style={{ minHeight: 44, padding: '6px 12px', borderRadius: 8, fontSize: 11.5, cursor: 'pointer', border: '1px solid rgba(76,175,80,0.4)', background: 'rgba(76,175,80,0.08)', color: 'var(--green-bright)' }}
+                                >
+                                  {actionBusy === item.id ? 'Submitting…' : 'Submit for approval →'}
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))
                     )}
@@ -253,6 +323,12 @@ export default function ContentCalendarPage() {
           </div>
         )}
       </div>
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', background: 'var(--slate, #0A0A0A)', color: '#fff', padding: '10px 18px', borderRadius: 999, fontSize: 12.5, zIndex: 60, boxShadow: '0 4px 14px rgba(0,0,0,0.2)' }} className="t-meta">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
