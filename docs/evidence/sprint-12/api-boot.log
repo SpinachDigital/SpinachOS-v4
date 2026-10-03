@@ -8,3 +8,6 @@ Spinach OS API running on http://localhost:4000
 WebSocket on ws://localhost:4000/ws and ws://localhost:4000/ws/activity
 [assets] buckets ensured at boot
 [task-advance] BLOCKED at festive-brief: open gate diwali-review-gate (write) — approve at /approvals
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.
