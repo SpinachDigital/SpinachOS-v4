@@ -30,6 +30,7 @@ logs/
 api/.director-jwt
 api/.s9-*
 api/.s10-*
+api/.s11-*
 .s9-*
 supabase/.temp/
 .DS_Store
