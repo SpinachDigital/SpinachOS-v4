@@ -25,6 +25,13 @@ logs/
 # Sprint evidence logs are COMMITTED (§7.1 build-log discipline — the
 # "build green" claim counts only with the log in the repo)
 !docs/evidence/**/*.log
+# Runtime state files (JWT cache, gate/task state pointers, supabase temp) —
+# machine-local, never committed; clean-tree builds exclude them
+api/.director-jwt
+api/.s9-*
+api/.s10-*
+.s9-*
+supabase/.temp/
 .DS_Store
 Thumbs.db
 *.tmp
