@@ -120,7 +120,7 @@ app.post('/api/v1/playbooks/:slug/install', authMiddleware, async (req, res) => 
           workflow_id: wf.id,
           client_id,
           gate_name: String(g.name),
-          action: String(g.action || 'approve_deliverable'),
+          action: String(g.action || 'file_deliverable'), // Sprint 13 nit 2: fallback must be a VALID registered action (approve_deliverable isn't in KNOWN_ACTIONS — a pack missing an action would 400 at runtime)
           risk_tier: String(g.risk_tier || 'write'),
           payload_json: { from_playbook: pack.slug, pack_version: pack.version, after_step: g.after_step || null },
           requested_by: 'playbook',

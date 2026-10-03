@@ -21,7 +21,9 @@ create table if not exists public.agent_memory (
 --    version; existing instances stay unless explicitly migrated.
 create table if not exists public.playbooks (
   id uuid primary key default gen_random_uuid(),
-  slug text not null unique,
+  slug text not null,
+  -- Sprint 13 nit 4 / schema fix: versioned packs — uniqueness is
+  -- (slug, version), NOT slug alone (slug-unique made v2 seeds impossible)
   name text not null,
   workflow_type text not null,            -- onboarding | content | sales | retainer
   version integer not null default 1,
@@ -84,8 +86,11 @@ insert into public.playbooks (slug, name, workflow_type, version, description, s
    '[{"name":"Run SEO audit","agent":"seo_specialist","step_name":"audit"},{"name":"Apply on-page fixes","agent":"seo_specialist","step_name":"on-page"}]',
    '[{"name":"seo-report-gate","action":"file_deliverable","risk_tier":"write","after_step":"report"}]');
 
--- 6. touch trigger on playbooks (updated_at)
+-- 6. touch triggers on playbooks (updated_at) — IF NOT EXISTS (Sprint 13
+--    nit 3: migration idempotent — re-running must not fail)
+drop trigger if exists trg_playbooks_touch on public.playbooks;
 create trigger trg_playbooks_touch before update on public.playbooks
   for each row execute function public.touch_updated_at();
+drop trigger if exists trg_agent_memory_touch on public.agent_memory;
 create trigger trg_agent_memory_touch before update on public.agent_memory
   for each row execute function public.touch_updated_at();

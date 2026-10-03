@@ -14,6 +14,7 @@
  * failure must not break the decision it records.
  */
 import { SupabaseClient } from '@supabase/supabase-js';
+import { redactPayload } from './routes/gates';
 
 export type MemoryType = 'client' | 'decision' | 'pattern' | 'preference';
 
@@ -32,12 +33,14 @@ export type MemoryInput = {
  */
 export async function recordMemory(supabase: SupabaseClient, m: MemoryInput): Promise<boolean> {
   try {
+    // Sprint 13 nit 4: redact secrets at record time — a password/token in a
+    // payload never reaches the ledger raw (same REDACT_KEYS as gate payloads).
     const { error } = await supabase.from('agent_memory').upsert(
       {
         agent_profile: m.agent_profile,
         memory_type: m.memory_type,
         key: m.key,
-        value: m.value,
+        value: redactPayload(m.value),
         expires_at: m.expires_at || null,
         updated_at: new Date().toISOString(),
       },

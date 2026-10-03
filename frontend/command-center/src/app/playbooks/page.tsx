@@ -148,10 +148,24 @@ export default function PlaybooksPage() {
                       <p className="t-meta" style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.45, marginBottom: 10 }}>
                         {p.description || '—'}
                       </p>
-                      {/* Real preview inline: stages the pack will create */}
-                      <div className="flex items-center gap-1 flex-wrap">
+                      {/* Real preview inline: stages the pack will create —
+                          Sprint 13 nit 4: real chip components (border+pill),
+                          not bare inline text */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         {(p.stages_json || (p as any).stages || []).slice(0, 4).map((s: any, i: number) => (
-                          <span key={i} className="t-mono" style={{ fontSize: 10, padding: '2px 8px', borderRadius: 6, background: 'var(--bg-2)', border: '1px solid var(--border-hairline)', color: 'var(--text-dim, #333)' }}>
+                          <span
+                            key={i}
+                            role="listitem"
+                            className="t-mono"
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              fontSize: 10.5, fontWeight: 600, padding: '3px 9px',
+                              borderRadius: 999, background: 'var(--bg-2, rgba(0,0,0,0.04))',
+                              border: '1px solid var(--border-hairline, #e5e5e0)',
+                              color: 'var(--text-dim, #333)',
+                            }}
+                          >
+                            <span style={{ width: 5, height: 5, borderRadius: 99, background: 'var(--accent, #004B63)', flexShrink: 0 }} />
                             {typeof s === 'string' ? s : s.name}
                           </span>
                         ))}
