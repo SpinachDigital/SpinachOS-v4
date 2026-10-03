@@ -1,0 +1,69 @@
+   ▲ Next.js 14.0.4
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/pipeline/[id]/page.tsx
+88:6  Warning: React Hook useEffect has a missing dependency: 'data'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/tasks/[id]/page.tsx
+58:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/chat/TaskChat.tsx
+42:6  Warning: React Hook useCallback has an unnecessary dependency: 'taskId'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/OutputPreview.tsx
+98:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/25) ...
+   Generating static pages (6/25) 
+   Generating static pages (12/25) 
+   Generating static pages (18/25) 
+ ✓ Generating static pages (25/25) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    10.3 kB        95.9 kB
+├ ○ /_not-found                          869 B          83.1 kB
+├ ○ /agents                              4.22 kB        86.4 kB
+├ ○ /analytics                           2.62 kB        84.8 kB
+├ λ /api/auth/session                    0 B                0 B
+├ ○ /approvals                           4.37 kB        86.5 kB
+├ ○ /assets                              854 B          90.1 kB
+├ ○ /calendar                            4.78 kB          87 kB
+├ ○ /chat                                7.03 kB        99.6 kB
+├ ○ /clients                             4.22 kB        93.5 kB
+├ λ /clients/[id]                        7.16 kB        96.4 kB
+├ ○ /comms                               5.34 kB        87.5 kB
+├ ○ /finance                             858 B          90.1 kB
+├ ○ /keokarpin-3d                        4 kB            272 kB
+├ ○ /knowledge                           850 B          90.1 kB
+├ ○ /leads                               4.86 kB        94.1 kB
+├ ○ /logs                                4.54 kB        86.7 kB
+├ ○ /marketing                           1.61 kB        83.8 kB
+├ ○ /marketing/calendar                  6.35 kB        88.5 kB
+├ ○ /marketing/engagement                7 kB           89.2 kB
+├ ○ /office                              3.9 kB          272 kB
+├ λ /pipeline/[id]                       4.25 kB        86.4 kB
+├ ○ /projects                            2.6 kB         84.8 kB
+├ ○ /settings                            6.05 kB        88.2 kB
+├ λ /tasks/[id]                          5.35 kB        87.5 kB
+├ ○ /team                                3.93 kB        93.2 kB
+└ ○ /terminal                            946 B          83.1 kB
++ First Load JS shared by all            82.2 kB
+  ├ chunks/458-c0b958f7c44b62e8.js       26.7 kB
+  ├ chunks/fd9d1056-6eeb50621e02653f.js  53.3 kB
+  ├ chunks/main-app-16f781f3f5274da5.js  220 B
+  └ chunks/webpack-195a625e8d9ce80d.js   2 kB
+
+
+ƒ Middleware                             40.2 kB
+
+○  (Static)   prerendered as static content
+λ  (Dynamic)  server-rendered on demand using Node.js
+

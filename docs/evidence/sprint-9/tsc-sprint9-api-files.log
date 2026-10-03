@@ -1,0 +1,4 @@
+tsc -p (noEmit, skipLibCheck, esModuleInterop)
+FILES: ctx.ts, engines/agent-execution.ts, routes/outreach.ts, command-thread.ts, command-intent.ts, laya-client.ts
+OUTPUT: (empty — 0 errors)
+exit=0
