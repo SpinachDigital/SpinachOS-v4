@@ -44,6 +44,32 @@ export default function AssetsPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(false);
+  // Sprint 12 nit 5c: a real workflow picker dropdown (replaces window.prompt)
+  const [reuseFor, setReuseFor] = useState<Asset | null>(null);
+  const [workflows, setWorkflows] = useState<{ id: string; name: string }[]>([]);
+  // Sprint 12 nit 5a: signed-URL thumbnails — Supabase objects render as real
+  // thumbnails (not the Hermes image-cache route). Cached per asset id.
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const targets = assets.filter((a) => a.kind === 'image' && a.file_url && !thumbs[a.id]);
+    if (targets.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      const next: Record<string, string> = {};
+      for (const a of targets.slice(0, 12)) {
+        try {
+          const res = await apiFetch(`/api/v1/assets/${a.id}/download`, { method: 'POST' });
+          if (res.ok) {
+            const body = await res.json().catch(() => null);
+            if (body?.url) next[a.id] = body.url;
+          }
+        } catch { /* thumbnail is best-effort — the icon fallback shows */ }
+      }
+      if (!cancelled && Object.keys(next).length > 0) setThumbs((t) => ({ ...t, ...next }));
+    })();
+    return () => { cancelled = true; };
+  }, [assets, thumbs]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,6 +94,10 @@ export default function AssetsPage() {
     apiFetch('/api/v1/clients')
       .then((res) => (res.ok ? res.json() : []))
       .then((d) => setClients(Array.isArray(d) ? d : []))
+      .catch(() => {});
+    apiFetch('/api/v1/workflows?limit=100')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((d) => setWorkflows((Array.isArray(d) ? d : []).map((w: any) => ({ id: w.id, name: w.name || w.title || w.id.slice(0, 8) }))))
       .catch(() => {});
   }, []);
 
@@ -94,8 +124,8 @@ export default function AssetsPage() {
     }
   };
 
-  const reuse = async (a: Asset) => {
-    const wfId = (a.workflow_id || (a.metadata?.reused_from ? a.workflow_id : null) || window.prompt(`Workflow ID to reuse "${a.title}" into:`));
+  const reuse = async (a: Asset, workflowId?: string | null) => {
+    const wfId = workflowId || null;
     if (!wfId) return;
     setActionBusy(a.id);
     try {
@@ -104,6 +134,7 @@ export default function AssetsPage() {
         body: JSON.stringify({ workflow_id: wfId, note: 'reused from the library' }),
       });
       flash(`"${a.title}" reused into ${String(wfId).slice(0, 8)}… (logged)`);
+      setReuseFor(null);
       void load();
     } catch (e: any) {
       flash(e?.message || 'Reuse failed');
@@ -215,7 +246,8 @@ export default function AssetsPage() {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 4px 12px -6px rgba(0,0,0,0.05)',
                 }}
               >
-                {/* Thumbnail where previewable, type icon otherwise */}
+                {/* Thumbnail where previewable, type icon otherwise (Sprint 12
+                    nit 5a: signed-URL thumbnails for Supabase objects) */}
                 <div style={{
                   height: 92, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: a.kind === 'image' && a.file_url ? 'var(--bg-2, #fafaf7)' : 'var(--bg-2, #fafaf7)',
@@ -223,7 +255,7 @@ export default function AssetsPage() {
                   fontSize: 28,
                 }}>
                   {a.kind === 'image' && a.file_url
-                    ? <img src={`/api/v1/images/file/${(a.file_url || '').split('/').pop()}`} alt={a.title} style={{ maxHeight: 84, maxWidth: '100%', objectFit: 'contain' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ? <img src={thumbs[a.id] || `/api/v1/images/file/${(a.file_url || '').split('/').pop()}`} alt={a.title} style={{ maxHeight: 84, maxWidth: '100%', objectFit: 'contain' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     : <span aria-hidden>{KIND_ICON[a.kind] || '📄'}</span>}
                 </div>
                 <div style={{ padding: 12 }}>
@@ -243,7 +275,7 @@ export default function AssetsPage() {
                       Download
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); void reuse(a); }}
+                      onClick={(e) => { e.stopPropagation(); setReuseFor(a); }}
                       disabled={actionBusy === a.id}
                       className="btn btn-secondary btn-sm"
                       style={{ minHeight: 44, padding: '6px 10px', fontSize: 11.5 }}
@@ -286,7 +318,32 @@ export default function AssetsPage() {
             )}
             <div className="flex items-center gap-2" style={{ marginTop: 14 }}>
               <button onClick={() => void download(preview)} className="btn btn-secondary btn-sm" style={{ minHeight: 44 }}>Download</button>
-              <button onClick={() => { setPreview(null); void reuse(preview); }} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>Reuse</button>
+              <button onClick={() => { setPreview(null); setReuseFor(preview); }} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>Reuse</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reuse modal — a real workflow picker dropdown (Sprint 12 nit 5c) */}
+      {reuseFor && (
+        <div onClick={() => setReuseFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,10,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--card, #fff)', borderRadius: 16, padding: 20, maxWidth: 420, width: '100%', border: '1px solid var(--border-hairline)' }}>
+            <h3 className="t-meta" style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)', marginBottom: 4 }}>Reuse "{reuseFor.title}"</h3>
+            <p className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }}>
+              Copy this asset into a workflow — one click, logged in the pipeline.
+            </p>
+            <select
+              value=""
+              onChange={(e) => { if (e.target.value) void reuse(reuseFor, e.target.value); }}
+              aria-label="Target workflow"
+              className="t-mono"
+              style={{ width: '100%', minHeight: 44, padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border-hairline)', background: 'var(--bg-2)', color: 'var(--text)', fontSize: 13 }}
+            >
+              <option value="">Pick a workflow…</option>
+              {workflows.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            </select>
+            <div className="flex items-center gap-2" style={{ marginTop: 14 }}>
+              <button onClick={() => setReuseFor(null)} className="btn btn-secondary btn-sm" style={{ minHeight: 44 }}>Cancel</button>
             </div>
           </div>
         </div>

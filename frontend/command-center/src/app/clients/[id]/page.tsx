@@ -65,6 +65,7 @@ export default function Client360Page({ params }: Props) {
   const { connected } = useWebSocket();
   const [ctx, setCtx] = useState<any>(null);
   const [dna, setDna] = useState<any>(null);
+  const [aiCost, setAiCost] = useState<{ cost: number | null; calls: number } | null>(null);
   const [retainer, setRetainer] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -149,6 +150,16 @@ export default function Client360Page({ params }: Props) {
         setFiledAssets(Array.isArray(filed) ? filed : []);
       } else {
         setFiledAssets([]); // endpoint missing → honest empty, never fake
+      }
+      // Sprint 11 nit 5 (due): per-client AI cost line inside the twin —
+      // the P&L rollup read side, filtered to this client.
+      const pnlRes = await apiFetch('/api/v1/pnl');
+      if (pnlRes.ok) {
+        const pnl = await pnlRes.json();
+        const row = (pnl?.clients || []).find((c: any) => c.client_id === id);
+        setAiCost(row ? { cost: row.ai_cost_inr, calls: row.calls } : { cost: 0, calls: 0 });
+      } else {
+        setAiCost(null); // endpoint missing → honest absence
       }
     } catch (e: any) {
       setError(e?.message || 'Failed to load client');
@@ -349,6 +360,16 @@ export default function Client360Page({ params }: Props) {
               <h3>Client DNA</h3>
               {dna?.retrieval && <span className="badge badge-gray">{dna.retrieval}</span>}
             </div>
+            {/* Sprint 11 nit 5 (due): per-client AI cost line in the twin */}
+            {aiCost && (
+              <div className="kv-row" style={{ marginBottom: 10 }}>
+                <span className="k">AI cost (P&L)</span>
+                <span className="v">
+                  {aiCost.cost == null ? '—' : `₹${aiCost.cost.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`}
+                  <span style={{ color: 'var(--text-faint)', fontSize: 12, marginLeft: 6 }}>({aiCost.calls} logged calls)</span>
+                </span>
+              </div>
+            )}
             {chunks.length === 0 ? (
               <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
                 No knowledge ingested for this client yet. Ingest brand docs, briefs, or past

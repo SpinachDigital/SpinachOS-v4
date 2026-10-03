@@ -11,6 +11,7 @@ import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from '
 import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from '../breaker-telemetry';
 import { extractDeliverable } from '../deliverable-extract';
 import { logUsage } from '../usage';
+import { recordTaskOutcome } from '../memory-ledger';
 
 export const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128/v1';
 export const AGENT_TASK_TIMEOUT_MS = Number(process.env.AGENT_TASK_TIMEOUT_MS || 120000);
@@ -215,6 +216,13 @@ export async function executeAgentTask(agent: string, task: string, source: stri
       } catch { /* non-fatal */ }
       emitAgentState(agent, 'idle', `Completed: ${task.slice(0, 50)}`);
       emitTaskLifecycle(taskRow.id, agent, 'done', `Completed: ${task.slice(0, 50)}`, { task_id: taskRow.id, model, via });
+      // Sprint 12 §2: ledger write path — task completions with notable
+      // outcomes are recorded (a decision nobody recorded is a decision
+      // nobody can replay).
+      void recordTaskOutcome(supabase, {
+        taskId: taskRow.id, agent, task, outcome: String(output).slice(0, 500),
+        workflowId: taskRow.metadata?.workflow_id || null, model,
+      });
       // Sprint 11 nit 7 — task-done auto-advance listener: the linked stage
       // advances on the REAL event (task done → next stage), not on manual
       // clicks. Every advance is logged (pipeline_events actor=task:<kind>).
@@ -228,6 +236,26 @@ export async function executeAgentTask(agent: string, task: string, source: stri
           const { data: wf } = await supabase.from('workflows').select('current_step, status').eq('id', wfId).single();
           // Only advance the stage the task WAS working on (not a newer one).
           if (wf && wf.status === 'active' && wf.current_step === stepName) {
+            // Sprint 12 nit 2 (REAL bug) — gate-bypass fix: an open gate on
+            // this workflow PAUSES the advance. The task-done listener routes
+            // through the same enforcement the gate mechanism uses: no
+            // registered action runs past an open gate. Comment-only
+            // protection is not protection — this check is the protection.
+            const { data: openGates } = await supabase
+              .from('gate_actions')
+              .select('id, gate_name, risk_tier')
+              .eq('workflow_id', wfId)
+              .eq('status', 'pending')
+              .limit(1);
+            if (openGates && openGates.length > 0) {
+              const g = openGates[0];
+              await supabase.from('pipeline_events').insert({
+                workflow_id: wfId, client_id: taskRow.metadata.client_id || null, event: 'advance_blocked_by_gate',
+                from_step: stepName, actor: `task:${inferredKind}`,
+                detail: { task_id: taskRow.id, gate_id: g.id, gate_name: g.gate_name, risk_tier: g.risk_tier },
+              });
+              console.log(`[task-advance] BLOCKED at ${stepName}: open gate ${g.gate_name} (${g.risk_tier}) — approve at /approvals`);
+            } else {
             const { data: wfFull } = await supabase.from('workflows').select('steps_json').eq('id', wfId).single();
             const steps: any[] = wfFull?.steps_json || [];
             const idx = steps.findIndex((s: any) => s.name === stepName);
@@ -254,6 +282,7 @@ export async function executeAgentTask(agent: string, task: string, source: stri
                   detail: { task_id: taskRow.id, completed: true },
                 });
               }
+            }
             }
           }
         } catch (e2: any) {

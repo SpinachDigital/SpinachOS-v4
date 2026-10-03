@@ -36,8 +36,19 @@ const ensureBuckets = async () => {
   }
 };
 
-// Buckets ensured once at boot (idempotent).
+// Buckets ensured ONCE at boot (Sprint 12 nit 4: actually boot-time — module
+// level, not lazily on first request). Fire-and-forget: a bucket check must
+// not delay boot; the first upload still re-checks via the lazy path.
 let _bucketsEnsured = false;
+void (async () => {
+  try {
+    await ensureBuckets();
+    _bucketsEnsured = true;
+    console.log('[assets] buckets ensured at boot');
+  } catch (e: any) {
+    console.error('[assets] boot bucket ensure failed (lazy path still active):', e?.message);
+  }
+})();
 
 app.get('/api/v1/assets', authMiddleware, async (req, res) => {
   try {
@@ -68,7 +79,7 @@ app.get('/api/v1/assets', authMiddleware, async (req, res) => {
     res.json((data || []).map((a: any) => ({
       ...a,
       client_name: nameById.get(a.client_id) || null,
-      source: (a.metadata as any)?.uploaded ? 'upload' : 'filed',
+      source: (a.metadata as any)?.reused_from ? 'reused' : (a.metadata as any)?.uploaded ? 'upload' : 'filed',
     })));
   } catch (e: any) {
     res.status(500).json({ error: e.message });

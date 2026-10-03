@@ -20,6 +20,7 @@
  */
 import { createHash } from 'crypto';
 import { app, authMiddleware, emitApproval, supabase } from '../ctx';
+import { recordGateDecision, recordFounderCorrection } from '../memory-ledger';
 
 // Secrets/tokens never rendered raw — previews + logs redact these keys.
 const REDACT_KEYS = /^(password|secret|token|api_?key|authorization|credential|access_?token|refresh_?token|private_?key)$/i;
@@ -165,6 +166,13 @@ export const runGates = () => {
         to_step: null, actor: 'founder',
         detail: { gate_id: gate.id, gate_name: gate.gate_name, action: gate.action, risk_tier: gate.risk_tier, payload_hash: gate.payload_hash },
       });
+      // Sprint 12 §2: the ledger write path — a gate decision nobody recorded
+      // is a decision nobody can replay.
+      void recordGateDecision(supabase, {
+        gateId: gate.id, gateName: gate.gate_name, approved: true,
+        tier: gate.risk_tier, escalation: (gate.metadata as any)?.escalation || false,
+        by: 'founder', clientId: gate.client_id,
+      });
       emitApproval({ ...gate, type: 'gate', action: 'approved' });
       res.json({ ok: true, gate });
     } catch (e: any) {
@@ -199,9 +207,20 @@ export const runGates = () => {
       await supabase.from('pipeline_events').insert({
         workflow_id: gate.workflow_id, client_id: gate.client_id, event: 'gate_rejected',
         actor: 'founder',
-        detail: { gate_id: gate.id, gate_name: gate.gate_name, reason: reason || null },
+        detail: { gate_id: gate.id, gate_name: gate.gate_name, reason: reasonText },
       });
-      emitApproval({ ...gate, type: 'gate', action: 'rejected', rejection_reason: reason || null });
+      // Sprint 12 §2: ledger write paths — the gate decision AND the founder
+      // correction (a rejection IS a correction: the lesson is recorded).
+      void recordGateDecision(supabase, {
+        gateId: gate.id, gateName: gate.gate_name, approved: false,
+        tier: gate.risk_tier, by: 'founder', clientId: gate.client_id,
+      });
+      void recordFounderCorrection(supabase, {
+        about: `gate:${gate.gate_name}`,
+        correction: `Rejected: ${reasonText}`,
+        referenceId: gate.id,
+      });
+      emitApproval({ ...gate, type: 'gate', action: 'rejected', rejection_reason: reasonText });
       res.json({ ok: true, gate });
     } catch (e: any) {
       res.status(500).json({ error: e.message });

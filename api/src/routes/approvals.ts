@@ -6,6 +6,7 @@
 
 // -- imports auto-added by fix-imports (Phase 3)
 import { app, authMiddleware, emitApproval, supabase } from '../ctx';
+import { recordApprovalDecision, recordFounderCorrection } from '../memory-ledger';
 app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
     const { client_id, status } = req.query;
@@ -96,6 +97,12 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
       }).eq('id', (data as any).payload_json.draft_id);
     }
     emitApproval({ ...data, action: 'approved' });
+    // Sprint 12 §2: ledger write path — approval decisions are recorded
+    // (a decision nobody recorded is a decision nobody can replay).
+    void recordApprovalDecision(supabase, {
+      approvalId: data.id, title: data.title || 'approval', approved: true,
+      by: 'director', clientId: data.client_id || null,
+    });
     res.json(data);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -121,6 +128,19 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
       }).eq('id', (data as any).payload_json.draft_id);
     }
     emitApproval({ ...data, action: 'rejected', rejection_reason: reason || null });
+    // Sprint 12 §2: ledger write paths — the decision AND the founder
+    // correction (a rejection IS a correction: the lesson is recorded).
+    void recordApprovalDecision(supabase, {
+      approvalId: data.id, title: data.title || 'approval', approved: false,
+      by: 'director', reason: reason || null, clientId: data.client_id || null,
+    });
+    if (reason && String(reason).trim()) {
+      void recordFounderCorrection(supabase, {
+        about: `approval:${(data.title || 'item').slice(0, 80)}`,
+        correction: `Rejected: ${String(reason).trim()}`,
+        referenceId: data.id,
+      });
+    }
     res.json(data);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

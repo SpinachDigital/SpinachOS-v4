@@ -11,7 +11,7 @@
 ### §1 Real assets library
 | Piece | Where | Detail |
 |---|---|---|
-| Buckets (blueprint §2.8 folded debt) | Supabase Storage | `client-assets`, `deliverables`, `content` — private, created via API (idempotent `ensureBuckets()` at boot) |
+| Buckets (blueprint §2.8 folded debt) | Supabase Storage | `client-assets`, `deliverables`, `content` — private, created via API (`ensureBuckets()` was lazy on first request at sprint-11 time; made actually boot-time in Sprint 12 nit 4) |
 | Assets API | `api/src/routes/assets.ts` | `GET /assets` (global library, filter client/type/date, client names joined, `source` upload/filed), `POST /assets/upload` (binary→right bucket via `BUCKET_FOR_KIND`, text→row, **upload without indexing is impossible** — same insert indexes), `GET /assets/:id/download` (signed URL 3600s), `POST /assets/:id/reuse` (copy + `pipeline_events` 'asset_reused' audit — a reuse nobody can see is not a reuse) |
 | Library page | `frontend/.../src/app/assets/page.tsx` (new) | Filter pills (≥44px) + client dropdown, **card grid with thumbnails/image-render + type icons** (a library, not a table dump), preview modal (image renders, text previews, unpreviewable → "Preview not available" honestly), Download + Reuse (logged), Upload panel (client+type tags), honest loading/empty/error states |
 | Old redirect DELETED | `frontend/.../next.config.js:18` | `/assets → /settings` gone; `/assets` is the real page. Sidebar entry added (`Sidebar.tsx:36`) |
@@ -46,7 +46,7 @@
 4. **§1 upload→bucket→indexed:** text upload (Brand Guidelines v1) + binary upload (1x1 PNG → `client-assets/…/1791018661448-logo-mark-test.png` bucket object verified) → deliverables 1→3 rows indexed.
 5. **Download:** signed URL returned (Supabase sign URL, 3600s).
 6. **Reuse:** copy created + `pipeline_events` 'asset_reused' actor=founder verified.
-7. **Library filters:** `?kind=image` returns 1 (correct); full list shows filed + upload + reused sources.
+7. **Library filters:** `?kind=image` returns 1 (correct); full list shows filed + upload sources at sprint-11 time (the `reused` third value was claimed but not in code — added in Sprint 12 nit 3).
 8. **Nit 7 live:** linked task on `research` → done → **auto-advance research→draft** (actor=task:competitor, progress 33%, event logged).
 9. **360px real captures** (Playwright 1.63 fixed viewport): `/assets` + `/pnl` — horizontal-overflow: false ×2; **vision-verified**: library renders as cards (title, pills, Download/Reuse), P&L shows real numbers (₹0.02 total, ₹15,000/mo, margin 100%, per-client rows).
 10. **Build:** final `next build` ✓ Compiled successfully from CLEAN tree, tsc 0 errors — BUILD_ID in the committed log.
