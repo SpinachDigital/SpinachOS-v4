@@ -5,6 +5,10 @@
  ✓ Compiled successfully
    Linting and checking validity of types ...
 
+./src/app/assets/page.tsx
+226:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+279:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
 ./src/app/pipeline/[id]/page.tsx
 88:6  Warning: React Hook useEffect has a missing dependency: 'data'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
 
@@ -19,11 +23,11 @@
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
    Collecting page data ...
-   Generating static pages (0/21) ...
-   Generating static pages (5/21) 
-   Generating static pages (10/21) 
-   Generating static pages (15/21) 
- ✓ Generating static pages (21/21) 
+   Generating static pages (0/23) ...
+   Generating static pages (5/23) 
+   Generating static pages (11/23) 
+   Generating static pages (17/23) 
+ ✓ Generating static pages (23/23) 
    Finalizing page optimization ...
    Collecting build traces ...
 
@@ -33,7 +37,8 @@ Route (app)                              Size     First Load JS
 ├ ○ /agents                              4.23 kB        86.4 kB
 ├ ○ /analytics                           2.62 kB        84.8 kB
 ├ λ /api/auth/session                    0 B                0 B
-├ ○ /approvals                           4.37 kB        86.6 kB
+├ ○ /approvals                           4.37 kB        86.5 kB
+├ ○ /assets                              4.45 kB        86.6 kB
 ├ ○ /calendar                            4.78 kB          87 kB
 ├ ○ /chat                                7.03 kB        99.6 kB
 ├ ○ /clients                             4.22 kB        93.5 kB
@@ -47,6 +52,7 @@ Route (app)                              Size     First Load JS
 ├ ○ /marketing/engagement                7 kB           89.2 kB
 ├ ○ /pipeline                            2.15 kB        91.4 kB
 ├ λ /pipeline/[id]                       4.25 kB        86.4 kB
+├ ○ /pnl                                 3.66 kB        85.8 kB
 ├ ○ /projects                            2.6 kB         84.8 kB
 ├ ○ /settings                            6.05 kB        88.2 kB
 ├ λ /tasks/[id]                          5.35 kB        87.5 kB
@@ -55,7 +61,7 @@ Route (app)                              Size     First Load JS
   ├ chunks/458-c0b958f7c44b62e8.js       26.7 kB
   ├ chunks/fd9d1056-6eeb50621e02653f.js  53.3 kB
   ├ chunks/main-app-16f781f3f5274da5.js  220 B
-  └ chunks/webpack-383d105e822797be.js   2 kB
+  └ chunks/webpack-983307b3ad3bc462.js   2 kB
 
 
 ƒ Middleware                             40.2 kB
@@ -63,4 +69,4 @@ Route (app)                              Size     First Load JS
 ○  (Static)   prerendered as static content
 λ  (Dynamic)  server-rendered on demand using Node.js
 
-BUILD_ID: 4CXjk8D-fO7ozycvfkqTt (clean tree, 1 dirty)
+BUILD_ID: uULN-XFYbvR1UcC9vZTAe (clean tree, 0 dirty)
