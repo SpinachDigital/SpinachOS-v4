@@ -18,6 +18,7 @@
  * GET  /api/v1/images/file/:name  → the PNG bytes (Hermes cache, name-validated)
  */
 import { app, authMiddleware, supabase } from '../ctx';
+import { logUsage } from '../usage';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -67,6 +68,17 @@ app.post('/api/v1/images/generate', authMiddleware, async (req, res) => {
         if (error) return res.status(500).json({ error: `task_output insert failed: ${error.message}` });
         saved = data;
       }
+      // Sprint 11 §2: image generation logs a usage row too (image_gen source,
+      // per-image flat cost from model_rates). Best-effort.
+      void logUsage(supabase, {
+        agent_profile: 'image_gen',
+        model: 'gpt-image-2-medium',
+        input_tokens: 1,
+        output_tokens: 1,
+        source: 'image_gen',
+        task_id: task_id ? String(task_id) : null,
+        metadata: { provider: 'openai-codex', prompt: String(prompt).slice(0, 100), file_name },
+      }).catch(() => {});
       return res.status(201).json({
         ok: true,
         image_url: `/api/v1/images/file/${file_name}`,

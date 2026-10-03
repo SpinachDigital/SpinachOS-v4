@@ -18,7 +18,15 @@ app.post('/api/v1/agents/execute', authMiddleware, async (req, res) => {
     if (!AGENT_MODELS[agent]) {
       return res.status(400).json({ error: `Unknown agent "${agent}"`, known: Object.keys(AGENT_MODELS) });
     }
-    const task_id = await executeAgentTask(agent, task, source);
+    // Sprint 11 nit 7: optional workflow linkage — the caller passes
+    // workflow_id + step_name (+ client_id) and the task-done listener
+    // auto-advances the linked stage (no linkage → no advance, honest).
+    const { workflow_id, step_name, client_id } = req.body || {};
+    const task_id = await executeAgentTask(agent, task, source, undefined, {
+      workflow_id: workflow_id || undefined,
+      step_name: step_name || undefined,
+      client_id: client_id || undefined,
+    });
     res.status(202).json({
       ok: true,
       task_id,

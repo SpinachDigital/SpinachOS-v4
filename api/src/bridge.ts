@@ -147,6 +147,8 @@ const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128/v1';
 const AGENT_TASK_TIMEOUT_MS = parseInt(String(process.env.AGENT_TASK_TIMEOUT_MS)) || 60000;
 
 import { breakerFor, breakerAllows, recordFailure, recordSuccess, recordFallback, getBreakerStates, getFallbackLog } from './breaker-telemetry';
+import { logUsage } from './usage';
+import { supabase } from './ctx';
 export { getBreakerStates, getFallbackLog, recordFallback };
 // Import AGENT_MODELS + prompts from the main module's values — re-declared here to
 // keep this module self-contained (the main file passes its own fallbacks anyway).
@@ -208,6 +210,17 @@ async function runGatewayTask(profile: string, task: string): Promise<{ output: 
     const output = data?.choices?.[0]?.message?.content;
     if (!output) { recordFailure(b); throw new Error('OmniRoute returned empty output'); }
     recordSuccess(b);
+    // Sprint 11 §2: every AI call logs a usage row — a call nobody logged is
+    // a cost nobody sees. Best-effort (a logging failure must not break the
+    // call it observes).
+    void logUsage(supabase, {
+      agent_profile: `gateway:${profile}`,
+      model: data?.model || model,
+      input_tokens: data?.usage?.prompt_tokens ?? null,
+      output_tokens: data?.usage?.completion_tokens ?? null,
+      source: 'agent',
+      metadata: { via: 'gateway', path: 'gateway', task: task.slice(0, 120) },
+    }).catch(() => {});
     return { output: String(output), model: data?.model || model };
   } catch (e: any) {
     if (!String(e?.message || '').includes('circuit open')) recordFailure(b);
@@ -253,6 +266,15 @@ export async function runSpecialistTask(
     const data = await res.json();
     const output = data?.choices?.[0]?.message?.content;
     if (!output) throw new Error('OmniRoute returned empty output');
+    // Sprint 11 §2: bench AI calls log usage too (same rule as gateway).
+    void logUsage(supabase, {
+      agent_profile: `bench:${bench}`,
+      model: data?.model || model,
+      input_tokens: data?.usage?.prompt_tokens ?? null,
+      output_tokens: data?.usage?.completion_tokens ?? null,
+      source: 'agent',
+      metadata: { via: 'bench', task: task.slice(0, 120) },
+    }).catch(() => {});
     return { output: String(output), model: data?.model || model };
   } finally {
     clearTimeout(timer);

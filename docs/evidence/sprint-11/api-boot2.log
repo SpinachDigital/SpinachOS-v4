@@ -1,0 +1,8 @@
+[retainer-cron] armed: daily 09:00 IST → POST /api/v1/retainer/run-due
+[standup-daily-0930] armed: "30 9 * * 1-5" → orchestrator
+[cto-weekly-review] armed: "0 10 * * 1" → cto
+[ceo-monthly-strategy] armed: "0 11 1 * *" → ceo
+[hr-watcher] armed: */5 * * * * — stuck/overloaded/idle/error_spike (flags only, never pauses)
+[wf-watcher] armed: */10 * * * * — stage SLA 48h → attention card (THE INBOX)
+Spinach OS API running on http://localhost:4000
+WebSocket on ws://localhost:4000/ws and ws://localhost:4000/ws/activity

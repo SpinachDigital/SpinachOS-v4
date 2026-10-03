@@ -192,7 +192,9 @@ export async function executeAgentTask(agent: string, task: string, source: stri
         .update({
           status: 'done',
           progress: 100,
-          metadata: { source, model, output, via, completed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
+          // preserve the linkage map (nit 7) — the completion update must not
+          // wipe workflow_id/step_name/client_id from the insert metadata
+          metadata: { ...(taskRow.metadata || {}), source, model, output, via, completed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
         })
         .eq('id', taskRow.id)
         .select()
@@ -267,7 +269,8 @@ export async function executeAgentTask(agent: string, task: string, source: stri
         .from('tasks')
         .update({
           status: 'blocked',
-          metadata: { source, via: viaAtFailure, error: String(e?.message || 'unknown').slice(0, 500), failed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
+          // preserve the linkage map (nit 7) on failure too
+          metadata: { ...(taskRow.metadata || {}), source, via: viaAtFailure, error: String(e?.message || 'unknown').slice(0, 500), failed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
         })
         .eq('id', taskRow.id);
       emitAgentState(agent, 'blocked', `Failed: ${String(e?.message || '').slice(0, 50)}`);
