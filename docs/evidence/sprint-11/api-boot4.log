@@ -6,3 +6,6 @@
 [wf-watcher] armed: */10 * * * * — stage SLA 48h → attention card (THE INBOX)
 Spinach OS API running on http://localhost:4000
 WebSocket on ws://localhost:4000/ws and ws://localhost:4000/ws/activity
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.
+[AUTH][BOOTSTRAP] First-mint bootstrap token used from ::1 — rotate/remove BOOTSTRAP_ADMIN_TOKEN after bootstrap.

@@ -33,7 +33,7 @@ Route (app)                              Size     First Load JS
 ├ ○ /agents                              4.23 kB        86.4 kB
 ├ ○ /analytics                           2.62 kB        84.8 kB
 ├ λ /api/auth/session                    0 B                0 B
-├ ○ /approvals                           4.37 kB        86.5 kB
+├ ○ /approvals                           4.37 kB        86.6 kB
 ├ ○ /calendar                            4.78 kB          87 kB
 ├ ○ /chat                                7.03 kB        99.6 kB
 ├ ○ /clients                             4.22 kB        93.5 kB
@@ -55,7 +55,7 @@ Route (app)                              Size     First Load JS
   ├ chunks/458-c0b958f7c44b62e8.js       26.7 kB
   ├ chunks/fd9d1056-6eeb50621e02653f.js  53.3 kB
   ├ chunks/main-app-16f781f3f5274da5.js  220 B
-  └ chunks/webpack-b336de4e40d8fdb8.js   2 kB
+  └ chunks/webpack-383d105e822797be.js   2 kB
 
 
 ƒ Middleware                             40.2 kB
@@ -63,4 +63,4 @@ Route (app)                              Size     First Load JS
 ○  (Static)   prerendered as static content
 λ  (Dynamic)  server-rendered on demand using Node.js
 
-BUILD_ID: vgH2EDvgndtDdgqwkYKfz (clean tree)
+BUILD_ID: 4CXjk8D-fO7ozycvfkqTt (clean tree, 1 dirty)

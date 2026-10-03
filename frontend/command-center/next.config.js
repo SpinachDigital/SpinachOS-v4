@@ -15,7 +15,8 @@ const nextConfig = {
       // catches any stale links/bookmarks. (Sprint 6's "Living Office ships
       // at /office" is superseded — / renders the diorama + dept tags.)
       { source: '/office', destination: '/', permanent: false },
-      { source: '/assets', destination: '/settings', permanent: false },
+      // /assets redirect DELETED (Sprint 11 §1) — /assets is now the REAL
+      // library page (src/app/assets/page.tsx).
       { source: '/logs', destination: '/analytics', permanent: false },
       { source: '/marketing/calendar', destination: '/marketing', permanent: false },
       { source: '/marketing/engagement', destination: '/marketing', permanent: false },

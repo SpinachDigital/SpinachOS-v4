@@ -33,6 +33,8 @@ const NAV: NavEntry[] = [
   { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
   { href: '/team', label: 'Team', sub: 'HR & human roster', icon: I.team },
   { href: '/clients', label: 'Clients', sub: 'Relationships', icon: I.clients },
+  { href: '/assets', label: 'Assets', sub: 'CREATE — the library', icon: I.assets },
+  { href: '/pnl', label: 'P&L', sub: 'AI cost vs revenue', icon: I.analytics },
   { href: '/leads', label: 'Lead Inbox', sub: 'WIN — qualify & outreach', icon: I.approvals },
   { href: '/marketing', label: 'Marketing', sub: 'Content & Campaigns', icon: I.marketing },
   { href: '/analytics', label: 'Analytics', sub: 'Growth & Insights', icon: I.analytics },
