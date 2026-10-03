@@ -66,6 +66,22 @@ export const runGates = () => {
       const { data: wf, error: wfErr } = await supabase.from('workflows').select('id, client_id, current_step').eq('id', workflow_id).single();
       if (wfErr || !wf) return res.status(404).json({ error: 'workflow not found' });
 
+      // Sprint 11 nit 5 — CROSS-GATE risk-tier escalation: a gate at a HIGHER
+      // tier than any previously approved gate on this workflow carries an
+      // escalation flag in its event trail (the approve is still explicit —
+      // but the audit trail records that this tier was never approved before).
+      // No silent escalation: reviewers see the tier jump.
+      let escalation = false;
+      if (tier !== 'read') {
+        const { data: prior } = await supabase
+          .from('gate_actions')
+          .select('risk_tier')
+          .eq('workflow_id', workflow_id)
+          .eq('status', 'approved');
+        const priorMax = Math.max(0, ...(prior || []).map((g: any) => TIER_RANK[g.risk_tier] || 0));
+        escalation = TIER_RANK[tier] > priorMax;
+      }
+
       // Idempotent: an open gate of the same (workflow, gate_name) is returned,
       // not duplicated.
       const { data: open } = await supabase
@@ -86,6 +102,7 @@ export const runGates = () => {
         payload_json: redactPayload(payload),
         payload_hash: payloadHash(payload),
         requested_by: 'watcher',
+        metadata: { escalation },
       }).select().single();
       if (error) throw error;
 
@@ -93,7 +110,7 @@ export const runGates = () => {
       await supabase.from('pipeline_events').insert({
         workflow_id, client_id: gate.client_id, event: 'gate_paused',
         from_step: wf.current_step, actor: 'watcher',
-        detail: { gate_id: gate.id, gate_name, action, risk_tier: tier },
+        detail: { gate_id: gate.id, gate_name, action, risk_tier: tier, escalation },
       });
 
       emitApproval({ ...gate, type: 'gate', action: 'created' });
@@ -156,16 +173,22 @@ export const runGates = () => {
   });
 
   // ------------------------------------------------------------------
-  // POST /gates/:id/reject — founder rejection (reason required).
+  // POST /gates/:id/reject — founder rejection (reason REQUIRED — Sprint 11
+  // nit 4: the report claimed "reason required" but stored reason||null with
+  // no 400. Enforced now).
   // ------------------------------------------------------------------
   app.post('/api/v1/gates/:id/reject', authMiddleware, async (req, res) => {
     try {
       const { reason } = req.body || {};
+      if (!reason || !String(reason).trim()) {
+        return res.status(400).json({ error: 'reason required — a rejection without a reason is not a decision' });
+      }
+      const reasonText = String(reason).trim();
       const { data: gate, error } = await supabase
         .from('gate_actions')
         .update({
           status: 'rejected', approved_by: 'founder', reviewed_at: new Date().toISOString(),
-          metadata: { rejection_reason: reason || null },
+          metadata: { rejection_reason: reasonText },
         })
         .eq('id', req.params.id)
         .eq('status', 'pending')

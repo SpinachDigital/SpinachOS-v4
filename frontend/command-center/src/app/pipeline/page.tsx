@@ -79,13 +79,19 @@ export default function PipelineIndexPage() {
           onChange={(e) => setFilter(e.target.value)}
           aria-label="Search pipelines"
         />
-        <div className="pill-group">
+        <div className="pill-group" style={{ display: 'flex', gap: 8 }}>
           {['all', 'active', 'blocked', 'completed'].map((s) => (
             <button
               key={s}
               className={`pill ${statusFilter === s ? 'pill-active' : ''}`}
               onClick={() => setStatusFilter(s)}
               aria-label={`Filter ${s}`}
+              style={{
+                minHeight: 44,           // Sprint 11 nit 2: ≥44px touch targets
+                padding: '10px 16px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
             >
               {s}
             </button>
@@ -119,7 +125,10 @@ export default function PipelineIndexPage() {
             </div>
             <div className="card-meta">
               <span>{r.client_name || '—'}</span>
-              <span> · step {r.completed_steps + 1}/{r.total_steps}</span>
+              {/* Sprint 11 nit 3: step counter off-by-one fixed — "step 7/6"
+                  on completed pipelines. Cap at total; 0-step workflows show
+                  the honest state. */}
+              <span> · {r.total_steps === 0 ? 'no steps' : `step ${Math.min(r.completed_steps + 1, r.total_steps)}/${r.total_steps}`}</span>
               {r.current_step && <span> · {r.current_step}</span>}
             </div>
             <div className="progress-track" role="progressbar" aria-valuenow={r.progress} aria-valuemin={0} aria-valuemax={100}>

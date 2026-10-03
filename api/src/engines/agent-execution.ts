@@ -10,6 +10,7 @@ import {
 import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from '../bridge';
 import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from '../breaker-telemetry';
 import { extractDeliverable } from '../deliverable-extract';
+import { logUsage } from '../usage';
 
 export const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:20128/v1';
 export const AGENT_TASK_TIMEOUT_MS = Number(process.env.AGENT_TASK_TIMEOUT_MS || 120000);
@@ -77,6 +78,17 @@ export async function runAgentTask(agent: string, task: string): Promise<{ outpu
     const output = data?.choices?.[0]?.message?.content;
     if (!output) { recordGatewayFailure(); throw new Error('OmniRoute returned empty output'); }
     recordGatewaySuccess();
+    // Sprint 11 §2: every AI call logs a usage row — a call nobody logged is
+    // a cost nobody sees. Best-effort: a logging failure must not break the
+    // call it observes.
+    void logUsage(supabase, {
+      agent_profile: agent,
+      model: data?.model || model,
+      input_tokens: data?.usage?.prompt_tokens ?? null,
+      output_tokens: data?.usage?.completion_tokens ?? null,
+      source: 'agent',
+      metadata: { via: 'gateway', task: task.slice(0, 120) },
+    }).catch(() => {});
     return { output: String(output), model: data?.model || model };
   } catch (e: any) {
     if (!String(e?.message || '').includes('circuit open')) recordGatewayFailure();
@@ -92,7 +104,7 @@ export async function runAgentTask(agent: string, task: string): Promise<{ outpu
  *  PHASE 3 FIX: inference default is now 'words' → gateway path, NOT 'copy' →
  *  profile-social (a generic command should be a words-only call, not a
  *  random HOD spawn — found during P1 testing). */
-export async function executeAgentTask(agent: string, task: string, source: string, taskKind?: string): Promise<string> {
+export async function executeAgentTask(agent: string, task: string, source: string, taskKind?: string, link?: { workflow_id?: string; step_name?: string; client_id?: string }): Promise<string> {
   const t = task.toLowerCase();
   const inferredKind = taskKind ||
     (t.includes('logo') ? 'logo'
@@ -117,7 +129,16 @@ export async function executeAgentTask(agent: string, task: string, source: stri
       assigned_to: agent,
       status: 'running',
       priority: 2,
-      metadata: { source, started_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
+      metadata: {
+        source, started_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path,
+        // Sprint 11 nit 7: task→workflow linkage map — the caller passes the
+        // workflow/step this task belongs to; on completion the linked stage
+        // auto-advances (the task-done listener lives in the completion path
+        // below). No linkage → no advance (honest).
+        workflow_id: link?.workflow_id || null,
+        step_name: link?.step_name || null,
+        client_id: link?.client_id || null,
+      },
     })
     .select()
     .single();
@@ -192,6 +213,51 @@ export async function executeAgentTask(agent: string, task: string, source: stri
       } catch { /* non-fatal */ }
       emitAgentState(agent, 'idle', `Completed: ${task.slice(0, 50)}`);
       emitTaskLifecycle(taskRow.id, agent, 'done', `Completed: ${task.slice(0, 50)}`, { task_id: taskRow.id, model, via });
+      // Sprint 11 nit 7 — task-done auto-advance listener: the linked stage
+      // advances on the REAL event (task done → next stage), not on manual
+      // clicks. Every advance is logged (pipeline_events actor=task:<kind>).
+      // Gate-gated stages are NOT bypassed: the advance calls the same
+      // sequence enforcement as /pipeline/advance (a gate between stages
+      // still pauses the pipeline).
+      if (taskRow.metadata?.workflow_id && taskRow.metadata?.step_name) {
+        try {
+          const wfId = taskRow.metadata.workflow_id as string;
+          const stepName = taskRow.metadata.step_name as string;
+          const { data: wf } = await supabase.from('workflows').select('current_step, status').eq('id', wfId).single();
+          // Only advance the stage the task WAS working on (not a newer one).
+          if (wf && wf.status === 'active' && wf.current_step === stepName) {
+            const { data: wfFull } = await supabase.from('workflows').select('steps_json').eq('id', wfId).single();
+            const steps: any[] = wfFull?.steps_json || [];
+            const idx = steps.findIndex((s: any) => s.name === stepName);
+            if (idx >= 0) {
+              steps[idx].status = 'completed';
+              steps[idx].completed_at = new Date().toISOString();
+              const nextIdx = steps.findIndex((s: any, i: number) => i > idx && s.status === 'pending');
+              const progress = Math.round((steps.filter((s: any) => s.status === 'completed').length / steps.length) * 100);
+              if (nextIdx >= 0) {
+                steps[nextIdx].status = 'in_progress';
+                steps[nextIdx].started_at = new Date().toISOString();
+                await supabase.from('workflows').update({ steps_json: steps, current_step: steps[nextIdx].name, progress }).eq('id', wfId);
+                await supabase.from('pipeline_events').insert({
+                  workflow_id: wfId, client_id: taskRow.metadata.client_id || null, event: 'auto_advance',
+                  from_step: stepName, to_step: steps[nextIdx].name, actor: `task:${inferredKind}`,
+                  detail: { task_id: taskRow.id, model, progress },
+                });
+                console.log(`[task-advance] ${stepName} → ${steps[nextIdx].name} (task ${taskRow.id.slice(0, 8)} done)`);
+              } else {
+                await supabase.from('workflows').update({ steps_json: steps, status: 'completed', progress: 100, current_step: null }).eq('id', wfId);
+                await supabase.from('pipeline_events').insert({
+                  workflow_id: wfId, client_id: taskRow.metadata.client_id || null, event: 'auto_advance',
+                  from_step: stepName, to_step: null, actor: `task:${inferredKind}`,
+                  detail: { task_id: taskRow.id, completed: true },
+                });
+              }
+            }
+          }
+        } catch (e2: any) {
+          console.error('[task-advance] failed:', e2?.message); // non-fatal — the task itself completed
+        }
+      }
     } catch (e: any) {
       // Failed runs: mark task blocked + agent blocked, emit for visibility
       // ('failed' not allowed by tasks_status_check — 'blocked' + metadata.error carries the detail)

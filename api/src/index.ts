@@ -42,6 +42,8 @@ import './routes/pipeline';
 import './routes/gates';
 import './routes/pipeline-index';
 import './routes/deliverables';
+import './routes/pnl';
+import './routes/assets';
 import { startWorkflowWatcher } from './workflow-watcher';
 startWorkflowWatcher();
 import './routes/retainer';

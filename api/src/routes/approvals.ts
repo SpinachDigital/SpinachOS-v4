@@ -12,7 +12,7 @@ app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
     const limit = Math.min(parseInt(String(req.query.limit || '100'), 10) || 100, 500);
     let query = supabase
       .from('approvals')
-      .select('id, client_id, type, title, description, platform, status, requested_by, approved_by, reviewed_at, expires_at, created_at, payload_json')
+      .select('id, client_id, type, title, description, platform, status, requested_by, approved_by, reviewed_at, expires_at, created_at, payload_json, risk_tier, metadata')
       .order('created_at', { ascending: false })
       .limit(limit);
     if (client_id) query = query.eq('client_id', String(client_id));

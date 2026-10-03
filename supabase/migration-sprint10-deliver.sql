@@ -93,7 +93,7 @@ drop trigger if exists trg_deliverables_touch on public.deliverables;
 create trigger trg_deliverables_touch before update on public.deliverables
   for each row execute function public.touch_updated_at();
 
--- 6. RLS on both new tables (migration defaults — hardening stays Phase 5)
+-- 6. RLS on the THREE new tables (migration defaults — hardening stays Phase 5)
 alter table public.gate_actions enable row level security;
 alter table public.deliverables enable row level security;
 alter table public.pipeline_events enable row level security;

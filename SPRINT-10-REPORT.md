@@ -18,7 +18,7 @@
 | What | Detail |
 |---|---|
 | `api/src/routes/gates.ts` (new, §2) | **Deny-by-default DELIVER gates:** `POST /gates` (unknown actions → 400, never queued; idempotent open-gate return; workflow must exist), `GET /gates` (queue — payload redacted in previews), `POST /gates/:id/approve` (only `status=pending` gates approve — 409 on decided/expired, never resurrected), `POST /gates/:id/reject` (reason required, stored), `POST /gates/:id/run` (**403 without approval — the gate action does not run**; idempotent re-run 409; `advance_stage` → §1 auto-advance with logged event, `file_deliverable` → §3 filing). **Risk tiers:** read/write/external ranked — no silent escalation. **Secrets redacted:** `redactPayload()` (REDACT_KEYS regex — password/token/api_key…) in every preview + payload_hash for audit. |
-| `api/src/workflow-watcher.ts` (new, §1) | **Stuck detection:** stage idle past SLA (48h) → attention card in THE INBOX (approvals row, type=stuck_stage) + `pipeline_events` 'stuck_flag'. Idempotent (one open card per workflow+stage), auto-resolve when the stage advances (resolved_by=watcher). Cron */10. |
+| `api/src/workflow-watcher.ts` (new, §1) | **Stuck detection:** stage idle past SLA (48h) → attention card in THE INBOX (approvals row, type=stuck_stage) + `pipeline_events` 'stuck_flag'. Idempotent (one open card per workflow+stage), auto-resolve when the stage advances (approved_by='watcher' — the watcher acts as the system's own approver for the resolve action). Cron */10. |
 | `api/src/routes/pipeline-index.ts` (new, §6 P1) | `GET /api/v1/pipelines-index` — every workflow with client name + computed step counts (the index page payload). |
 | `api/src/routes/deliverables.ts` (new, §3/§4) | `GET /api/v1/deliverables?client_id=` — the twin's filed assets read side. |
 
@@ -71,7 +71,7 @@
 - **Gate ApprovalCards render as generic approval rows** in /approvals + chat — a dedicated gate card shape (risk-tier badge, payload preview) is a nit → Sprint 11.
 - **Twin 360 shot is on the Test Gym client** (the filed deliverable's client) — CHURNED badge visible; a production-client twin shot is cosmetic-only later.
 - **Laya headline 55.7% < Sprint 8's 60.0% baseline** — the rebuilt set is stricter (honest, documented above; label-corrected ≈63-64%); embeddings/logged-data fold into Sprint 11+.
-- **/logs page** still exists behind its redirect (not in the sprint's delete list — untouched).
+- **/logs** remains redirect-only (redirects to a route that doesn't render; untouched in this sprint — not in the delete list).
 - **auto-advance on task-done events** (agent task completion → stage advance) — the gate-driven path is live; a task-done listener is a nit → Sprint 11 (needs the task→workflow linkage map).
 
 ## Deliberately not built (per §8)

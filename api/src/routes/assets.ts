@@ -1,0 +1,163 @@
+/*
+ * routes/assets.ts — Sprint 11 §1: the REAL assets library (Sprint 10's
+ * filed deliverables finally have a home). Supabase Storage buckets
+ * (client-assets / deliverables / content — blueprint §2.8 folded debt):
+ * real file bytes in buckets, metadata + links in the DB.
+ *
+ * The old /assets → /settings redirect is DELETED — /assets becomes the
+ * real library page (frontend).
+ *
+ * Endpoints:
+ *   GET    /assets                — global library (filter client/type/date)
+ *   POST   /assets/upload         — founder adds assets (client + type tags,
+ *                                   writes the right bucket + indexes the row)
+ *   GET    /assets/:id/download   — signed URL download
+ *   POST   /assets/:id/reuse      — attach/copy into a workflow or draft
+ *                                   (one click, logged)
+ */
+import { app, authMiddleware, supabase } from '../ctx';
+
+// Bucket per kind (blueprint §2.8) — uploads land in the right bucket.
+const BUCKET_FOR_KIND: Record<string, string> = {
+  file: 'client-assets',
+  image: 'client-assets',
+  link: 'content',
+  post: 'content',
+  report: 'deliverables',
+};
+
+const ensureBuckets = async () => {
+  for (const name of ['client-assets', 'deliverables', 'content']) {
+    const { data: existing } = await supabase.storage.getBucket(name);
+    if (!existing) {
+      await supabase.storage.createBucket(name, { public: false });
+      console.log(`[assets] bucket created: ${name}`);
+    }
+  }
+};
+
+// Buckets ensured once at boot (idempotent).
+let _bucketsEnsured = false;
+
+app.get('/api/v1/assets', authMiddleware, async (req, res) => {
+  try {
+    if (!_bucketsEnsured) { await ensureBuckets(); _bucketsEnsured = true; }
+    const { client_id, kind, since } = req.query;
+    const limit = Math.min(parseInt(String(req.query.limit || '200'), 10) || 200, 1000);
+    // The library = filed deliverables (Sprint 10) + uploaded assets — ONE
+    // table (deliverables), no duplicate filing paths. Uploaded rows carry
+    // gate_action_id = null + metadata.uploaded=true.
+    let query = supabase
+      .from('deliverables')
+      .select('id, client_id, workflow_id, title, kind, content, file_url, version, released_by, released_at, metadata, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (client_id) query = query.eq('client_id', String(client_id));
+    if (kind) query = query.eq('kind', String(kind));
+    if (since) query = query.gte('created_at', String(since));
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // client names (bounded, one query)
+    const clientIds = Array.from(new Set((data || []).map((a: any) => a.client_id).filter(Boolean)));
+    const { data: clients } = clientIds.length
+      ? await supabase.from('clients').select('id, name').in('id', clientIds)
+      : { data: [] };
+    const nameById = new Map((clients || []).map((c: any) => [c.id, c.name]));
+
+    res.json((data || []).map((a: any) => ({
+      ...a,
+      client_name: nameById.get(a.client_id) || null,
+      source: (a.metadata as any)?.uploaded ? 'upload' : 'filed',
+    })));
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/v1/assets/upload', authMiddleware, async (req, res) => {
+  try {
+    if (!_bucketsEnsured) { await ensureBuckets(); _bucketsEnsured = true; }
+    const { client_id, title, kind = 'file', content_base64, content_text, file_name } = req.body || {};
+    if (!title) return res.status(400).json({ error: 'title required' });
+    if (!client_id) return res.status(400).json({ error: 'client_id required — upload without a client tag is incomplete' });
+
+    const bucket = BUCKET_FOR_KIND[String(kind)] || 'client-assets';
+    let fileUrl: string | null = null;
+
+    // Real bytes → the right bucket. Text content → stored in the row.
+    if (content_base64 && file_name) {
+      const bytes = Buffer.from(content_base64, 'base64');
+      if (bytes.length > 25 * 1024 * 1024) return res.status(400).json({ error: 'file too large (25MB cap)' });
+      const path = `${client_id}/${Date.now()}-${file_name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error: upErr } = await supabase.storage.from(bucket).upload(path, bytes, { upsert: false });
+      if (upErr) throw upErr;
+      fileUrl = `${bucket}/${path}`; // storage path (signed URL on download)
+    } else if (!content_text) {
+      return res.status(400).json({ error: 'content_base64+file_name (binary) or content_text required' });
+    }
+
+    // Upload without indexing is incomplete — index the row (same table as
+    // filed deliverables; metadata.uploaded=true marks the source).
+    const { data: row, error } = await supabase.from('deliverables').insert({
+      client_id,
+      title,
+      kind,
+      content: content_text || null,
+      file_url: fileUrl,
+      version: 1,
+      metadata: { uploaded: true, bucket, file_name: file_name || null },
+    }).select().single();
+    if (error) throw error;
+    res.status(201).json({ ok: true, asset: row });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/v1/assets/:id/download', authMiddleware, async (req, res) => {
+  try {
+    const { data: asset } = await supabase.from('deliverables').select('id, title, file_url, kind').eq('id', req.params.id).single();
+    if (!asset) return res.status(404).json({ error: 'asset not found' });
+    if (!asset.file_url) return res.status(400).json({ error: 'no file bytes — text/link assets have no download' });
+    const [bucket, ...pathParts] = asset.file_url.split('/');
+    const path = pathParts.join('/');
+    const { data: signed, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+    if (error || !signed) throw error || new Error('signed url failed');
+    res.json({ ok: true, url: signed.signedUrl, expires_in: 3600, title: asset.title });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/v1/assets/:id/reuse', authMiddleware, async (req, res) => {
+  try {
+    const { workflow_id, note } = req.body || {};
+    if (!workflow_id) return res.status(400).json({ error: 'workflow_id required — reuse without a target is a dead click' });
+    const { data: asset } = await supabase.from('deliverables').select('id, title, kind, content, file_url, client_id').eq('id', req.params.id).single();
+    if (!asset) return res.status(404).json({ error: 'asset not found' });
+
+    // Reuse = copy the asset onto the target workflow (logged). One click.
+    const { data: copy, error } = await supabase.from('deliverables').insert({
+      client_id: asset.client_id,
+      workflow_id,
+      title: `${asset.title} (reused)`,
+      kind: asset.kind,
+      content: asset.content,
+      file_url: asset.file_url,
+      version: 1,
+      metadata: { reused_from: asset.id, note: note || null },
+    }).select().single();
+    if (error) throw error;
+
+    // Audit trail: a reuse nobody can see is not a reuse.
+    await supabase.from('pipeline_events').insert({
+      workflow_id, client_id: asset.client_id, event: 'asset_reused',
+      actor: 'founder',
+      detail: { asset_id: asset.id, copy_id: copy.id, title: asset.title, note: note || null },
+    });
+    res.json({ ok: true, copy });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

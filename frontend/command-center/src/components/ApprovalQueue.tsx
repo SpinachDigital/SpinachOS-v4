@@ -83,6 +83,18 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
           {approvals.map((approval) => {
             const config = TYPE_CONFIG[approval.type] || { icon: <FileText className="w-4 h-4" />, tint: 'rgba(100,116,139,0.14)', label: approval.type };
             const isPending = approval.status === 'pending';
+            // Sprint 11 nit 6 — dedicated Gate ApprovalCard: gates (type='gate')
+            // get a risk-tier badge + escalation flag + redacted payload
+            // preview. No longer a generic approval row.
+            const isGate = approval.type === 'gate';
+            const gateTier = isGate ? (approval as any).risk_tier || (approval as any).payload_json?.risk_tier || null : null;
+            const gateEscalation = isGate && ((approval as any).metadata?.escalation || (approval as any).payload_json?.escalation);
+            const TIER_STYLE: Record<string, { bg: string; color: string }> = {
+              read: { bg: 'rgba(100,116,139,0.14)', color: '#475569' },
+              write: { bg: 'rgba(245,158,11,0.16)', color: '#b45309' },
+              external: { bg: 'rgba(239,68,68,0.16)', color: '#b91c1c' },
+            };
+            const tierStyle = gateTier ? (TIER_STYLE[gateTier] || TIER_STYLE.write) : null;
 
             return (
               <article
@@ -119,6 +131,26 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }:
                       {config.label}
                       {approval.requested_by && ` · requested by @${approval.requested_by}`}
                     </p>
+                    {isGate && tierStyle && (
+                      <div className="flex items-center gap-2" style={{ marginTop: 4, flexWrap: 'wrap' }}>
+                        {/* Sprint 11 nit 6: risk-tier badge — read/write/external */}
+                        <span className="t-mono" style={{
+                          padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                          textTransform: 'uppercase', letterSpacing: '0.05em',
+                          background: tierStyle.bg, color: tierStyle.color,
+                        }}>
+                          {gateTier} risk
+                        </span>
+                        {gateEscalation && (
+                          <span className="t-mono" style={{
+                            padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                            background: 'rgba(239,68,68,0.16)', color: '#b91c1c',
+                          }}>
+                            tier escalation — {gateTier} never approved before on this workflow
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {approval.platform && (
                       <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Platform: {approval.platform}</p>
                     )}
