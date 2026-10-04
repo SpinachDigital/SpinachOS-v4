@@ -1,6 +1,7 @@
 import './globals.css';
 import { type ReactNode } from 'react';
 import AppShell from '@/components/shell/AppShell';
+import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
 
 export const metadata = {
   title: 'Spinach Labs — Command Center',
@@ -26,7 +27,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <AppShell>{children}</AppShell>
+        <GlobalErrorBoundary>
+          <AppShell>{children}</AppShell>
+        </GlobalErrorBoundary>
       </body>
     </html>
   );

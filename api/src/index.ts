@@ -15,6 +15,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import { app, httpServer, wss, wsClients, setWss } from './ctx';
+import 'express-async-errors'; // Phase 5 GOAL 6: async route errors reach the error handler — no unhandled rejections
 import { WebSocket } from 'ws';
 import { Request, Response, NextFunction } from 'express';
 import { assertLayaMapIntegrity } from './laya-client';
