@@ -1,0 +1,21 @@
+Sprint 13 — slug-unique → (slug, version) RE-VERIFY (user-run SQL: do $$ pg_constraint drop + composite unique add)
+Date: 2026-10-04
+
+TEST 1 — same slug, version 1 aur 2 (dono insert):
+  row v1: OK  __reverify-probe v1
+  row v2: OK  __reverify-probe v2
+  VERDICT: PASS
+
+TEST 2 — same slug+version duplicate:
+  REJECTED: duplicate key value violates unique constraint "playbooks_slug_version_key"
+  VERDICT: PASS
+
+TEST 3 — v2 pack seed → v1 instance untouched (honest: v2 deleted first, install picks v1):
+  1. install (v2 deleted → picks v1): pack_version=1 steps=[kickoff,brand-dna,kickoff-call,first-deliverable]
+  2. seed v2: OK v2
+  3. v1 after seed: pack_version=1 steps unchanged, updated_at unchanged
+     v1 untouched: PASS (snapshot byte-identical)
+  4. fresh install: v2 steps=[kickoff,discovery,proposal_review,handoff] → PASS
+
+ALL 3 TESTS PASS — Sprint 12 nit 4 (versioned packs) fully closed.
+Script: api/scripts/sprint13-slug-reverify.js (+ -v1honest variant)
