@@ -1,0 +1,31 @@
+Phase 5 GOAL 8+9 — BYOK + per-department model picker live tests (2026-10-04)
+
+Publishing connectors (GOAL 9):
+  GET  /api/v1/providers/publishing → publora (x,linkedin,instagram,threads),
+       connected=false, active=false, mode=dry-run
+  POST /api/v1/providers/publishing/publora/connect {token} →
+       {ok:true, key_masked:"test…6789"} → connected=true, active=true
+       (key never echoed in full — masked ack verified)
+
+Per-department model picks (GOAL 8):
+  POST /api/v1/providers/model-picks {department:'seo_specialist',
+       capability:'gateway', model:'auto/best-reasoning'} → ok
+  (fix: upsert needs { onConflict: 'department,capability' })
+  bridge.ts runSpecialistTask now reads the pick per call — founder's DB
+  pick overrides the bench code default, no hardcoded provider assumptions.
+
+OmniRoute health episode (honest documentation — NOT a code bug):
+  18:50 UTC: auto/best-reasoning OK 7.9s, auto/best-chat OK 8.7s (direct)
+  18:55 UTC: auto/best-fast + auto/* ALL tiers timeout (>55s, >100s, even
+             5-token 'Say OK' probe) — the local gateway's upstream had a
+             total outage episode mid-session.
+  Effect: grow/generate times out while the gateway is down. Bridge
+  breaker + AGENT_TASK_TIMEOUT_MS (180s, now in api/.env) fire correctly;
+  generate route now auto-resets a wedged slot drafting→planned on
+  abort/timeout errors (grow.ts catch block).
+  Resolution: restart OmniRoute (user's terminal) — bridge + picks work
+  the moment the gateway is healthy (proven by the direct-call successes).
+
+Also: /health embeddings probe fixed (GOAL 4) — was 'NVIDIA_API_KEY not
+set' because the key lives in the Hermes root .env; now probes via the
+effective chain (BYOK → env → Hermes .env) → ok 313ms.

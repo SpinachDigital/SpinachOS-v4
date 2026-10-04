@@ -130,7 +130,7 @@ app.post('/api/v1/providers/model-picks', authMiddleware, async (req, res) => {
     const { supabase } = require('../ctx');
     const { data, error } = await supabase.from('department_model_picks').upsert({
       department, capability, model, updated_at: new Date().toISOString(),
-    }).select().single();
+    }, { onConflict: 'department,capability' }).select().single();
     if (error) throw error;
     res.json({ ok: true, pick: data });
   } catch (e: any) {
