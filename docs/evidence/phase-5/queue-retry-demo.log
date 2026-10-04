@@ -1,0 +1,22 @@
+Phase 5 GOAL 1 — job queue live demo (2026-10-04)
+
+SETUP: job_queue table (migration-phase5-hardening.sql) + queue worker
+(5s tick, at-most-once claim via status flip) + handlers registry.
+
+DEMO 1 — dead-letter visible:
+  enqueued demo:no-handler (no handler registered)
+  → next tick: status=dead, last_error="no handler registered for queue
+    'demo:no-handler'", /api/v1/jobs counts {dead: 1}
+
+DEMO 2 — retry with backoff:
+  enqueued grow:publish (max_attempts 2, slot with bogus approval → handler
+  throws 'approval not approved — deny-by-default')
+  → attempt 1 fail → queued w/ 30s backoff
+  → attempt 2 fail → DEAD (attempts: 2, last_error honest)
+  → /api/v1/jobs shows the DLQ row + counts
+
+DEMO 3 — manual retry:
+  POST /api/v1/jobs/<id>/retry → OK — status queued (attempts reset 0)
+
+Verdict: PASS — a failed job retries with backoff, then surfaces visibly
+in /api/v1/jobs + a feed event. Nothing fails silently.

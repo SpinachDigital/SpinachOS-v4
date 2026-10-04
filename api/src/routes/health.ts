@@ -7,6 +7,7 @@
 import { app, supabase } from '../ctx';
 import { getQueueHealth } from '../job-queue';
 import { getActivePublisher } from '../providers/publishing';
+import { embeddingsKeyEffective } from '../rag';
 import { Agent, fetch as undiciFetch } from 'undici';
 
 const embedAgent = new Agent({ keepAliveTimeout: 10_000 });
@@ -49,10 +50,11 @@ app.get('/health', async (_req, res) => {
       const active = await getActivePublisher();
       return { connected: !!active, provider: active?.name || null, mode: active ? 'live' : 'dry-run' };
     }),
-    // Embeddings (NVIDIA): real API probe (cheap 1-token embed)
+    // Embeddings (NVIDIA): real API probe (cheap 1-token embed); key via the
+    // effective chain (BYOK → env → Hermes root .env).
     probe('embeddings', async () => {
-      const key = process.env.NVIDIA_API_KEY;
-      if (!key) throw new Error('NVIDIA_API_KEY not set');
+      const key = await embeddingsKeyEffective();
+      if (!key) throw new Error('no embeddings key (BYOK/env/Hermes .env all empty)');
       const r = await undiciFetch('https://integrate.api.nvidia.com/v1/embeddings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}`, 'user-agent': 'spinach-os/1.0' },

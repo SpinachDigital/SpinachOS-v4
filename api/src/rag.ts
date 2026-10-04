@@ -34,9 +34,18 @@ const EMBED_CACHE_MAX = 500;
 function cacheKey(text: string, inputType: string) { return inputType + ':' + text; }
 
 function nvidiaKey(): string | null {
-  // from the API server env; falls back to the Hermes root .env
-  const k = process.env.NVIDIA_API_KEY;
-  if (k) return k;
+  // Phase 5 GOAL 8: the founder's BYOK embeddings key (DB) wins first.
+  return process.env.NVIDIA_API_KEY || null;
+}
+
+/** Exported for /health (GOAL 4): the effective embeddings key (BYOK → env → Hermes root .env). */
+export async function embeddingsKeyEffective(): Promise<string | null> {
+  const byok = await getStoredKey('embeddings').catch(() => null);
+  return byok || nvidiaKey() || hermesRootNvidiaKey();
+}
+
+function hermesRootNvidiaKey(): string | null {
+  // from the Hermes root .env (the profiles' key — same account)
   try {
     const fs = require('fs');
     const path = require('path');
