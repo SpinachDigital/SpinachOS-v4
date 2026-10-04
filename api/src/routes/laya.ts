@@ -96,7 +96,7 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
     // (fine-tuning data collection the Laya experiment called for).
     void supabase.from('laya_routing_decisions').insert({
       source: 'single', message: command.slice(0, 2000), department: department.toLowerCase(),
-      priority, confidence: decision.confidence ?? 0, reasoning: decision.reasoning || null, latency_ms: null,
+      priority, confidence: decision.confidence ?? 0, reasoning: (decision as any).reasoning || null, latency_ms: null,
     });
 
     // Priority handling
