@@ -5,7 +5,10 @@
  */
 
 // -- imports auto-added by fix-imports (Phase 3)
-import { app, authMiddleware, emitApproval, supabase } from '../ctx';
+import { app, authMiddleware, supabase, emitApproval } from '../ctx';
+// Sprint 13: logSlotEvent — GROW slot transitions (publish approvals from
+// THE INBOX page ride the same machinery).
+import { logSlotEvent } from './grow';
 import { recordApprovalDecision, recordFounderCorrection } from '../memory-ledger';
 app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
@@ -95,6 +98,21 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
       await supabase.from('outreach_drafts').update({
         status: 'approved', updated_at: new Date().toISOString(),
       }).eq('id', (data as any).payload_json.draft_id);
+    }
+    // Sprint 13: publish cards ride the SAME machinery — approving a
+    // type=publish card schedules the linked calendar slot (the approval IS
+    // the publish button, same object THE INBOX shows).
+    if ((data as any)?.payload_json?.kind === 'publish' && (data as any)?.payload_json?.slot_id) {
+      const slotId = (data as any).payload_json.slot_id;
+      const { data: slot0 } = await supabase.from('marketing_content_calendar').select('*').eq('id', slotId).single();
+      if (slot0 && slot0.status === 'review') {
+        const scheduledAt = (data as any).payload_json?.scheduled_at || slot0.scheduled_at || new Date().toISOString();
+        await supabase.from('marketing_content_calendar').update({
+          status: 'scheduled', scheduled_at: scheduledAt, updated_at: new Date().toISOString(),
+          metadata: { ...(slot0.metadata || {}), approval_id: data.id },
+        }).eq('id', slotId);
+        await logSlotEvent(supabase, slotId, 'publish_approved', 'founder', { approval_id: data.id, scheduled_at: scheduledAt, platform: slot0.platform, via: 'approvals-page' });
+      }
     }
     emitApproval({ ...data, action: 'approved' });
     // Sprint 12 §2: ledger write path — approval decisions are recorded

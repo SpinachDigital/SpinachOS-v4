@@ -70,7 +70,7 @@ async function publishToProvider(post: { platform: string; text: string; mediaUr
  * have no workflow), so GROW transitions log into the SLOT's metadata.history
  * (always visible via /grow/status + the calendar page). Never silent.
  */
-async function logSlotEvent(supabase: any, slotId: string, event: string, actor: string, detail: Record<string, unknown>) {
+export async function logSlotEvent(supabase: any, slotId: string, event: string, actor: string, detail: Record<string, unknown>) {
   try {
     const { data: slot } = await supabase
       .from('marketing_content_calendar')
