@@ -328,30 +328,7 @@ export default function SettingsPage() {
             </div>
           </>
         ) : activeTab === 'api' ? (
-          <>
-            <div className="section-title">API keys</div>
-            <p className="t-meta" style={{ color: 'var(--text-dim)' }}>
-              Keys are stored in the Hermes vault (never in this UI). Manage them via Settings → Passwords &amp; Logins.
-            </p>
-            <div className="grid-2">
-              {['SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_ANON_KEY', 'JWT_SECRET', 'TELEGRAM_BOT_TOKEN', 'OPENAI_API_KEY', 'ANTHROPIC_API_KEY'].map((key) => (
-                <div key={key} className="panel">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span className="t-mono" style={{ fontSize: 11 }}>{key}</span>
-                    <span className="t-meta" style={{ color: apiKeys[key] ? 'var(--green-bright)' : 'var(--text-faint)' }}>
-                      {apiKeys[key] ? 'Configured' : 'Not set'}
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    placeholder={apiKeys[key] ? '••••••••' : 'Enter key…'}
-                    className="input"
-                    onChange={(e) => setApiKeys({ ...apiKeys, [key]: e.target.value })}
-                  />
-                </div>
-              ))}
-            </div>
-          </>
+          <ByokPanel />
         ) : (
           <>
             <div className="section-title">Advanced</div>
@@ -381,6 +358,220 @@ export default function SettingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/*
+ * ByokPanel — Phase 5 GOAL 8 + GOAL 9: central key management + the
+ * publishing connector registry + per-department model picker.
+ * Keys server-side only (masked acks); founder connects/disconnects
+ * publishing providers himself; model picks override code defaults.
+ */
+function ByokPanel() {
+  // Publishing providers (GOAL 9)
+  const [pubs, setPubs] = useState<any[] | null>(null);
+  const [pubKeyInput, setPubKeyInput] = useState<Record<string, string>>({});
+  const [pubMsg, setPubMsg] = useState<Record<string, string>>({});
+
+  // BYOK keys (GOAL 8): gateway | image | embeddings
+  const [keys, setKeys] = useState<any[] | null>(null);
+  const [keyInput, setKeyInput] = useState<Record<string, string>>({});
+  const [keyMsg, setKeyMsg] = useState<Record<string, string>>({});
+
+  // Model picks (GOAL 8)
+  const [picks, setPicks] = useState<any[] | null>(null);
+  const [pickDraft, setPickDraft] = useState({ department: 'ceo', capability: 'gateway', model: '' });
+  const [pickMsg, setPickMsg] = useState<string | null>(null);
+
+  const loadAll = async () => {
+    try {
+      const [p, k, m] = await Promise.all([
+        apiFetch('/api/v1/providers/publishing'),
+        apiFetch('/api/v1/providers/keys'),
+        apiFetch('/api/v1/providers/model-picks'),
+      ]);
+      if (p.ok) setPubs(await p.json());
+      if (k.ok) setKeys(await k.json());
+      if (m.ok) setPicks(await m.json());
+    } catch { /* honest loading state stays */ }
+  };
+
+  useEffect(() => { void loadAll(); }, []);
+
+  const connectPub = async (name: string) => {
+    const token = (pubKeyInput[name] || '').trim();
+    if (!token) return;
+    try {
+      const res = await apiFetch(`/api/v1/providers/publishing/${name}/connect`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+      });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setPubMsg((m) => ({ ...m, [name]: body.ok ? `Connected ✓ (${body.key_masked})` : (body.error || 'failed') }));
+      if (body.ok) { setPubKeyInput((s) => ({ ...s, [name]: '' })); void loadAll(); }
+    } catch (e: any) { setPubMsg((m) => ({ ...m, [name]: e?.message || 'failed' })); }
+  };
+
+  const disconnectPub = async (name: string) => {
+    try {
+      const res = await apiFetch(`/api/v1/providers/publishing/${name}/disconnect`, { method: 'POST' });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setPubMsg((m) => ({ ...m, [name]: body.ok ? 'Disconnected' : (body.error || 'failed') }));
+      if (body.ok) void loadAll();
+    } catch (e: any) { setPubMsg((m) => ({ ...m, [name]: e?.message || 'failed' })); }
+  };
+
+  const saveKey = async (provider: string) => {
+    const value = (keyInput[provider] || '').trim();
+    if (!value) return;
+    try {
+      const res = await apiFetch(`/api/v1/providers/keys/${provider}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: value }),
+      });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setKeyMsg((m) => ({ ...m, [provider]: body.ok ? `Saved ✓ (${body.key_masked})` : (body.error || 'failed') }));
+      if (body.ok) { setKeyInput((s) => ({ ...s, [provider]: '' })); void loadAll(); }
+    } catch (e: any) { setKeyMsg((m) => ({ ...m, [provider]: e?.message || 'failed' })); }
+  };
+
+  const deleteKeyUi = async (provider: string) => {
+    try {
+      const res = await apiFetch(`/api/v1/providers/keys/${provider}`, { method: 'DELETE' });
+      if (res.ok) { setKeyMsg((m) => ({ ...m, [provider]: 'Deleted' })); void loadAll(); }
+    } catch { /* stays */ }
+  };
+
+  const savePick = async () => {
+    const { department, capability, model } = pickDraft;
+    if (!model.trim()) return;
+    try {
+      const res = await apiFetch('/api/v1/providers/model-picks', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ department, capability, model: model.trim() }),
+      });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setPickMsg(body.ok ? `Pick saved ✓ — ${department}/${capability} → ${model}` : (body.error || 'failed'));
+      if (body.ok) { setPickDraft((d) => ({ ...d, model: '' })); void loadAll(); }
+    } catch (e: any) { setPickMsg(e?.message || 'failed'); }
+  };
+
+  const removePick = async (id: string) => {
+    try {
+      const res = await apiFetch(`/api/v1/providers/model-picks/${id}`, { method: 'DELETE' });
+      if (res.ok) void loadAll();
+    } catch { /* stays */ }
+  };
+
+  return (
+    <>
+      <div className="section-title">Publishing providers</div>
+      <p className="t-meta" style={{ color: 'var(--text-dim)', marginBottom: 10 }}>
+        GROW publishing rides the active provider — nothing connected = dry-run (labeled). Keys server-side only.
+      </p>
+      <div className="grid-2">
+        {(pubs || []).map((p) => (
+          <div key={p.name} className="panel">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="t-heading">{p.name}</span>
+                {p.active && <span className="badge badge-green">active</span>}
+              </div>
+              <span className={`dot ${p.connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
+            </div>
+            <div className="t-meta" style={{ color: 'var(--text-faint)', marginBottom: 8 }}>
+              platforms: {(p.capabilities?.platforms || []).join(', ')} · scheduling: {p.capabilities?.scheduling ? 'yes' : 'no'} · threads: {p.capabilities?.threads ? 'yes' : 'no'}
+            </div>
+            {p.connected ? (
+              <button onClick={() => void disconnectPub(p.name)} className="btn btn-danger btn-sm" style={{ minHeight: 44 }}>Disconnect</button>
+            ) : (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="password"
+                  value={pubKeyInput[p.name] || ''}
+                  onChange={(e) => setPubKeyInput((s) => ({ ...s, [p.name]: e.target.value }))}
+                  placeholder="API token…"
+                  className="input"
+                  style={{ flex: 1 }}
+                />
+                <button onClick={() => void connectPub(p.name)} disabled={!(pubKeyInput[p.name] || '').trim()} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>Connect</button>
+              </div>
+            )}
+            {pubMsg[p.name] && <div className="t-meta" style={{ marginTop: 6, color: pubMsg[p.name].includes('✓') ? 'var(--green-bright)' : 'var(--text-faint)' }}>{pubMsg[p.name]}</div>}
+          </div>
+        ))}
+        {pubs === null && <div className="skeleton" style={{ height: 120 }} />}
+      </div>
+
+      <div className="section-title" style={{ marginTop: 18 }}>Provider keys (BYOK)</div>
+      <p className="t-meta" style={{ color: 'var(--text-dim)', marginBottom: 10 }}>
+        Keys stored server-side (DB) — masked everywhere. The embeddings key overrides the env key for RAG.
+      </p>
+      <div className="grid-2">
+        {['gateway', 'image', 'embeddings'].map((provider) => {
+          const existing = (keys || []).find((k: any) => k.provider === provider);
+          return (
+            <div key={provider} className="panel">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span className="t-mono" style={{ fontSize: 11 }}>{provider}</span>
+                <span className="t-meta" style={{ color: existing ? 'var(--green-bright)' : 'var(--text-faint)' }}>
+                  {existing ? existing.key_masked : 'Not set'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="password"
+                  value={keyInput[provider] || ''}
+                  onChange={(e) => setKeyInput((s) => ({ ...s, [provider]: e.target.value }))}
+                  placeholder="Enter key…"
+                  className="input"
+                  style={{ flex: 1 }}
+                />
+                <button onClick={() => void saveKey(provider)} disabled={!(keyInput[provider] || '').trim()} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>Save</button>
+                {existing && <button onClick={() => void deleteKeyUi(provider)} className="btn btn-danger btn-sm" style={{ minHeight: 44 }}>✕</button>}
+              </div>
+              {keyMsg[provider] && <div className="t-meta" style={{ marginTop: 6, color: 'var(--text-faint)' }}>{keyMsg[provider]}</div>}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="section-title" style={{ marginTop: 18 }}>Per-department model picker</div>
+      <p className="t-meta" style={{ color: 'var(--text-dim)', marginBottom: 10 }}>
+        Which model each department uses per capability — overrides code defaults (empty pick = default).
+      </p>
+      <div className="panel" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <select value={pickDraft.department} onChange={(e) => setPickDraft((d) => ({ ...d, department: e.target.value }))} className="input" style={{ width: 160 }}>
+            {['ceo','cto','orchestrator','designer','engineer','social','seo_specialist','research','sales','ads_manager'].map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+          <select value={pickDraft.capability} onChange={(e) => setPickDraft((d) => ({ ...d, capability: e.target.value }))} className="input" style={{ width: 140 }}>
+            {['gateway', 'image', 'embeddings'].map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input
+            value={pickDraft.model}
+            onChange={(e) => setPickDraft((d) => ({ ...d, model: e.target.value }))}
+            onKeyDown={(e) => { if (e.key === 'Enter') void savePick(); }}
+            placeholder="model (e.g. auto/pro-reasoning)"
+            className="input"
+            style={{ flex: 1, minWidth: 180 }}
+          />
+          <button onClick={() => void savePick()} disabled={!pickDraft.model.trim()} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>Set</button>
+        </div>
+        {pickMsg && <div className="t-meta" style={{ marginTop: 6, color: pickMsg.includes('✓') ? 'var(--green-bright)' : 'var(--text-faint)' }}>{pickMsg}</div>}
+      </div>
+      {(picks || []).length === 0 ? (
+        <div className="t-meta" style={{ color: 'var(--text-faint)' }}>No picks yet — every department runs its code default.</div>
+      ) : (
+        <div className="kv">
+          {(picks || []).map((p) => (
+            <div key={p.id} className="kv-row">
+              <span className="k t-mono">{p.department}/{p.capability}</span>
+              <span className="v">{p.model}</span>
+              <button onClick={() => void removePick(p.id)} className="btn btn-danger btn-sm" style={{ minHeight: 32, marginLeft: 8 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
