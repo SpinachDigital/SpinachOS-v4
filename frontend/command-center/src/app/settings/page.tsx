@@ -22,7 +22,7 @@ interface Profile {
   dormant?: boolean;
 }
 
-type Tab = 'integrations' | 'models' | 'theme' | 'api' | 'advanced';
+type Tab = 'integrations' | 'models' | 'knowledge' | 'theme' | 'api' | 'advanced';
 
 // The 10 Hermes profile keys known from the execution bridge (bridge.ts).
 // Used only to mark which profiles the API does NOT report — never as fake rows.
@@ -34,6 +34,7 @@ const KNOWN_PROFILE_KEYS = [
 const TABS: { id: Tab; label: string }[] = [
   { id: 'integrations', label: 'Integrations' },
   { id: 'models', label: 'Models & Brains' },
+  { id: 'knowledge', label: 'Knowledge' },
   { id: 'theme', label: 'Theme' },
   { id: 'api', label: 'API Keys' },
   { id: 'advanced', label: 'Advanced' },
@@ -292,6 +293,8 @@ export default function SettingsPage() {
               client is onboarded. All other profiles are live.
             </div>
           </>
+        ) : activeTab === 'knowledge' ? (
+          <KnowledgePanel />
         ) : activeTab === 'theme' ? (
           <>
             <div className="section-title">Appearance</div>
@@ -378,5 +381,163 @@ export default function SettingsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/*
+ * KnowledgePanel — Phase 5 GOAL 7b: the ingest UI (no more API-only
+ * ingestion) + a live query tester. Founder pastes text (or client docs
+ * summaries), picks client + kind, ingests — the chunk is embedded + indexed
+ * via the real /api/v1/knowledge/ingest. Query tester hits the REAL
+ * retrieval endpoint (hybrid, client-isolated) so quality is visible.
+ */
+function KnowledgePanel() {
+  const [ingText, setIngText] = useState('');
+  const [ingTitle, setIngTitle] = useState('');
+  const [ingKind, setIngKind] = useState('pattern');
+  const [ingClientId, setIngClientId] = useState('');
+  const [ingesting, setIngesting] = useState(false);
+  const [ingResult, setIngResult] = useState<string | null>(null);
+
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [qText, setQText] = useState('');
+  const [qClientId, setQClientId] = useState('');
+  const [qResults, setQResults] = useState<any[] | null>(null);
+  const [querying, setQuerying] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch('/api/v1/clients');
+        if (res.ok) setClients(await res.json());
+      } catch { /* honest empty */ }
+    })();
+  }, []);
+
+  const ingest = async () => {
+    if (!ingText.trim()) return;
+    setIngesting(true);
+    setIngResult(null);
+    try {
+      const res = await apiFetch('/api/v1/knowledge/ingest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: ingTitle.trim() || ingText.trim().slice(0, 60),
+          content: ingText.trim(),
+          kind: ingKind,
+          client_id: ingClientId || null,
+        }),
+      });
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setIngResult(res.ok && body.ok !== false
+        ? `Ingested ✓ (embedded ${body.embedded !== false ? '+ indexed' : '— lexical-only, embedding failed'})`
+        : (body.error || 'Ingest failed'));
+      if (res.ok) { setIngText(''); setIngTitle(''); }
+    } catch (e: any) {
+      setIngResult(e?.message || 'Ingest failed');
+    } finally {
+      setIngesting(false);
+    }
+  };
+
+  const runQuery = async () => {
+    if (!qText.trim()) return;
+    setQuerying(true);
+    try {
+      const params = new URLSearchParams({ q: qText.trim(), limit: '5' });
+      if (qClientId) params.set('client_id', qClientId);
+      const res = await apiFetch(`/api/v1/knowledge/query?${params.toString()}`);
+      const body = res.ok ? await res.json().catch(() => ({})) : { error: `HTTP ${res.status}` };
+      setQResults(body.results || body.chunks || []);
+    } catch {
+      setQResults([]);
+    } finally {
+      setQuerying(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="section-title">Knowledge — ingest</div>
+      <div className="panel" style={{ marginBottom: 14 }}>
+        <div className="panel-head">
+          <h3>Ingest a document / note</h3>
+          <span className="badge badge-gray">POST /api/v1/knowledge/ingest</span>
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+          <input
+            value={ingTitle}
+            onChange={(e) => setIngTitle(e.target.value)}
+            placeholder="Title (optional)"
+            className="input"
+            style={{ flex: 2, minWidth: 160 }}
+          />
+          <select value={ingKind} onChange={(e) => setIngKind(e.target.value)} className="input" style={{ flex: 1, minWidth: 120 }}>
+            {['pattern', 'preference', 'decision', 'client', 'guideline', 'report'].map((k) => <option key={k} value={k}>{k}</option>)}
+          </select>
+          <select value={ingClientId} onChange={(e) => setIngClientId(e.target.value)} className="input" style={{ flex: 1, minWidth: 140 }}>
+            <option value="">All clients</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+        <textarea
+          value={ingText}
+          onChange={(e) => setIngText(e.target.value)}
+          placeholder="Paste the text to ingest (brand guidelines, meeting notes, competitor intel…). It gets embedded (NVIDIA) + indexed for hybrid retrieval."
+          className="input"
+          rows={5}
+          style={{ width: '100%', marginBottom: 10, resize: 'vertical' }}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => void ingest()} disabled={ingesting || !ingText.trim()} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>
+            {ingesting ? 'Ingesting…' : 'Ingest'}
+          </button>
+          {ingResult && <span className="t-meta" style={{ color: ingResult.includes('✓') ? 'var(--green-bright)' : 'var(--red)' }}>{ingResult}</span>}
+        </div>
+      </div>
+
+      <div className="section-title">Knowledge — query tester</div>
+      <div className="panel">
+        <div className="panel-head">
+          <h3>Test hybrid retrieval</h3>
+          <span className="badge badge-gray">GET /api/v1/knowledge/query</span>
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+          <input
+            value={qText}
+            onChange={(e) => setQText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void runQuery(); }}
+            placeholder="Query (e.g. 'which clients have no logo')"
+            className="input"
+            style={{ flex: 3, minWidth: 200 }}
+          />
+          <select value={qClientId} onChange={(e) => setQClientId(e.target.value)} className="input" style={{ flex: 1, minWidth: 140 }}>
+            <option value="">All clients</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <button onClick={() => void runQuery()} disabled={querying || !qText.trim()} className="btn btn-secondary btn-sm" style={{ minHeight: 44 }}>
+            {querying ? 'Searching…' : 'Query'}
+          </button>
+        </div>
+        {qResults === null ? null : qResults.length === 0 ? (
+          <div className="t-meta" style={{ color: 'var(--text-faint)', padding: '8px 0' }}>No results — honest empty state.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {qResults.map((r, i) => (
+              <div key={r.id || i} className="panel" style={{ padding: 10, marginBottom: 0 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <span className="badge badge-gray">#{i + 1}</span>
+                  <span className="t-heading" style={{ fontSize: 13 }}>{r.title || '(untitled)'}</span>
+                  {r.kind && <span className="t-meta">{r.kind}</span>}
+                  {typeof r.score === 'number' && <span className="t-meta" style={{ marginLeft: 'auto' }}>score {r.score.toFixed?.(3) || r.score}</span>}
+                </div>
+                <div className="t-meta" style={{ marginTop: 4, color: 'var(--text-faint)' }}>{String(r.content || '').slice(0, 160)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
