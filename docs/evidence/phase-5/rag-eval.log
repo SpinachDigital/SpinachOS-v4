@@ -2,40 +2,39 @@ corpus: 25 chunks
 
 RAG RETRIEVAL EVAL (honest — live hybrid retrieval vs labeled set):
   queries evaluated: 30
-  hit@1: 24/30 = 80%
-  hit@3: 28/30 = 93%
-  hit@5: 28/30 = 93%
-  MRR:   0.867
+  hit@1: 11/30 = 37%
+  hit@3: 13/30 = 43%
+  hit@5: 13/30 = 43%
+  MRR:   0.4
 
 per-query:
-  [2] which client is a specialty cafe in Bandra → expect "guidelines — Brew Theory"
+  [MISS] which client is a specialty cafe in Bandra → expect "guidelines — Brew Theory"
   [1] real estate premium project lead gen → expect "Intake — Vertex Realty"
   [1] salon brand dna → expect "Intake — Salon F 5"
-  [1] cafe brand dna test client → expect "Intake — Cafe B 1"
-  [1] dental clinic brand dna → expect "Intake — Dental H 7"
-  [1] design studio brand dna → expect "Intake — Studio D 3"
+  [MISS] cafe brand dna test client → expect "Intake — Cafe B 1"
+  [MISS] dental clinic brand dna → expect "Intake — Dental H 7"
+  [MISS] design studio brand dna → expect "Intake — Studio D 3"
   [1] bistro brand dna → expect "Intake — Bistro J 9"
   [1] bakery brand dna → expect "Intake — Bakery G 6"
   [1] clinic brand dna → expect "Intake — Clinic C 2"
   [1] realty brand dna → expect "Intake — Realty E 4"
-  [1] gym fitness brand dna → expect "Intake — Gym A 0"
-  [1] yoga studio brand dna → expect "Intake — Yoga I 8"
-  [1] urban fit studio fitness client → expect "Intake — Urban Fit Studio"
+  [MISS] gym fitness brand dna → expect "Intake — Gym A 0"
+  [MISS] yoga studio brand dna → expect "Intake — Yoga I 8"
+  [MISS] urban fit studio fitness client → expect "Intake — Urban Fit Studio"
   [1] monthly report september urban fit → expect "Monthly report"
-  [1] coastal roasters cafe client → expect "Intake — Coastal Roasters"
+  [MISS] coastal roasters cafe client → expect "Intake — Coastal Roasters"
   [1] brew theory brand guidelines visual identity → expect "guidelines — Brew Theory"
-  [1] casa verde interiors home makeovers → expect "Intake — Casa Verde Interiors"
+  [2] casa verde interiors home makeovers → expect "Intake — Casa Verde Interiors"
   [1] casa verde logo design → expect "logo_design — Casa Verde Interiors"
-  [2] war room demo company → expect "Intake — War Room Demo Co"
+  [MISS] war room demo company → expect "Intake — War Room Demo Co"
   [MISS] keo karpin client → expect "Intake — keo karpin"
   [MISS] kro karpin client → expect "Intake — kro karpin"
-  [1] which clients have no logo → expect "Intake — Vertex Realty"
-  [1] interior design studio premium → expect "Intake — Casa Verde Interiors"
-  [1] engagement up 18 percent posts → expect "Monthly report"
-  [2] specialty coffee bandra stand out → expect "guidelines — Brew Theory"
+  [MISS] which clients have no logo → expect "Intake — Vertex Realty"
+  [2] interior design studio premium → expect "Intake — Casa Verde Interiors"
+  [MISS] engagement up 18 percent posts → expect "Monthly report"
+  [MISS] specialty coffee bandra stand out → expect "guidelines — Brew Theory"
   [1] fitness studio brand → expect "Intake — Urban Fit Studio"
-  [1] dental practice brand dna → expect "Intake — Dental H 7"
-  [1] yoga wellness brand → expect "Intake — Yoga I 8"
+  [MISS] dental practice brand dna → expect "Intake — Dental H 7"
+  [MISS] yoga wellness brand → expect "Intake — Yoga I 8"
   [1] logo design war room → expect "logo_design — War Room Demo Co"
-  [2] premium home makeover interiors client → expect "Intake — Casa Verde Interiors"
-exit: 0
+  [MISS] premium home makeover interiors client → expect "Intake — Casa Verde Interiors"
