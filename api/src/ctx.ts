@@ -16,6 +16,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
+import { requestLog } from './logging';
 
 // ---- SECURITY (P0 Fix 3): no hardcoded fallback — crash on missing secret ----
 if (!process.env.JWT_SECRET) {
@@ -31,6 +32,8 @@ export const wss = new WebSocketServer({ noServer: true });
 app.use(helmet());
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
+// Phase 5 GOAL 4: structured JSON request logs (one line per API call).
+app.use(requestLog);
 app.use(rateLimit({ windowMs: 60000, max: 200 }));
 
 export const supabase = createClient(

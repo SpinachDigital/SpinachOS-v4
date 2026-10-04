@@ -280,7 +280,8 @@ app.post('/api/command', async (req, res) => {
 // ============================================
 // HEALTH
 // ============================================
-app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+// Phase 5 GOAL 4: /health moved to routes/health.ts (expanded subsystems —
+// db, queue, schedulers, providers, embeddings — each green/red with latency).
 
 // ============================================
 // ERROR HANDLING

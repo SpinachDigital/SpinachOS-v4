@@ -71,6 +71,7 @@ import './routes/scrapers';
 import './routes/telegram';
 import './routes/marketing';
 import './routes/dashboard';
+import './routes/health';      // Phase 5 GOAL 4: expanded /health (one endpoint, whole system state)
 
 // ---- cron engine (WAKE_BRAINS + retainer cron) ----
 import { startRetainerCron } from './cron-engine';
