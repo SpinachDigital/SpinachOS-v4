@@ -86,14 +86,16 @@ API. Plus the 4 Sprint 12 nits.
 - **Verified live:** history shows `publish_approved (founder)` →
   `published (grow:scheduler)` with full detail.
 
-## Pack v2 live-upgrade test (Sprint 12 nit, verified here)
+## Pack v2 live-upgrade test (Sprint 12 nit, RE-VERIFIED 2026-10-04 after user SQL)
 
-- Install v1 (`client-onboarding`) → instance created with
-  `pack_version: 1`, v1 steps, its own steps_json copy.
-- Seed v2 (`Client Onboarding v2` — 4 revised stages, kickoff-review gate) →
-  **v1 instance untouched** (steps + pack_version + updated_at unchanged).
-- Fresh install after v2 seed → gets **v2** (`order('version', desc)`).
-- Test instances cleaned up; v2 pack kept (a real pack now).
+- `playbooks` uniqueness is `(slug, version)` — `playbooks_slug_key` dropped
+  via the `pg_constraint` DO-block (Supabase auto-named it; exact-name drops
+  silently skipped). **All 3 re-verify tests PASS** (`slug-reverify.log`):
+  1. same slug v1 + v2 both insert: **PASS**
+  2. same slug+version duplicate: **REJECTED** on `playbooks_slug_version_key`: **PASS**
+  3. honest v1-install (v2 deleted first) → seed v2 → **v1 instance
+     byte-identical (PASS)**; fresh installs get **v2** (PASS).
+- Test instances cleaned up; both pack seeds kept (real packs).
 
 ## Evidence
 
