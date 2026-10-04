@@ -24,46 +24,20 @@ import { app, authMiddleware, supabase, emitApproval } from '../ctx';
 // to a shim that returned the raw object as a string). runSpecialistTask is
 // the exported real-gateway call (bench path, Sprint 11 usage-instrumented).
 import { runSpecialistTask } from '../bridge';
+// Phase 5 GOAL 1: the queued job path (retry with backoff, dead-letter).
+import { enqueue, registerHandler } from '../job-queue';
+// Phase 5 GOAL 9: the publishing registry — grow.ts calls the INTERFACE,
+// never a provider directly (adding a provider = one module, zero core changes).
+import { getActivePublisher } from '../providers/publishing';
 
 // ---------------------------------------------------------------------
-// Provider selection — Publora primary (see report for the 3-line reason).
-// Keys are env vars; absent → dry-run. Never hardcoded.
+// Provider selection — REMOVED (Phase 5 GOAL 9): the hardcoded Publora env
+// path moved to providers/publishing.ts (the registry). grow.ts calls
+// getActivePublisher() — nothing connected → dry-run (never stalls).
 // ---------------------------------------------------------------------
-const PUBLORA_TOKEN = process.env.PUBLORA_API_TOKEN || '';
-const PUBLORA_BASE = process.env.PUBLORA_BASE_URL || 'https://api.publora.com/v1';
-const publishMode = () => (PUBLORA_TOKEN ? 'live' : 'dry-run');
 
-/**
- * One scheduling-API call. dry-run: simulated + logged. live: real POST.
- * Returns { mode, post_id?, error? } — the caller stores the outcome.
- */
-async function publishToProvider(post: { platform: string; text: string; mediaUrls: string[]; scheduledAt: string }): Promise<{ mode: string; postId?: string; error?: string }> {
-  if (!PUBLORA_TOKEN) {
-    // DRY-RUN: the full chain executes, the API call is simulated + logged.
-    console.log(`[grow][DRY-RUN] would publish to ${post.platform} at ${post.scheduledAt}: "${post.text.slice(0, 60)}…" (${post.mediaUrls.length} media)`);
-    return { mode: 'dry-run', postId: `dryrun-${Date.now()}` };
-  }
-  try {
-    const res = await fetch(`${PUBLORA_BASE}/posts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${PUBLORA_TOKEN}` },
-      body: JSON.stringify({
-        platform: post.platform,
-        content: post.text,
-        media: post.mediaUrls,
-        schedule_at: post.scheduledAt,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      return { mode: 'live', error: `Publora ${res.status}: ${body.slice(0, 200)}` };
-    }
-    const data = await res.json();
-    return { mode: 'live', postId: data?.id || data?.post_id || `publora-${Date.now()}` };
-  } catch (e: any) {
-    return { mode: 'live', error: `Publora failed: ${e?.message?.slice(0, 200)}` };
-  }
-}
+/** Live-mode reporter for the read side — registry-driven (GOAL 9). */
+const publishMode = async () => ((await getActivePublisher()) ? 'live' : 'dry-run');
 
 /**
  * GROW event log — pipeline_events.workflow_id is NOT NULL (calendar slots
@@ -155,7 +129,7 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (upErr) throw upErr;
-    res.json({ ok: true, slot: updated, mode: publishMode() });
+    res.json({ ok: true, slot: updated, mode: await publishMode() });
   } catch (e: any) {
     // Generation failed → the slot stays drafting (honest) with the error.
     res.status(500).json({ error: e.message });
@@ -249,12 +223,11 @@ app.post('/api/v1/grow/decision/:approvalId', authMiddleware, async (req, res) =
 });
 
 // ---------------------------------------------------------------------
-// GOAL 4 — the scheduler: scheduled slots dispatch at their time
-// (workflow-watcher's setInterval pattern). On success → published with the
-// platform post ID; on failure → failed + attention card in THE INBOX.
-// Nothing dispatches without an approved approval row — the approval IS the
-// publish button; the scheduler only executes what the founder already
-// approved.
+// GOAL 4 — the scheduler: scheduled slots dispatch at their time.
+// Phase 5 GOAL 1: dispatch is a QUEUED job (job_queue) — retry with backoff,
+// dead-letter visible. GOAL 9: publishing via getActivePublisher() (registry
+// interface call — no direct provider import). Nothing dispatches without an
+// approved approval row — the approval IS the publish button.
 // ---------------------------------------------------------------------
 const dispatchDueSlots = async () => {
   try {
@@ -278,41 +251,70 @@ const dispatchDueSlots = async () => {
         console.warn(`[grow] slot ${slot.id} approval ${slot.metadata.approval_id} not approved — skipping`);
         continue;
       }
-      const mode = publishMode();
-      const result = await publishToProvider({
-        platform: slot.platform,
-        text: String(slot.content_text || ''),
-        mediaUrls: slot.asset_ref ? [slot.asset_ref] : [],
-        scheduledAt: slot.scheduled_at,
-      });
-      if (result.error) {
-        // failed + the error stored + an attention card in THE INBOX.
-        await supabase.from('marketing_content_calendar').update({
-          status: 'failed', updated_at: new Date().toISOString(),
-          metadata: { ...(slot.metadata || {}), publish_error: result.error, publish_mode: mode },
-        }).eq('id', slot.id);
-        await supabase.from('approvals').insert({
-          client_id: slot.metadata?.client_id || null, type: 'publish',
-          title: `PUBLISH FAILED — ${slot.platform} post ${slot.date} slot ${slot.slot_index}`,
-          description: result.error.slice(0, 400), platform: slot.platform, status: 'pending',
-          requested_by: 'grow', payload_json: { kind: 'publish_failure', slot_id: slot.id, error: result.error },
-        });
-        await logSlotEvent(supabase, slot.id, 'publish_failed', 'grow:scheduler', { error: result.error, mode });
-      } else {
-        await supabase.from('marketing_content_calendar').update({
-          status: 'published', published_at: new Date().toISOString(), post_id: result.postId,
-          updated_at: new Date().toISOString(),
-          metadata: { ...(slot.metadata || {}), publish_mode: mode },
-        }).eq('id', slot.id);
-        await logSlotEvent(supabase, slot.id, 'published', 'grow:scheduler', { post_id: result.postId, mode, platform: slot.platform });
-        console.log(`[grow] ${mode}: slot ${slot.id.slice(0, 8)} published to ${slot.platform} (${result.postId})`);
+      // Phase 5 GOAL 1: enqueue the publish job (retry with backoff on
+      // failure; dead-letter visible — nothing fails silently). The slot
+      // stays 'scheduled' until the job actually succeeds.
+      const jobId = await enqueue('grow:publish', { slot_id: slot.id });
+      if (!jobId) {
+        console.error(`[grow] slot ${slot.id} enqueue failed — will retry next tick`);
+        continue;
       }
+      await logSlotEvent(supabase, slot.id, 'publish_queued', 'grow:scheduler', { job_id: jobId, queue: 'grow:publish' });
     }
-    if ((due || []).length > 0) console.log(`[grow] dispatched ${(due || []).length} due slot(s) (${publishMode()} mode)`);
+    if ((due || []).length > 0) console.log(`[grow] queued ${(due || []).length} due slot(s) for publish`);
   } catch (e: any) {
     console.error('[grow] dispatch failed:', e?.message);
   }
 };
+
+// The publish job handler — the actual scheduling-API call (queued; the
+// queue retries with backoff, dead-letters visibly).
+async function handlePublishJob(payload: { slot_id: string }) {
+  const { data: slot } = await supabase.from('marketing_content_calendar').select('*').eq('id', payload.slot_id).single();
+  if (!slot) return; // slot deleted — job done, nothing to publish
+  if (slot.status !== 'scheduled') return; // already published/failed — idempotent
+  // Safety law re-checked at execution time (deny-by-default).
+  if (!slot.metadata?.approval_id) throw new Error('slot has no approval — deny-by-default');
+  const { data: appr } = await supabase.from('approvals').select('id, status').eq('id', slot.metadata.approval_id).single();
+  if (!appr || appr.status !== 'approved') throw new Error('approval not approved — deny-by-default');
+
+  // GOAL 9: the registry interface call — never a direct provider import.
+  const publisher = await getActivePublisher();
+  const mode = publisher ? 'live' : 'dry-run';
+  const result = publisher
+    ? await publisher.schedule({
+        platform: slot.platform,
+        text: String(slot.content_text || ''),
+        mediaUrls: slot.asset_ref ? [slot.asset_ref] : [],
+        scheduledAt: slot.scheduled_at,
+      })
+    : { mode: 'dry-run' as const, scheduledId: `dryrun-${Date.now()}` };
+
+  const postId = result.postId || result.scheduledId;
+  if (result.error) {
+    // failed + the error stored + an attention card in THE INBOX (the queue
+    // ALSO retries this job with backoff until max attempts — both paths).
+    await supabase.from('marketing_content_calendar').update({
+      status: 'failed', updated_at: new Date().toISOString(),
+      metadata: { ...(slot.metadata || {}), publish_error: result.error, publish_mode: mode },
+    }).eq('id', slot.id);
+    await supabase.from('approvals').insert({
+      client_id: slot.metadata?.client_id || null, type: 'publish',
+      title: `PUBLISH FAILED — ${slot.platform} post ${slot.date} slot ${slot.slot_index}`,
+      description: result.error.slice(0, 400), platform: slot.platform, status: 'pending',
+      requested_by: 'grow', payload_json: { kind: 'publish_failure', slot_id: slot.id, error: result.error },
+    });
+    await logSlotEvent(supabase, slot.id, 'publish_failed', 'grow:scheduler', { error: result.error, mode });
+    throw new Error(result.error); // → the queue retries with backoff
+  }
+  await supabase.from('marketing_content_calendar').update({
+    status: 'published', published_at: new Date().toISOString(), post_id: postId,
+    updated_at: new Date().toISOString(),
+    metadata: { ...(slot.metadata || {}), publish_mode: mode, publisher: publisher?.name || 'dry-run' },
+  }).eq('id', slot.id);
+  await logSlotEvent(supabase, slot.id, 'published', 'grow:scheduler', { post_id: postId, mode, platform: slot.platform, publisher: publisher?.name || 'dry-run' });
+  console.log(`[grow] ${mode}: slot ${slot.id.slice(0, 8)} published to ${slot.platform} (${postId}) via ${publisher?.name || 'dry-run'}`);
+}
 
 // The scheduler — every 60s (due slots only; the workflow-watcher pattern).
 let _growSchedulerStarted = false;
@@ -320,8 +322,14 @@ export const startGrowScheduler = () => {
   if (_growSchedulerStarted) return;
   _growSchedulerStarted = true;
   setInterval(() => { void dispatchDueSlots(); }, 60_000);
-  console.log(`[grow-scheduler] armed: */60s — scheduled slots dispatch at time (${publishMode()} mode)`);
+  console.log(`[grow-scheduler] armed: */60s — scheduled slots queue publish jobs at time`);
 };
+
+// Phase 5 GOAL 1: the publish job handler registration (called from index.ts
+// before the queue worker starts).
+export function registerPublishJobHandler() {
+  registerHandler('grow:publish', handlePublishJob);
+}
 
 // ---------------------------------------------------------------------
 // Status/history read side (the full chain visible)
@@ -334,7 +342,7 @@ app.get('/api/v1/grow/status/:slotId', authMiddleware, async (req, res) => {
     // not silent; pipeline_events has NOT NULL workflow_id and slots don't
     // belong to workflows).
     const history = (slot.metadata as any)?.history || [];
-    res.json({ slot, history, mode: publishMode() });
+    res.json({ slot, history, mode: await publishMode() });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

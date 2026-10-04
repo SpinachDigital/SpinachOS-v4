@@ -47,10 +47,20 @@ import './routes/assets';
 import './routes/playbooks';
 import './routes/ledger';
 import './routes/grow';
+import './routes/jobs';        // Phase 5 GOAL 1: job queue read side (DLQ visible)
+import './routes/providers';   // Phase 5 GOAL 8+9: BYOK keys + publishing registry
 import { startWorkflowWatcher } from './workflow-watcher';
 startWorkflowWatcher();
 import { startGrowScheduler } from './routes/grow';
 startGrowScheduler();
+// Phase 5 GOAL 1: the queue worker — registered handlers run with retry/
+// backoff; dead-letters visible. Handlers registered below BEFORE the worker
+// starts (module imports run top-to-bottom; handler registration is in the
+// grow module via registerJobHandlers()).
+import { startQueueWorker } from './job-queue';
+import { registerPublishJobHandler } from './routes/grow';
+registerPublishJobHandler();
+startQueueWorker();
 import './routes/retainer';
 import './routes/command';
 import './routes/laya';
