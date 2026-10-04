@@ -65,6 +65,12 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
 
     if (!decision) {
       // Laya unavailable or invalid response — fallback to command gateway logic
+      // Phase 5 GOAL 10: the fallback is LOGGED (confidence 0, source 'single')
+      // — a decision nobody recorded is a decision nobody can fine-tune on.
+      void supabase.from('laya_routing_decisions').insert({
+        source: 'single', message: command.slice(0, 2000), department: 'fallback',
+        priority: 'low', confidence: 0, reasoning: 'laya unavailable/invalid — command gateway fallback', latency_ms: null,
+      });
       return res.json({
         ok: false,
         fallback: true,
@@ -85,6 +91,13 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
 
     // Execute directly via agent execution engine
     const task_id = await executeAgentTask(agent, command, 'laya-routing');
+
+    // Phase 5 GOAL 10: the routing decision is LOGGED with its confidence
+    // (fine-tuning data collection the Laya experiment called for).
+    void supabase.from('laya_routing_decisions').insert({
+      source: 'single', message: command.slice(0, 2000), department: department.toLowerCase(),
+      priority, confidence: decision.confidence ?? 0, reasoning: decision.reasoning || null, latency_ms: null,
+    });
 
     // Priority handling
     if (priority === 'high') {
@@ -111,6 +124,80 @@ app.get('/api/v1/laya/health', authMiddleware, async (req, res) => {
     laya_connected: !!decision,
     url: LAYA_URL,
   });
+});
+
+// Phase 5 GOAL 10 — /batch-decide: batch routing with confidence logging.
+// Every decision logged (source 'batch', latency, confidence) — the
+// fine-tuning data collection the Laya experiment called for.
+app.post('/api/v1/laya/batch-decide', authMiddleware, async (req, res) => {
+  try {
+    const messages: string[] = (Array.isArray(req.body?.messages) ? req.body.messages : [])
+      .map((m: unknown) => sanitizeText(String(m), 2000))
+      .filter(Boolean);
+    if (messages.length === 0) return res.status(400).json({ error: 'messages[] required' });
+    if (messages.length > 50) return res.status(400).json({ error: 'max 50 messages per batch' });
+
+    const started = Date.now();
+    const results = [];
+    for (const message of messages) {
+      const t0 = Date.now();
+      const decision = await callLaya(message);
+      const latency = Date.now() - t0;
+      if (!decision) {
+        // Fallback logged (confidence 0) — visible, not silent.
+        void supabase.from('laya_routing_decisions').insert({
+          source: 'batch', message, department: 'fallback',
+          priority: 'low', confidence: 0, reasoning: 'laya unavailable/invalid', latency_ms: latency,
+        });
+        results.push({ message: message.slice(0, 80), routed: null, fallback: true, confidence: 0, latency_ms: latency });
+        continue;
+      }
+      const agent = LAYA_DEPARTMENT_MAP[decision.department.toLowerCase()] || null;
+      void supabase.from('laya_routing_decisions').insert({
+        source: 'batch', message, department: decision.department.toLowerCase(),
+        priority: decision.priority, confidence: decision.confidence ?? 0,
+        reasoning: (decision as any).reasoning || null, latency_ms: latency,
+      });
+      results.push({
+        message: message.slice(0, 80), routed: agent, department: decision.department,
+        priority: decision.priority, confidence: decision.confidence ?? 0, latency_ms: latency,
+        ...(agent ? {} : { error: `unknown department '${decision.department}'` }),
+      });
+    }
+    const withConfidence = results.filter((r) => !r.fallback);
+    const avgConfidence = withConfidence.length
+      ? Math.round((withConfidence.reduce((a, r) => a + (r.confidence || 0), 0) / withConfidence.length) * 100) / 100
+      : 0;
+    res.json({
+      ok: true, count: results.length, avg_confidence: avgConfidence,
+      total_ms: Date.now() - started, results,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/v1/laya/decisions — the confidence log (queryable)
+app.get('/api/v1/laya/decisions', authMiddleware, async (req, res) => {
+  try {
+    let q = supabase.from('laya_routing_decisions').select('*').order('created_at', { ascending: false }).limit(100);
+    if (req.query.department) q = q.eq('department', String(req.query.department));
+    if (req.query.source) q = q.eq('source', String(req.query.source));
+    const { data, error } = await q;
+    if (error) throw error;
+    const rows = data || [];
+    const withConf = rows.filter((r: any) => r.department !== 'fallback');
+    res.json({
+      decisions: rows,
+      stats: {
+        count: rows.length,
+        fallbacks: rows.length - withConf.length,
+        avg_confidence: withConf.length ? Math.round((withConf.reduce((a: number, r: any) => a + (r.confidence || 0), 0) / withConf.length) * 100) / 100 : 0,
+      },
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ============================================
