@@ -1,0 +1,22 @@
+[retainer-cron] armed: daily 09:00 IST → POST /api/v1/retainer/run-due
+[standup-daily-0930] armed: "30 9 * * 1-5" → orchestrator
+[cto-weekly-review] armed: "0 10 * * 1" → cto
+[ceo-monthly-strategy] armed: "0 11 1 * *" → ceo
+[hr-watcher] armed: */5 * * * * — stuck/overloaded/idle/error_spike (flags only, never pauses)
+[wf-watcher] armed: */10 * * * * — stage SLA 48h → attention card (THE INBOX)
+[grow-scheduler] armed: */60s — scheduled slots dispatch at time (dry-run mode)
+Spinach OS API running on http://localhost:4000
+WebSocket on ws://localhost:4000/ws and ws://localhost:4000/ws/activity
+[assets] buckets ensured at boot
+[grow][DRY-RUN] would publish to x at 2026-09-28T16:00:00+00:00: "GitHub is the engine room of modern SEO. ⚙️
+
+At Spinach Digi…" (0 media)
+[grow] dry-run: slot bb287e2c published to x (dryrun-1791091776956)
+[grow] dispatched 1 due slot(s) (dry-run mode)
+[hr-watcher] resolved idle → orchestrator
+[hr-watcher] 2026-10-04T05:30:00.888Z created=0 resolved=1
+[wf-watcher] stuck: "content_plan" 241h on Scale — Dental H 7 → attention card 597cd6ef
+[wf-watcher] stuck: "content_plan" 241h on Growth — Bakery G 6 → attention card 1283af15
+[wf-watcher] stuck: "content_plan" 240h on Growth — Urban Fit Studio — Month 1 → attention card 83dc6585
+[wf-watcher] stuck: "content_plan" 240h on Growth — Coastal Roasters — Month 1 → attention card 90dc30ac
+[wf-watcher] 2026-10-04T05:30:05.156Z flagged=4 resolved=0
