@@ -6,9 +6,10 @@
  * stuck flags, and deep-links to /pipeline/[id]. Filters that work. Honest
  * empty state. Every number traces to a DB row.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
+import { useWebSocketStore } from '@/lib/office/wsStore';
 
 type PipelineRow = {
   id: string;
@@ -51,9 +52,19 @@ export default function PipelineIndexPage() {
 
   useEffect(() => {
     void load();
-    const id = setInterval(() => void load(), 10_000); // max 10s staleness
-    return () => clearInterval(id);
+    // Phase 5 GOAL 5: the 10s poll is GONE — the page re-loads when a
+    // pipeline_event arrives over the WebSocket (live, no polling).
   }, [load]);
+
+  // WS-driven reload: subscribe to the pipeline version from the WS store.
+  const pipelineVersion = useWebSocketStore((s) => s.pipelineVersion);
+  const lastVersionRef = useRef(pipelineVersion);
+  useEffect(() => {
+    if (pipelineVersion !== lastVersionRef.current) {
+      lastVersionRef.current = pipelineVersion;
+      void load();
+    }
+  }, [pipelineVersion, load]);
 
   const filtered = (rows || []).filter((r) => {
     if (statusFilter !== 'all' && r.status !== statusFilter) return false;

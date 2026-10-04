@@ -5,7 +5,7 @@
  * emitTaskLifecycle. No behavior changes.
  */
 import {
-  supabase, emitAgentState, emitTaskLifecycle,
+  supabase, emitAgentState, emitTaskLifecycle, emitPipelineEvent,
 } from '../ctx';
 import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from '../bridge';
 import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from '../breaker-telemetry';
@@ -254,6 +254,7 @@ export async function executeAgentTask(agent: string, task: string, source: stri
                 from_step: stepName, actor: `task:${inferredKind}`,
                 detail: { task_id: taskRow.id, gate_id: g.id, gate_name: g.gate_name, risk_tier: g.risk_tier },
               });
+              emitPipelineEvent({ workflow_id: wfId, kind: 'advance_blocked_by_gate', step: stepName, gate: g.gate_name });
               console.log(`[task-advance] BLOCKED at ${stepName}: open gate ${g.gate_name} (${g.risk_tier}) — approve at /approvals`);
             } else {
             const { data: wfFull } = await supabase.from('workflows').select('steps_json').eq('id', wfId).single();
@@ -273,6 +274,7 @@ export async function executeAgentTask(agent: string, task: string, source: stri
                   from_step: stepName, to_step: steps[nextIdx].name, actor: `task:${inferredKind}`,
                   detail: { task_id: taskRow.id, model, progress },
                 });
+                emitPipelineEvent({ workflow_id: wfId, kind: 'auto_advance', from: stepName, to: steps[nextIdx].name, progress });
                 console.log(`[task-advance] ${stepName} → ${steps[nextIdx].name} (task ${taskRow.id.slice(0, 8)} done)`);
               } else {
                 await supabase.from('workflows').update({ steps_json: steps, status: 'completed', progress: 100, current_step: null }).eq('id', wfId);

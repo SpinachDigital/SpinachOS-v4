@@ -18,6 +18,7 @@ interface WSStore {
   connected: boolean;
   agentStates: Record<string, AgentStateEntry>;
   feed: FeedEntry[];
+  pipelineVersion: number;
   connect: () => () => void;
   applyMessage: (msg: { event: string; data: Record<string, unknown> }) => void;
 }
@@ -29,6 +30,7 @@ export const useWebSocketStore = create<WSStore>((set, get) => ({
   connected: false,
   agentStates: {},
   feed: [],
+  pipelineVersion: 0,
 
   applyMessage: (msg) => {
     if (msg.event === 'agent_state') {
@@ -41,6 +43,10 @@ export const useWebSocketStore = create<WSStore>((set, get) => ({
       set((s) => ({
         feed: [...s.feed, { profile: d.profile || '', action: d.action || '', timestamp: new Date().toISOString() }].slice(-50),
       }));
+    } else if (msg.event === 'pipeline_event') {
+      // Phase 5 GOAL 5: pipeline updates live — the store keeps a version
+      // counter that pipeline pages subscribe to (no polling).
+      set((s) => ({ pipelineVersion: s.pipelineVersion + 1 }));
     }
   },
 

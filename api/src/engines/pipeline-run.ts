@@ -77,6 +77,7 @@ async function runPipeline(workflowId: string): Promise<{ completed: boolean; pa
       const step = steps[idx];
       emitAgentState(step.agent, 'working', `${step.name} — ${workflow.name}`);
       emitFeed('orchestrator', 'PIPELINE_STEP', { workflow: workflow.name, step: step.name, agent: step.agent });
+      emitPipelineEvent({ workflow_id: workflow.id, kind: 'step', step: step.name });
       void warRoomPost(workflow.id, workflow.name, step.agent, `Delegating step "${step.name}" — brief sent, executing.`, { step: step.name });
       emitWorkflow({ id: workflow.id, current_step: step.name, status: 'active' });
 
@@ -150,6 +151,7 @@ async function runPipeline(workflowId: string): Promise<{ completed: boolean; pa
     // all steps done
     await persistSteps(workflowId, steps, null, 'completed', 100);
     emitFeed('orchestrator', 'PIPELINE_COMPLETED', { workflow: workflow.name, steps: steps.length });
+    emitPipelineEvent({ workflow_id: workflow.id, kind: 'completed' });
     void warRoomPost(workflow.id, workflow.name, 'orchestrator', `Pipeline completed — ${steps.length} steps delivered.`, { final: true });
     emitWorkflow({ id: workflow.id, status: 'completed', progress: 100 });
     void closeRetainerCycle(workflow, steps).catch((e: any) => console.error('[pipeline] retainer close failed:', e?.message));

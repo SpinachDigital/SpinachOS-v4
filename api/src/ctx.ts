@@ -129,6 +129,12 @@ export function emitWorkflow(workflow: any) {
   broadcast('workflow', workflow);
 }
 
+// Phase 5 GOAL 5: pipeline events over WS — the pipeline page subscribes to
+// pipeline_event (live reload, no polling; the targeted poll kill).
+export function emitPipelineEvent(detail?: any) {
+  broadcast('pipeline_event', { ...(detail || {}), timestamp: new Date().toISOString() });
+}
+
 export function emitTaskLifecycle(taskId: string, agent: string, status: 'running' | 'done' | 'blocked', activity: string, details?: any) {
   broadcast('task_lifecycle', { task_id: taskId, agent, status, activity, details, timestamp: new Date().toISOString() });
   // Sprint 9 §4 Profile Schema v2: emitTaskUpdate now carries the FULL Sprint 8
