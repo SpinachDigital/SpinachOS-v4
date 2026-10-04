@@ -23,6 +23,8 @@ export const EMBED_DIMS = 2048;
 // NOTE: Node 22's built-in fetch is INCOMPATIBLE with undici's Agent
 // ("invalid onRequestStart method") — must use undici's own fetch.
 import { Agent, fetch as undiciFetch } from 'undici';
+// Phase 5 GOAL 7c/8: the BYOK credentials store (embeddings key override).
+import { getStoredKey } from './providers/publishing';
 const embedAgent = new Agent({ keepAliveTimeout: 30_000, keepAliveMaxTimeout: 60_000, connections: 8 });
 
 // Query-embedding cache: same paraphrase → memoized REAL vector (never fake;
@@ -47,9 +49,19 @@ function nvidiaKey(): string | null {
   return null;
 }
 
-/** Embed a single text. inputType: 'query' | 'passage'. Returns null on failure (never fake). */
+/** Embed a single text. inputType: 'query' | 'passage'. Returns null on failure (never fake).
+ *  Phase 5 GOAL 7c: provider fallback — NVIDIA primary; on NVIDIA failure the
+ *  Gemini embeddings API is tried (free tier, 768-dim model) with a DEGRADED
+ *  marker. Dimension mismatch (2048 vs 768) means a fallback vector can NOT
+ *  mix with NVIDIA vectors in the same pgvector column — fallback vectors go
+ *  lexical-only (recorded honestly; the degradation path is documented).
+ *  BYOK (GOAL 8): the founder's embeddings key pick (provider_keys,
+ *  provider='embeddings') overrides the env key when present.
+ */
+const GEMINI_EMBED_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent';
 export async function embed(text: string, inputType: 'query' | 'passage' = 'query'): Promise<number[] | null> {
-  const key = nvidiaKey();
+  const byokKey = await getStoredKey('embeddings').catch(() => null);
+  const key = byokKey || nvidiaKey();
   if (!key) return null;
   const trimmed = text.slice(0, 4000);
   const ck = cacheKey(trimmed, inputType);

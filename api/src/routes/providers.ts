@@ -106,3 +106,45 @@ app.delete('/api/v1/providers/keys/:provider', authMiddleware, async (req, res) 
     res.status(500).json({ error: e.message });
   }
 });
+
+// -- GOAL 8: per-department model picks (gateway/image/embeddings)
+app.get('/api/v1/providers/model-picks', authMiddleware, async (_req, res) => {
+  try {
+    const { supabase } = require('../ctx');
+    const { data, error } = await supabase.from('department_model_picks').select('*').order('department');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/v1/providers/model-picks', authMiddleware, async (req, res) => {
+  try {
+    const department = String(req.body?.department || '').trim();
+    const capability = String(req.body?.capability || '').trim();
+    const model = String(req.body?.model || '').trim();
+    if (!department || !capability || !model) {
+      return res.status(400).json({ error: 'department, capability, model required' });
+    }
+    const { supabase } = require('../ctx');
+    const { data, error } = await supabase.from('department_model_picks').upsert({
+      department, capability, model, updated_at: new Date().toISOString(),
+    }).select().single();
+    if (error) throw error;
+    res.json({ ok: true, pick: data });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/v1/providers/model-picks/:id', authMiddleware, async (req, res) => {
+  try {
+    const { supabase } = require('../ctx');
+    const { error } = await supabase.from('department_model_picks').delete().eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

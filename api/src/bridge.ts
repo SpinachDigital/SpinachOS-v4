@@ -179,7 +179,20 @@ export const PROFILE_SOULS: Record<string, string> = {
 };
 
 async function runGatewayTask(profile: string, task: string): Promise<{ output: string; model: string }> {
-  const model = GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast';
+  // Phase 5 GOAL 8: the founder's per-department model pick (DB) overrides
+  // the code default — the picker never hardcodes silently. Empty pick =
+  // code default (documented in the report). Cache-bypass: one small DB
+  // read per task is fine (the table is 10 rows).
+  let model = GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast';
+  try {
+    const { data: pick } = await supabase
+      .from('department_model_picks')
+      .select('model')
+      .eq('department', profile)
+      .eq('capability', 'gateway')
+      .single();
+    if (pick?.model) model = pick.model;
+  } catch { /* DB read must never break the gateway path — code default holds */ }
   const soul = PROFILE_SOULS[profile] || BENCH_SOUL_TEMPLATE('specialist', 'operations', 'the requested deliverable');
   const b = breakerFor('omniroute');
 
