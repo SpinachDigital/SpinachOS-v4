@@ -1,0 +1,5 @@
+# Fresh-clone tsc proof — Phase 5 (full output, banned 1-line pattern replaced)
+# clone: %LOCALAPPDATA%/Temp/p5-clone @ commit 1e19a1b
+# date: 2026-10-05T18:31:22Z
+#---
+exit: 0
