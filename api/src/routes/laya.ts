@@ -7,6 +7,18 @@ import { LayaDecision, LAYA_DEPARTMENT_MAP } from '../laya-client';
 import { app, authMiddleware, emitFeed, emitAgentState, sanitizeText, supabase } from '../ctx';
 import { executeAgentTask, AGENT_TASK_TIMEOUT_MS } from '../engines/agent-execution';
 
+// Phase 5 GOAL 10 fix (2026-10-05): postgrest-js builders are LAZY —
+// `void supabase.from(...).insert(...)` NEVER fires the HTTP request.
+// Every routing decision must be AWAITED, else the confidence log
+// silently loses rows (found via live probe: batch rows never landed).
+async function logDecision(row: Record<string, unknown>) {
+  try {
+    await supabase.from('laya_routing_decisions').insert(row);
+  } catch (e: any) {
+    console.error('[laya] decision-log insert failed:', e?.message);
+  }
+}
+
 // -- imports auto-added by fix-imports (Phase 3)
 import { LAYA_URL } from '../laya-client';
 
@@ -67,7 +79,7 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
       // Laya unavailable or invalid response — fallback to command gateway logic
       // Phase 5 GOAL 10: the fallback is LOGGED (confidence 0, source 'single')
       // — a decision nobody recorded is a decision nobody can fine-tune on.
-      void supabase.from('laya_routing_decisions').insert({
+      void logDecision({
         source: 'single', message: command.slice(0, 2000), department: 'fallback',
         priority: 'low', confidence: 0, reasoning: 'laya unavailable/invalid — command gateway fallback', latency_ms: null,
       });
@@ -94,7 +106,7 @@ app.post('/api/v1/laya/route', authMiddleware, async (req, res) => {
 
     // Phase 5 GOAL 10: the routing decision is LOGGED with its confidence
     // (fine-tuning data collection the Laya experiment called for).
-    void supabase.from('laya_routing_decisions').insert({
+    void logDecision({
       source: 'single', message: command.slice(0, 2000), department: department.toLowerCase(),
       priority, confidence: decision.confidence ?? 0, reasoning: (decision as any).reasoning || null, latency_ms: null,
     });
@@ -145,7 +157,7 @@ app.post('/api/v1/laya/batch-decide', authMiddleware, async (req, res) => {
       const latency = Date.now() - t0;
       if (!decision) {
         // Fallback logged (confidence 0) — visible, not silent.
-        void supabase.from('laya_routing_decisions').insert({
+        await logDecision({
           source: 'batch', message, department: 'fallback',
           priority: 'low', confidence: 0, reasoning: 'laya unavailable/invalid', latency_ms: latency,
         });
@@ -153,7 +165,7 @@ app.post('/api/v1/laya/batch-decide', authMiddleware, async (req, res) => {
         continue;
       }
       const agent = LAYA_DEPARTMENT_MAP[decision.department.toLowerCase()] || null;
-      void supabase.from('laya_routing_decisions').insert({
+      await logDecision({
         source: 'batch', message, department: decision.department.toLowerCase(),
         priority: decision.priority, confidence: decision.confidence ?? 0,
         reasoning: (decision as any).reasoning || null, latency_ms: latency,

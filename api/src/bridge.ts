@@ -253,7 +253,19 @@ export async function runSpecialistTask(
 ): Promise<{ output: string; model: string }> {
   const spec = BENCH_OUTPUTS[bench] || BENCH_OUTPUTS.flat;
   const soul = BENCH_SOUL_TEMPLATE(spec.role, bench, spec.output);
-  const model = bench === 'engineering' || bench === 'paid_media' ? 'auto/pro-coding' : 'auto/best-fast';
+  // Phase 5 GOAL 8: the founder's per-department pick (DB) overrides the
+  // bench code default — no hardcoded provider assumptions. department key:
+  // the bench name maps to a department pick (capability='gateway').
+  let model = bench === 'engineering' || bench === 'paid_media' ? 'auto/pro-coding' : 'auto/best-fast';
+  try {
+    const { data: pick } = await supabase
+      .from('department_model_picks')
+      .select('model')
+      .eq('department', bench)
+      .eq('capability', 'gateway')
+      .single();
+    if (pick?.model) model = pick.model;
+  } catch { /* DB read must never break the bench path */ }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), AGENT_TASK_TIMEOUT_MS);

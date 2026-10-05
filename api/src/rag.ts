@@ -77,13 +77,13 @@ export async function embed(text: string, inputType: 'query' | 'passage' = 'quer
   const cached = embedCache.get(ck);
   if (cached) return cached;
   try {
-    const res = await undiciFetch(NVIDIA_EMBED_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ input: [trimmed], model: EMBED_MODEL, input_type: inputType }),
-      signal: AbortSignal.timeout(15_000),
-      dispatcher: embedAgent,
-    });
+      const res = await undiciFetch(NVIDIA_EMBED_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ input: [trimmed], model: EMBED_MODEL, input_type: inputType }),
+        signal: AbortSignal.timeout(15_000),
+        dispatcher: embedAgent,
+      });
     if (!res.ok) return null;
     const j: any = await res.json();
     const v = j?.data?.[0]?.embedding;

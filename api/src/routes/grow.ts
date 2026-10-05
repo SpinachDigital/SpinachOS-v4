@@ -135,10 +135,11 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
     // BUT a hard transport abort (timeout) means nothing was generated and
     // the slot is wedged — reset to planned so the founder can retry.
     if (/aborted|timeout/i.test(e.message || '')) {
-      await supabase.from('marketing_content_calendar')
-        .update({ status: 'planned', updated_at: new Date().toISOString() })
-        .eq('id', req.params.slotId)
-        .catch(() => { /* best-effort reset */ });
+      try {
+        await supabase.from('marketing_content_calendar')
+          .update({ status: 'planned', updated_at: new Date().toISOString() })
+          .eq('id', req.params.slotId);
+      } catch { /* best-effort reset */ }
     }
     res.status(500).json({ error: e.message });
   }

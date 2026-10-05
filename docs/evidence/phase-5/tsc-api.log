@@ -1,0 +1,36 @@
+src/engines/pipeline-run.ts(11,26): error TS2304: Cannot find name 'hybridRetrieve'.
+src/engines/pipeline-run.ts(31,15): error TS2304: Cannot find name 'QA_OWNER'.
+src/engines/pipeline-run.ts(43,28): error TS2304: Cannot find name 'runGatewayTask'.
+src/engines/pipeline-run.ts(57,7): error TS2552: Cannot find name 'runningPipelines'. Did you mean 'runPipeline'?
+src/engines/pipeline-run.ts(58,3): error TS2552: Cannot find name 'runningPipelines'. Did you mean 'runPipeline'?
+src/engines/pipeline-run.ts(60,45): error TS2304: Cannot find name 'supabase'.
+src/engines/pipeline-run.ts(67,15): error TS2304: Cannot find name 'supabase'.
+src/engines/pipeline-run.ts(78,7): error TS2304: Cannot find name 'emitAgentState'.
+src/engines/pipeline-run.ts(79,7): error TS2304: Cannot find name 'emitFeed'.
+src/engines/pipeline-run.ts(80,7): error TS2304: Cannot find name 'emitPipelineEvent'.
+src/engines/pipeline-run.ts(81,12): error TS2304: Cannot find name 'warRoomPost'.
+src/engines/pipeline-run.ts(82,7): error TS2304: Cannot find name 'emitWorkflow'.
+src/engines/pipeline-run.ts(86,56): error TS2304: Cannot find name 'supabase'.
+src/engines/pipeline-run.ts(101,9): error TS2304: Cannot find name 'emitApproval'.
+src/engines/pipeline-run.ts(102,9): error TS2304: Cannot find name 'emitFeed'.
+src/engines/pipeline-run.ts(103,14): error TS2304: Cannot find name 'warRoomPost'.
+src/engines/pipeline-run.ts(118,14): error TS2304: Cannot find name 'QA_GATE_STEPS'.
+src/engines/pipeline-run.ts(123,9): error TS2304: Cannot find name 'emitFeed'.
+src/engines/pipeline-run.ts(123,18): error TS2304: Cannot find name 'QA_OWNER'.
+src/engines/pipeline-run.ts(124,14): error TS2304: Cannot find name 'warRoomPost'.
+src/engines/pipeline-run.ts(124,54): error TS2304: Cannot find name 'QA_OWNER'.
+src/engines/pipeline-run.ts(127,11): error TS2304: Cannot find name 'emitFeed'.
+src/engines/pipeline-run.ts(135,35): error TS2304: Cannot find name 'QA_GATE_STEPS'.
+src/engines/pipeline-run.ts(137,9): error TS2304: Cannot find name 'supabase'.
+src/engines/pipeline-run.ts(154,5): error TS2304: Cannot find name 'emitFeed'.
+src/engines/pipeline-run.ts(155,5): error TS2304: Cannot find name 'emitPipelineEvent'.
+src/engines/pipeline-run.ts(156,10): error TS2304: Cannot find name 'warRoomPost'.
+src/engines/pipeline-run.ts(157,5): error TS2304: Cannot find name 'emitWorkflow'.
+src/engines/pipeline-run.ts(158,10): error TS2304: Cannot find name 'closeRetainerCycle'.
+src/engines/pipeline-run.ts(164,5): error TS2304: Cannot find name 'runningPipelines'.
+src/engines/pipeline-run.ts(184,27): error TS2304: Cannot find name 'supabase'.
+src/engines/pipeline-run.ts(202,16): error TS2304: Cannot find name 'resolvePath'.
+src/engines/pipeline-run.ts(205,23): error TS2304: Cannot find name 'runProfileTask'.
+src/engines/pipeline-run.ts(209,23): error TS2304: Cannot find name 'runSpecialistTask'.
+src/engines/pipeline-run.ts(212,21): error TS2304: Cannot find name 'runGatewayTask'.
+exit: 0

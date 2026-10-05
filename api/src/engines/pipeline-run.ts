@@ -133,7 +133,8 @@ async function runPipeline(workflowId: string): Promise<{ completed: boolean; pa
 
       // ingest approved deliverables to RAG (client-scoped) — D1 step 10 LEARN
       if (client?.id && output && QA_GATE_STEPS.has(step.name) && qaVerdict === 'approved_HOD') {
-        void supabase.from('knowledge_chunks').insert({
+        // Phase 5 GOAL 10 fix: postgrest builders are lazy — .then() fires it.
+        supabase.from('knowledge_chunks').insert({
           client_id: client.id, scope: 'client', kind: 'asset',
           title: `${step.name} — ${client.name}`,
           content: String(output).slice(0, 6000),
