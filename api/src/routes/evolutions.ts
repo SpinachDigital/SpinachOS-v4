@@ -183,3 +183,130 @@ cron.schedule('0 3 * * *', async () => {
   }
 });
 console.log('[learning-cron] armed: daily 08:30 IST → learning loop mining run');
+
+// ---------------- Phase 7 GOAL 2: Laya training-data export ----------------
+// JSONL dump of laya_routing_decisions joined with outcomes (was the routed
+// task approved/rejected downstream?). One row per decision, training-ready.
+// GET /api/v1/evolutions/laya-export?days=30 → application/x-ndjson
+app.get('/api/v1/evolutions/laya-export', authMiddleware, async (req: any, res) => {
+  try {
+    const days = Math.min(parseInt(String(req.query.days || '30'), 10) || 30, 180);
+    const since = new Date(Date.now() - days * 864e5).toISOString();
+    const { data: decisions, error } = await supabase
+      .from('laya_routing_decisions')
+      .select('id, source, message, department, priority, confidence, reasoning, latency_ms, created_at')
+      .gte('created_at', since)
+      .order('created_at', { ascending: true })
+      .limit(5000);
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Outcome enrichment: was the downstream task approved? Join via
+    // approvals where the payload references the routed task/message.
+    const msgs = (decisions || []).map((d: any) => d.message);
+    let outcomeByMsg: Record<string, { status: string; type: string }> = {};
+    if (msgs.length) {
+      const { data: appr } = await supabase
+        .from('approvals')
+        .select('title, type, status')
+        .gte('created_at', since)
+        .limit(2000);
+      for (const a of (appr || []) as any[]) {
+        if (a.title) outcomeByMsg[a.title] = { status: a.status, type: a.type };
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/x-ndjson');
+    for (const d of (decisions || []) as any[]) {
+      const outcome = outcomeByMsg[d.message] || null;
+      res.write(JSON.stringify({
+        text: d.message,
+        department: d.department,
+        priority: d.priority,
+        confidence: d.confidence,
+        reasoning: d.reasoning,
+        latency_ms: d.latency_ms,
+        source: d.source,
+        outcome_status: outcome?.status || 'unknown',
+        outcome_type: outcome?.type || null,
+        decided_at: d.created_at,
+      }) + '\n');
+    }
+    res.end();
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------- Phase 7 GOAL 3: style lint + tighten ----------------
+import { lintAgentOutput, weeklyStyleScores } from '../agents/style-lint';
+import { styleBlockFor } from '../agents/style-contract';
+
+/** Lint any text (probe endpoint — the real path runs inside approval-card
+ *  creation). Zero LLM, regex only. */
+app.post('/api/v1/evolutions/style-lint', authMiddleware, async (req: any, res) => {
+  try {
+    const { text } = req.body || {};
+    if (typeof text !== 'string') return res.status(400).json({ error: 'text (string) required' });
+    const t0 = Date.now();
+    const result = lintAgentOutput(text);
+    res.json({ ...result, lint_ms: Date.now() - t0 });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/** Weekly average style score per agent (P&L/ops view — style drift visible). */
+app.get('/api/v1/evolutions/style-weekly', authMiddleware, async (req: any, res) => {
+  try {
+    const scores = await weeklyStyleScores();
+    res.json(scores);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/** Tighten — ONE user-initiated rewrite pass. NEVER automatic. The rewrite
+ *  is logged: original text + lint-before stay in the audit trail
+ *  (memory ledger), and the tightened text is returned (caller swaps the
+ *  card payload explicitly). Score < 6 required for the button to exist. */
+app.post('/api/v1/evolutions/tighten', authMiddleware, async (req: any, res) => {
+  try {
+    const { text, agent, approval_id } = req.body || {};
+    if (typeof text !== 'string') return res.status(400).json({ error: 'text (string) required' });
+    const before = lintAgentOutput(text);
+    if (before.score >= 6) {
+      return res.status(400).json({ error: `tighten only offered below score 6 (current: ${before.score})` });
+    }
+
+    // Single rewrite pass via the gateway with a tighten-focused prompt.
+    const { runProfileTask } = await import('../bridge');
+    const tierBlock = styleBlockFor(agent || 'engineer');
+    const tightened = await runProfileTask(agent || 'engineer',
+      `Rewrite the following text so it complies with the style contract below. Keep every fact. Return ONLY the rewritten text.\n\nSTYLE CONTRACT:${tierBlock}\n\nTEXT:\n${text}`);
+
+    const after = lintAgentOutput(tightened.output);
+
+    // Audit trail: original + both scores land in the memory ledger.
+    const { recordMemory } = await import('../memory-ledger');
+    await recordMemory(supabase, {
+      agent_profile: agent || 'engineer',
+      memory_type: 'decision',
+      key: `tighten:${approval_id || 'adhoc'}:${Date.now()}`,
+      value: {
+        what: 'style tighten (user-initiated)', original: text.slice(0, 2000),
+        score_before: before.score, score_after: after.score,
+        violations_before: before.violations, approval_id: approval_id || null,
+      },
+    });
+
+    res.json({
+      ok: true,
+      before: { score: before.score, violations: before.violations },
+      after: { score: after.score, violations: after.violations },
+      text: tightened.output,
+      model: tightened.model,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

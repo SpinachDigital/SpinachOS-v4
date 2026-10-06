@@ -111,7 +111,9 @@ async function mineApprovalPatterns(): Promise<Proposal[]> {
   return out;
 }
 
-/** 2. Playbook improvements: stages that stall repeatedly across installs. */
+/** 2. Playbook improvements: stages that stall repeatedly across installs.
+ *  stuck_flag events carry {sla_hours, idle_hours, approval_id} — the STAGE
+ *  lives on the workflow row (current_step), so resolve it there. */
 async function mineStuckStages(): Promise<Proposal[]> {
   const { data } = await supabase
     .from('pipeline_events')
@@ -122,10 +124,22 @@ async function mineStuckStages(): Promise<Proposal[]> {
   const out: Proposal[] = [];
   if (!data) return out;
 
+  // Resolve stage per event via the workflow's current_step at the time.
+  const wfIds = [...new Set((data as any[]).map(r => r.workflow_id).filter(Boolean))];
+  const wfStep: Record<string, string> = {};
+  if (wfIds.length) {
+    const { data: wfs } = await supabase
+      .from('workflows')
+      .select('id, current_step')
+      .in('id', wfIds)
+      .limit(200);
+    for (const w of wfs || []) wfStep[w.id] = w.current_step || 'unknown';
+  }
+
   const byStage: Record<string, number> = {};
   const byWf: Record<string, Set<string>> = {};
   for (const row of data as any[]) {
-    const stage = row.detail?.stage || row.detail?.step || 'unknown';
+    const stage = wfStep[row.workflow_id] || row.detail?.stage || row.detail?.step || 'unknown';
     byStage[stage] = (byStage[stage] || 0) + 1;
     if (row.workflow_id) {
       byWf[stage] = byWf[stage] || new Set();

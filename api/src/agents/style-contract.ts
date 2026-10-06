@@ -65,3 +65,48 @@ export function styleBlockFor(agent: string, tierOverride?: StyleTier): string {
   if (tier === 'T2') lines.push(T2_ADDENDUM);
   return lines.join('\n');
 }
+
+// ---------------- Phase 7 GOAL 2: learned-preference injection ----------------
+// Approved learned_preferences inject into generation prompts — same pattern
+// as the style contract: prompt text only, zero render-path latency (§8).
+// Scope respected: global → every agent; client → that client's work;
+// agent → that agent only.
+//
+// The fetch is async but happens at PROMPT BUILD time (before the model
+// call), never on a render path — same as the P&L/model-pick reads the
+// gateway already does. A 60s in-process cache keeps it cheap.
+
+import { supabase } from '../ctx';
+
+let PREF_CACHE: { at: number; rows: any[] } = { at: 0, rows: [] };
+const PREF_TTL_MS = 60_000;
+
+async function fetchApprovedPrefs(): Promise<any[]> {
+  if (Date.now() - PREF_CACHE.at < PREF_TTL_MS) return PREF_CACHE.rows;
+  const { data, error } = await supabase
+    .from('learned_preferences')
+    .select('scope, client_id, agent_profile, key, value')
+    .eq('status', 'approved')
+    .limit(100);
+  if (error) {
+    console.error('[style-contract] pref fetch failed:', error.message);
+    return PREF_CACHE.rows; // stale cache beats a broken prompt build
+  }
+  PREF_CACHE = { at: Date.now(), rows: data || [] };
+  return PREF_CACHE.rows;
+}
+
+/** Build the learned-preference block for an agent (and optionally a client).
+ *  Returns '' when no prefs apply — zero added prompt chars. */
+export async function learnedPreferenceBlock(agent: string, clientId?: string | null): Promise<string> {
+  const rows = await fetchApprovedPrefs();
+  const applicable = rows.filter((r: any) =>
+    r.scope === 'global' ||
+    (r.scope === 'agent' && r.agent_profile === agent) ||
+    (r.scope === 'client' && clientId && r.client_id === clientId)
+  );
+  if (!applicable.length) return '';
+  const lines = ['\n\n---\n[LEARNED PREFERENCES — founder-approved rules. Obey these.]'];
+  for (const r of applicable) lines.push(`- ${r.key}: ${JSON.stringify(r.value)}`);
+  return lines.join('\n');
+}

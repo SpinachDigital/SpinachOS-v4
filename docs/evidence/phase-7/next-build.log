@@ -1,288 +1,77 @@
 # FRESH-CLONE BUILD PROOF (Phase 7 GOAL 0b)
-# clone: C:/Users/Abhishek/AppData/Local/Temp/p7-clone @ 9695a34a09da1b902e94c3253abc3a570558bb79
-# BUILD_ID: p7-1791267063-9695a34
-# command: npx next build (clean clone, npm install fresh)
-# date: 2026-10-06T06:11:03Z
+# clone: C:/Users/Abhishek/AppData/Local/Temp/p7-clone @ fc4bf31afa184d0d1d8323da621e174e69c5268e
+# BUILD_ID: p7-fc4bf31-1791275768
+# command: npm install && npx next build (clean clone)
+# date: 2026-10-06T08:36:08Z
    ▲ Next.js 14.0.4
 
    Creating an optimized production build ...
-Failed to compile.
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
 
-./src/app/approvals/page.tsx
-Error: 
-  [31mx[0m the name `workflow` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:46:1]
- [2m46[0m |   const [loading, setLoading] = useState(true);
- [2m47[0m |   const [actionPending, setActionPending] = useState<string | null>(null);
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
-    : [31;1m         ^^^^|^^^[0m
-    :              [31;1m`-- [31;1mprevious definition of `workflow` here[0m[0m
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
-    : [33;1m         ^^^^|^^^[0m
-    :              [33;1m`-- [33;1m`workflow` redefined here[0m[0m
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m63[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    `----
+./src/app/assets/page.tsx
+258:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+311:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
-  [31mx[0m the name `setWorkflow` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:46:1]
- [2m46[0m |   const [loading, setLoading] = useState(true);
- [2m47[0m |   const [actionPending, setActionPending] = useState<string | null>(null);
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
-    : [31;1m                   ^^^^^|^^^^^[0m
-    :                         [31;1m`-- [31;1mprevious definition of `setWorkflow` here[0m[0m
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
-    : [33;1m                   ^^^^^|^^^^^[0m
-    :                         [33;1m`-- [33;1m`setWorkflow` redefined here[0m[0m
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m63[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    `----
+./src/app/pipeline/[id]/page.tsx
+88:6  Warning: React Hook useEffect has a missing dependency: 'data'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
 
-  [31mx[0m the name `typeFilter` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:47:1]
- [2m47[0m |   const [actionPending, setActionPending] = useState<string | null>(null);
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
-    : [31;1m         ^^^^^|^^^^[0m
-    :               [31;1m`-- [31;1mprevious definition of `typeFilter` here[0m[0m
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
-    : [33;1m         ^^^^^|^^^^[0m
-    :               [33;1m`-- [33;1m`typeFilter` redefined here[0m[0m
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m64[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    `----
+./src/app/tasks/[id]/page.tsx
+58:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
-  [31mx[0m the name `setTypeFilter` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:47:1]
- [2m47[0m |   const [actionPending, setActionPending] = useState<string | null>(null);
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
-    : [31;1m                     ^^^^^^|^^^^^^[0m
-    :                            [31;1m`-- [31;1mprevious definition of `setTypeFilter` here[0m[0m
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
-    : [33;1m                     ^^^^^^|^^^^^^[0m
-    :                            [33;1m`-- [33;1m`setTypeFilter` redefined here[0m[0m
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m64[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    `----
+./src/components/chat/TaskChat.tsx
+42:6  Warning: React Hook useCallback has an unnecessary dependency: 'taskId'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
 
-  [31mx[0m the name `search` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:48:1]
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
-    : [31;1m         ^^^|^^[0m
-    :             [31;1m`-- [31;1mprevious definition of `search` here[0m[0m
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
-    : [33;1m         ^^^|^^[0m
-    :             [33;1m`-- [33;1m`search` redefined here[0m[0m
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m65[0m | 
-    `----
+./src/components/OutputPreview.tsx
+98:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
-  [31mx[0m the name `setSearch` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:48:1]
- [2m48[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
-    : [31;1m                 ^^^^|^^^^[0m
-    :                      [31;1m`-- [31;1mprevious definition of `setSearch` here[0m[0m
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
-    : [33;1m                 ^^^^|^^^^[0m
-    :                      [33;1m`-- [33;1m`setSearch` redefined here[0m[0m
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m65[0m | 
-    `----
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/24) ...
+   Generating static pages (6/24) 
+   Generating static pages (12/24) 
+   Generating static pages (18/24) 
+ ✓ Generating static pages (24/24) 
+   Finalizing page optimization ...
+   Collecting build traces ...
 
-  [31mx[0m the name `selected` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:49:1]
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    : [31;1m         ^^^^|^^^[0m
-    :              [31;1m`-- [31;1mprevious definition of `selected` here[0m[0m
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    : [33;1m         ^^^^|^^^[0m
-    :              [33;1m`-- [33;1m`selected` redefined here[0m[0m
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m66[0m | 
- [2m66[0m |   // Fetch approvals on mount and when feed updates
-    `----
-
-  [31mx[0m the name `setSelected` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:49:1]
- [2m49[0m |   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    : [31;1m                   ^^^^^|^^^^^[0m
-    :                         [31;1m`-- [31;1mprevious definition of `setSelected` here[0m[0m
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
-    : [33;1m                   ^^^^^|^^^^^[0m
-    :                         [33;1m`-- [33;1m`setSelected` redefined here[0m[0m
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
- [2m66[0m | 
- [2m66[0m |   // Fetch approvals on mount and when feed updates
-    `----
-
-  [31mx[0m the name `bulkConfirm` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:50:1]
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    : [31;1m         ^^^^^|^^^^^[0m
-    :               [31;1m`-- [31;1mprevious definition of `bulkConfirm` here[0m[0m
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    : [33;1m         ^^^^^|^^^^^[0m
-    :               [33;1m`-- [33;1m`bulkConfirm` redefined here[0m[0m
- [2m66[0m | 
- [2m67[0m |   // Fetch approvals on mount and when feed updates
- [2m67[0m |   const fetchApprovals = useCallback(async () => {
-    `----
-
-  [31mx[0m the name `setBulkConfirm` is defined multiple times
-    ,-[[36;1;4mC:\Users\Abhishek\AppData\Local\Temp\p7-clone\frontend\command-center\src\app\approvals\page.tsx[0m:50:1]
- [2m50[0m |   const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
- [2m51[0m |   const [search, setSearch] = useState('');
- [2m52[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m53[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    : [31;1m                      ^^^^^^^|^^^^^^[0m
-    :                              [31;1m`-- [31;1mprevious definition of `setBulkConfirm` here[0m[0m
- [2m54[0m |   // Optionally bind onToggleSelect from parent if needed
- [2m55[0m |   const onToggleSelect = (id: string) => setSelected(s => {
- [2m56[0m |     const next = new Set(s);
- [2m57[0m |     if (next.has(id)) next.delete(id); else next.add(id);
- [2m58[0m |     return next;
- [2m59[0m |   });
- [2m60[0m |   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
- [2m61[0m |   const [workflow, setWorkflow] = useState<string>('all');
- [2m62[0m |   const [typeFilter, setTypeFilter] = useState<string>('all');
- [2m63[0m |   const [search, setSearch] = useState('');
- [2m64[0m |   const [selected, setSelected] = useState<Set<string>>(new Set());
- [2m65[0m |   const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-    : [33;1m                      ^^^^^^^|^^^^^^[0m
-    :                              [33;1m`-- [33;1m`setBulkConfirm` redefined here[0m[0m
- [2m66[0m | 
- [2m67[0m |   // Fetch approvals on mount and when feed updates
- [2m67[0m |   const fetchApprovals = useCallback(async () => {
-    `----
-
-Import trace for requested module:
-./src/app/approvals/page.tsx
+Route (app)                              Size     First Load JS
+┌ ○ /                                    10.4 kB        95.9 kB
+├ ○ /_not-found                          869 B            83 kB
+├ ○ /agents                              5.05 kB        87.2 kB
+├ ○ /analytics                           3.41 kB        85.6 kB
+├ λ /api/auth/session                    0 B                0 B
+├ ○ /approvals                           5.25 kB        87.4 kB
+├ ○ /assets                              5.57 kB        87.7 kB
+├ ○ /calendar                            5.6 kB         87.8 kB
+├ ○ /chat                                7.06 kB        99.6 kB
+├ ○ /clients                             5.05 kB        94.3 kB
+├ λ /clients/[id]                        8.36 kB        97.6 kB
+├ ○ /comms                               6.17 kB        88.3 kB
+├ ○ /keokarpin-3d                        190 kB          273 kB
+├ ○ /leads                               5.7 kB         94.9 kB
+├ ○ /ledger                              4.24 kB        86.4 kB
+├ ○ /marketing                           1.61 kB        83.8 kB
+├ ○ /marketing/calendar                  7.8 kB         89.9 kB
+├ ○ /marketing/engagement                7.86 kB          90 kB
+├ ○ /pipeline                            4.68 kB        93.9 kB
+├ λ /pipeline/[id]                       5.04 kB        87.2 kB
+├ ○ /playbooks                           4.66 kB        86.8 kB
+├ ○ /pnl                                 4.45 kB        86.6 kB
+├ ○ /projects                            3.39 kB        85.5 kB
+├ ○ /settings                            9.26 kB        91.4 kB
+├ λ /tasks/[id]                          6.13 kB        88.3 kB
+└ ○ /team                                3.93 kB        93.2 kB
++ First Load JS shared by all            82.1 kB
+  ├ chunks/458-33a8d2193f67b0a9.js       26.7 kB
+  ├ chunks/fd9d1056-5c1082dd35c96066.js  53.3 kB
+  ├ chunks/main-app-943f8a629afe71a6.js  220 B
+  └ chunks/webpack-c9de134fcdc3cfe5.js   1.97 kB
 
 
-> Build failed because of webpack errors
-exit: 1
+ƒ Middleware                             40.2 kB
+
+○  (Static)   prerendered as static content
+λ  (Dynamic)  server-rendered on demand using Node.js
+
+exit: 0

@@ -149,7 +149,7 @@ const AGENT_TASK_TIMEOUT_MS = parseInt(String(process.env.AGENT_TASK_TIMEOUT_MS)
 import { breakerFor, breakerAllows, recordFailure, recordSuccess, recordFallback, getBreakerStates, getFallbackLog } from './breaker-telemetry';
 import { logUsage } from './usage';
 import { supabase } from './ctx';
-import { styleBlockFor } from './agents/style-contract';
+import { styleBlockFor, learnedPreferenceBlock } from './agents/style-contract';
 export { getBreakerStates, getFallbackLog, recordFallback };
 // Import AGENT_MODELS + prompts from the main module's values — re-declared here to
 // keep this module self-contained (the main file passes its own fallbacks anyway).
@@ -195,7 +195,8 @@ async function runGatewayTask(profile: string, task: string): Promise<{ output: 
     if (pick?.model) model = pick.model;
   } catch { /* DB read must never break the gateway path — code default holds */ }
   const soul = (PROFILE_SOULS[profile] || BENCH_SOUL_TEMPLATE('specialist', 'operations', 'the requested deliverable'))
-    + styleBlockFor(profile); // Phase 6 GOAL 1: style contract injected into every profile prompt (tier-aware, zero I/O)
+    + styleBlockFor(profile) // Phase 6 GOAL 1: style contract injected into every profile prompt (tier-aware, zero I/O)
+    + await learnedPreferenceBlock(profile); // Phase 7 GOAL 2: founder-approved learned prefs (60s-cached, prompt-time only)
   const b = breakerFor('omniroute');
 
   const controller = new AbortController();
@@ -255,7 +256,8 @@ export async function runSpecialistTask(
 ): Promise<{ output: string; model: string }> {
   const spec = BENCH_OUTPUTS[bench] || BENCH_OUTPUTS.flat;
   const soul = BENCH_SOUL_TEMPLATE(spec.role, bench, spec.output)
-    + styleBlockFor(bench); // Phase 6 GOAL 1: bench specialists get the contract too (default T0)
+    + styleBlockFor(bench) // Phase 6 GOAL 1: bench specialists get the contract too (default T0)
+    + await learnedPreferenceBlock(bench); // Phase 7 GOAL 2: learned prefs apply to bench runs too
   // Phase 5 GOAL 8: the founder's per-department pick (DB) overrides the
   // bench code default — no hardcoded provider assumptions. department key:
   // the bench name maps to a department pick (capability='gateway').
