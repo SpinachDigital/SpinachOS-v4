@@ -29,6 +29,7 @@ import { enqueue, registerHandler } from '../job-queue';
 // Phase 5 GOAL 9: the publishing registry — grow.ts calls the INTERFACE,
 // never a provider directly (adding a provider = one module, zero core changes).
 import { getActivePublisher } from '../providers/publishing';
+import { styleBlockFor } from '../agents/style-contract';
 
 // ---------------------------------------------------------------------
 // Provider selection — REMOVED (Phase 5 GOAL 9): the hardcoded Publora env
@@ -86,7 +87,9 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
     // Text via the gateway path (Sprint 11 instrumentation logs the cost).
     const brief = slot.topic || slot.theme || 'the scheduled topic';
     const platformNote = slot.platform === 'x' ? '280 chars max' : 'platform-native length';
-    const result = await runSpecialistTask('seo_specialist', `Write a ${slot.platform} post for Spinach Digital about ${brief}. ${platformNote}. Return ONLY the post text.`);
+    // Phase 6 GOAL 1: GROW content is T2 EXPRESSIVE — voice allowed, filter on.
+    const t2Block = styleBlockFor('social', 'T2');
+    const result = await runSpecialistTask('seo_specialist', `Write a ${slot.platform} post for Spinach Digital about ${brief}. ${platformNote}. Return ONLY the post text.` + t2Block);
     const text = result.output;
 
     // Visuals from the ASSETS LIBRARY (reuse endpoint — don't generate new

@@ -1,0 +1,28 @@
+LIVE TABLES (46): agent_memory, agent_state_log, agent_states, approvals, calendars, channels, clients, command_threads, content, content_calendar, daily_runs, deliverables, department_model_picks, events, gate_actions, hr_actions, hr_agents, hr_flags, invoices, job_queue, knowledge_chunks, laya_routing_decisions, leads, logs, marketing_content_calendar, marketing_engagement, messages, model_rates, outreach_drafts, outreach_messages, packages, pipeline_events, playbooks, provider_keys, retainer_runs, scraper_runs, scraper_sources, task_outputs, tasks, telegram_notifications, telegram_users, telegram_webhooks, thread_messages, threads, usage_logs, workflows
+
+COLUMN PROBES (REST select — 200 = column exists):
+  OK  leads.budget_signal → 200
+  OK  leads.intent_signal → 200
+  OK  leads.fit_signal → 200
+  OK  approvals.type → 200
+  OK  clients.monthly_value → 200
+  OK  job_queue.status → 200
+  OK  laya_routing_decisions.confidence → 200
+  FAIL provider_keys.mask_hint → 400 {"code":"42703","details":null,"hint":null,"message":"column provider_keys.mask_hint does not exist"}
+  OK  department_model_picks.model → 200
+  OK  playbooks.version → 200
+  FAIL agent_memory.expiry → 400 {"code":"42703","details":null,"hint":null,"message":"column agent_memory.expiry does not exist"}
+  OK  usage_logs.cost_inr → 200
+  OK  deliverables.version → 200
+  OK  gate_actions.risk_tier → 200
+  OK  content_calendar.status → 200
+
+PLAYBOOKS: [{"slug":"client-onboarding","version":1},{"slug":"content-production","version":1},{"slug":"retainer-ops","version":1},{"slug":"new-client-onboarding","version":1},{"slug":"diwali-campaign","version":1},{"slug":"seo-retainer","version":1},{"slug":"lead-to-close","version":1},{"slug":"__reverify-probe","version":1},{"slug":"__reverify-probe","version":2},{"slug":"client-onboarding","version":2}]
+
+RLS behavioral probe (no key = should be denied/401):
+  clients w/ bad key → 401 (denied = RLS/auth on)
+ROWS job_queue: 0
+ROWS laya_routing_decisions: 3
+ROWS provider_keys: 1
+ROWS department_model_picks: 1
+exit: 0

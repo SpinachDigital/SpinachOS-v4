@@ -1,0 +1,25 @@
+PENDING                000-schema.sql → clients✓, tasks✓, leads✓, content✓, logs✓, workflows✓, approvals✓, agent_states✓, daily_runs✓, calendars✓, events✓, channels✓, channel_members✗, threads✓, messages✓, telegram_users✓, telegram_webhooks✓, telegram_notifications✓, scraper_sources✓, scraper_runs✓
+APPLIED                010-fix-tasks-assigned-to.sql → tasks✓
+APPLIED                011-fix-agent-states-profile-check.sql → agent_states✓
+APPLIED                020-p1-backend-gaps.sql → invoices✓, calendars✓, events✓, channels✓, threads✓, messages✓, agent_state_log✓
+APPLIED                030-v4-extended.sql → packages✓, knowledge_chunks✓, retainer_runs✓, command_threads✓, thread_messages✓, marketing_content_calendar✓, marketing_engagement✓
+APPLIED                031-v6-hierarchy.sql
+APPLIED                032-v6-retainer.sql → retainer_runs✓
+APPLIED                040-phase4-rag.sql → knowledge_chunks✓
+APPLIED                041-phase4-comms-social.sql → content_calendar✓
+APPLIED                050-sprint9-win.sql → outreach_drafts✓, outreach_messages✓
+APPLIED                051-sprint10-deliver.sql → gate_actions✓, deliverables✓, pipeline_events✓
+APPLIED                052-sprint10-approvals-type.sql
+APPLIED                053-sprint11-create-pl.sql → usage_logs✓, model_rates✓
+APPLIED                054-sprint12-playbooks-ledger.sql → agent_memory✓, playbooks✓
+APPLIED                055-sprint13-publish-type.sql
+APPLIED                060-phase5-hardening.sql → job_queue✓, laya_routing_decisions✓, provider_keys✓, department_model_picks✓
+APPLIED                061-phase5-rls.sql
+
+052/055 CHECK (approvals.type reachable): APPLIED (live rows verified in earlier probes)
+061 RLS (bad key denied): APPLIED (auth+RLS gate live)
+
+TOTAL unique tables expected: 43, live DB tables: 46
+MISSING: channel_members
+SEEDS: playbooks=10 (v2=2), model_rates=8
+exit: 0

@@ -149,3 +149,117 @@ app.post('/api/v1/playbooks/:slug/install', authMiddleware, async (req, res) => 
     res.status(500).json({ error: e.message });
   }
 });
+
+// ---------------------------------------------------------------------
+// Phase 6 GOAL 2 — PACKAGE DESIGNER: base package + à la carte add-ons
+// → live total → "save as custom playbook" (versioned, reusable).
+// ---------------------------------------------------------------------
+app.post('/api/v1/playbooks/designer/quote', authMiddleware, async (req, res) => {
+  try {
+    const baseSlug = String(req.body?.base_slug || '').replace(/^.*\//, '');
+    const addons: string[] = Array.isArray(req.body?.addons) ? req.body.addons.map((a: any) => String(a).replace(/^.*\//, '')) : [];
+    if (!baseSlug) return res.status(400).json({ error: 'base_slug required' });
+
+    // Base pack (highest version)
+    const { data: base } = await supabase.from('playbooks')
+      .select('slug, name, version, metadata, stages_json, tasks_json, gates_json')
+      .eq('slug', baseSlug).order('version', { ascending: false }).limit(1).maybeSingle();
+    if (!base) return res.status(404).json({ error: `base playbook "${baseSlug}" not found` });
+
+    // Add-on packs (workflow_type='addon')
+    const addonRows = addons.length
+      ? (await supabase.from('playbooks')
+          .select('slug, name, version, metadata, stages_json, tasks_json, gates_json')
+          .in('slug', addons)
+          .eq('workflow_type', 'addon')
+          .order('version', { ascending: false })).data || []
+      : [];
+
+    const basePrice = Number(base.metadata?.price_inr || 0);
+    const addonPrices = addonRows.map(a => Number(a.metadata?.price_inr || 0));
+    const total = basePrice + addonPrices.reduce((s, p) => s + p, 0);
+
+    res.json({
+      ok: true,
+      base: { slug: base.slug, name: base.name, price_inr: basePrice },
+      addons: addonRows.map((a, i) => ({ slug: a.slug, name: a.name, price_inr: addonPrices[i] })),
+      total_inr: total,
+      combined_stages: [
+        ...(Array.isArray(base.stages_json) ? base.stages_json : []),
+        ...addonRows.flatMap(a => (Array.isArray(a.stages_json) ? a.stages_json : [])),
+      ].length,
+      combined_gates: [
+        ...(Array.isArray(base.gates_json) ? base.gates_json : []),
+        ...addonRows.flatMap(a => (Array.isArray(a.gates_json) ? a.gates_json : [])),
+      ].length,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/v1/playbooks/designer/save', authMiddleware, async (req, res) => {
+  try {
+    const baseSlug = String(req.body?.base_slug || '').replace(/^.*\//, '');
+    const addons: string[] = Array.isArray(req.body?.addons) ? req.body.addons.map((a: any) => String(a).replace(/^.*\//, '')) : [];
+    const customName = String(req.body?.name || '').slice(0, 120);
+    if (!baseSlug || !customName) return res.status(400).json({ error: 'base_slug and name required' });
+
+    const { data: base } = await supabase.from('playbooks')
+      .select('*').eq('slug', baseSlug).order('version', { ascending: false }).limit(1).maybeSingle();
+    if (!base) return res.status(404).json({ error: `base playbook "${baseSlug}" not found` });
+
+    const addonRows = addons.length
+      ? (await supabase.from('playbooks')
+          .select('*').in('slug', addons).eq('workflow_type', 'addon')
+          .order('version', { ascending: false })).data || []
+      : [];
+
+    const stages = [
+      ...(Array.isArray(base.stages_json) ? base.stages_json : []),
+      ...addonRows.flatMap(a => (Array.isArray(a.stages_json) ? a.stages_json : [])),
+    ];
+    const tasks = [
+      ...(Array.isArray(base.tasks_json) ? base.tasks_json : []),
+      ...addonRows.flatMap(a => (Array.isArray(a.tasks_json) ? a.tasks_json : [])),
+    ];
+    const gates = [
+      ...(Array.isArray(base.gates_json) ? base.gates_json : []),
+      ...addonRows.flatMap(a => (Array.isArray(a.gates_json) ? a.gates_json : [])),
+    ];
+    const total = Number(base.metadata?.price_inr || 0)
+      + addonRows.reduce((s, a) => s + Number(a.metadata?.price_inr || 0), 0);
+
+    // Versioned custom slug: base + addons hash → unique per combo
+    const comboSlug = `custom-${baseSlug}${addons.length ? '-' + addons.join('+') : ''}`.replace(/[^a-z0-9+-]/gi, '-').slice(0, 100);
+    // Next version for this combo
+    const { data: existing } = await supabase.from('playbooks')
+      .select('version').eq('slug', comboSlug).order('version', { ascending: false }).limit(1);
+    const nextVersion = (existing && existing.length ? Number(existing[0].version) : 0) + 1;
+
+    const { data: saved, error } = await supabase.from('playbooks').insert({
+      slug: comboSlug,
+      name: customName,
+      workflow_type: 'custom',
+      version: nextVersion,
+      description: `${customName} — ${base.name}${addonRows.length ? ' + ' + addonRows.length + ' add-ons' : ''}. ₹${total}.`,
+      stages_json: stages,
+      tasks_json: tasks,
+      gates_json: gates,
+      metadata: {
+        price_inr: total,
+        billing: base.metadata?.billing || 'one_time',
+        base_slug: baseSlug,
+        addons,
+        designed_via: 'package-designer',
+      },
+    }).select().single();
+    if (error) {
+      // Unique violation on exact same version → bump handled above; anything else is real.
+      return res.status(500).json({ error: `save failed: ${error.message}` });
+    }
+    res.status(201).json({ ok: true, playbook: { slug: saved.slug, name: saved.name, version: saved.version, price_inr: total }, install_url: `/api/v1/playbooks/${encodeURIComponent(saved.slug)}/install` });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

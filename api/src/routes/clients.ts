@@ -111,6 +111,79 @@ app.post('/api/v1/onboard', authMiddleware, async (req, res) => {
     dormant = await provisionDormantAgent('ads_manager');
   }
 
+  // 3b. PHASE 6 GOAL 2 — package-select step → PLAYBOOK install.
+  // The package's playbook seeds the real pipeline: stages, tasks, gates.
+  // Booked to P&L: clients.package_price_inr + monthly_value for retainers.
+  let playbookInstall: any = null;
+  const PACK_TO_PLAYBOOK: Record<string, string> = {
+    brand_identity: 'pkg-brand-identity',
+    digital_launch: 'pkg-digital-launch',
+    ai_chat_agent: 'pkg-ai-chat-agent',
+    workflow_system: 'pkg-workflow-system',
+    growth: 'ret-growth',
+    scale: 'ret-scale',
+    agent_care: 'ret-agent-care',
+  };
+  const { data: catalogPack } = await supabase
+    .from('playbooks')
+    .select('*')
+    .eq('slug', PACK_TO_PLAYBOOK[package_key] || '')
+    .order('version', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (catalogPack) {
+    // Stage map from the pack (the pipeline this client will run).
+    const stages = Array.isArray(catalogPack.stages_json) ? catalogPack.stages_json : [];
+    if (stages.length > 0) {
+      // Install = a SECOND workflow seeded from the playbook (instance is
+      // independent; editing it never mutates the pack). The preset workflow
+      // above stays as the delivery backbone; the playbook workflow carries
+      // the catalog stages + gates + price.
+      const pbSteps = stages.map((s: any, i: number) => ({
+        ...s,
+        description: s.description || s.name,
+        status: i === 0 ? 'in_progress' : 'pending',
+        started_at: i === 0 ? new Date().toISOString() : null,
+      }));
+      const pbPayload = {
+        name: `${catalogPack.name} (playbook v${catalogPack.version}) — ${name}`,
+        client_id: client.id,
+        current_step: pbSteps[0]?.name || null,
+        steps_json: pbSteps,
+        metadata: {
+          pack_slug: catalogPack.slug, pack_version: catalogPack.version,
+          installed_via: 'onboard-package-select', installed_at: new Date().toISOString(),
+          price_inr: catalogPack.metadata?.price_inr || null,
+          billing: catalogPack.metadata?.billing || 'one_time',
+        },
+      };
+      const { data: pbWf, error: pbErr } = await supabase.from('workflows').insert(pbPayload).select().single();
+      if (!pbErr && pbWf) {
+        playbookInstall = { workflow_id: pbWf.id, pack_slug: catalogPack.slug, version: catalogPack.version };
+        // Gates from the pack — armed via the existing gate machinery.
+        const gates = Array.isArray(catalogPack.gates_json) ? catalogPack.gates_json : [];
+        for (const g of gates) {
+          await supabase.from('gate_actions').insert({
+            workflow_id: pbWf.id, client_id: client.id,
+            action: g.action || 'approve_deliverable', name: g.name || 'gate',
+            risk_tier: g.risk_tier || 'read',
+            payload_json: { pack_slug: catalogPack.slug, after_step: g.after_step || null },
+            status: 'pending', decided_by: null,
+          }).then(({ error: e }: any) => { if (e) console.error('[onboard] gate insert failed:', e.message); });
+        }
+        // Book the price (P&L revenue side — never manual).
+        const priceInr = catalogPack.metadata?.price_inr;
+        const billing = catalogPack.metadata?.billing || 'one_time';
+        await supabase.from('clients').update({
+          package_slug: catalogPack.slug,
+          package_price_inr: priceInr ?? null,
+          package_billing: billing,
+          ...(billing === 'monthly' ? { monthly_value: priceInr ?? null } : {}),
+        }).eq('id', client.id);
+      }
+    }
+  }
+
   // 4. Workflow auto-start with package-specific steps
   const steps = preset.steps.map((s: any, i: number) => ({
     ...s,
@@ -140,6 +213,7 @@ app.post('/api/v1/onboard', authMiddleware, async (req, res) => {
     client,
     package: { key: preset.key, name: preset.name, price_inr: preset.price_inr, billing: preset.billing },
     workflow,
+    playbook_install: playbookInstall, // Phase 6 GOAL 2: catalog playbook seeded (pipeline+gates+price)
     dormant_trigger: dormant,
     package_linked: packageLinked,
     brand_branch: has_logo ? 'dna_from_logo' : 'code_drawn_svg',
