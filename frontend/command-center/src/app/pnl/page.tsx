@@ -33,6 +33,7 @@ export default function PnlPage() {
   const [revenueInput, setRevenueInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [styleScores, setStyleScores] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,6 +49,14 @@ export default function PnlPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  // Phase 7-FIX FIX 6: weekly avg style score per agent — drift visible
+  // where the founder already looks (P&L/ops view).
+  useEffect(() => {
+    apiFetch('/api/v1/evolutions/style-weekly').then((r) => (r.ok ? r.json() : []))
+      .then((d) => setStyleScores(Array.isArray(d) ? d : []))
+      .catch(() => setStyleScores([]));
+  }, []);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -191,6 +200,28 @@ export default function PnlPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+            </section>
+
+            {/* Phase 7-FIX FIX 6: weekly avg style score per agent */}
+            <section>
+              <h2 className="t-mono" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-faint)', marginBottom: 10 }}>
+                Style score — weekly avg per agent (drift)
+              </h2>
+              {(styleScores.length === 0) ? (
+                <p className="t-meta" style={{ color: 'var(--text-faint)' }}>No linted cards yet — style scores appear after agents produce inbox cards.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {styleScores.map((s: any) => (
+                    <div key={s.agent || s.agent_profile} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span className="t-mono" style={{ width: 150, flexShrink: 0, fontSize: 11.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.agent || s.agent_profile}</span>
+                      <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'var(--bg-2, rgba(0,0,0,0.05))', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.max(2, Math.min(100, (Number(s.avg_score ?? s.avg ?? 0) / 10) * 100))}%`, height: '100%', background: Number(s.avg_score ?? s.avg ?? 0) >= 6 ? 'var(--green, #4CAF50)' : 'var(--amber, #f59e0b)', borderRadius: 999 }} />
+                      </div>
+                      <span className="t-mono" style={{ width: 90, textAlign: 'right', fontSize: 11.5, color: 'var(--text-faint)' }}>{Number(s.avg_score ?? s.avg ?? 0).toFixed(1)}/10 · {s.cards ?? s.count ?? 0} cards</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </section>

@@ -12,6 +12,7 @@
  * tools themselves are NOT adopted (self-host weight violates minimal-setup).
  */
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { checkCostCap } from './cost-guardrails';
 
 export type UsageSource = 'agent' | 'omniroute' | 'image_gen' | 'laya';
 
@@ -77,6 +78,11 @@ export async function logUsage(supabase: SupabaseClient, u: UsageInput): Promise
     if (error) {
       console.error('[usage] insert failed:', error.message);
       return { logged: false };
+    }
+    // Phase 7-FIX FIX 2: approved cost caps are LIVE guardrails — breach
+    // logs the trigger to the ledger + raises a low-risk inbox card.
+    if (costUsd > 0) {
+      void checkCostCap(supabase, u.agent_profile, costUsd, u.model).then(() => undefined, () => undefined);
     }
     return { logged: true, id: data?.id, rateFound };
   } catch (e: any) {
