@@ -1,3 +1,4 @@
+import { lintAgentOutput } from '../agents/style-lint';
 /*
  * routes/approvals.ts — Phase 3 monolith split (from index.ts L779–892).
  * No behavior changes: same paths, methods, auth, response shapes.
@@ -63,6 +64,12 @@ app.post('/api/v1/invoices', authMiddleware, async (req, res) => {
     const { client_id, package_key, amount, currency = 'INR', status = 'draft', due_at, notes } = req.body || {};
     if (!client_id) return res.status(400).json({ error: 'client_id required' });
     if (amount == null || isNaN(Number(amount))) return res.status(400).json({ error: 'amount (number) required' });
+    const lintResult = lintAgentOutput(req.body.payload?.output || "");
+    const enrichedBody = {
+      ...req.body,
+      style_score: lintResult.score,
+      style_violations: lintResult.violations
+    };
     const { data, error } = await supabase.from('invoices').insert({
       client_id, package_key,
       amount: Number(amount), currency, status,
@@ -175,7 +182,13 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
 
 app.post('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
-    const { data, error } = await supabase.from('approvals').insert(req.body).select().single();
+    const lintResult = lintAgentOutput(req.body.payload?.output || "");
+    const enrichedBody = {
+      ...req.body,
+      style_score: lintResult.score,
+      style_violations: lintResult.violations
+    };
+    const { data, error } = await supabase.from('approvals').insert(enrichedBody).select().single();
     if (error) throw error;
     emitApproval({ ...data, action: 'created' });
     res.status(201).json(data);

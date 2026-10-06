@@ -56,9 +56,45 @@ app.post('/api/v1/evolutions/:id/apply', authMiddleware, async (req: any, res) =
       if (insErr) throw insErr;
       applied.preference_saved = true;
     } else if (prop.type === 'playbook_fix') {
-      // Versioned playbook diff — GOAL 2 detail. Mark applied; the pack's
-      // next version (v(N+1)) is produced by the playbooks route from payload.
-      applied.playbook_fix_marked = true;
+      // Versioned playbook diff — GOAL 2 detail. Create actual v(N+1) version row
+      // from payload diff data, mark old installs untouched (v(N)), new installs get v(N+1).
+      const p = prop.payload || {};
+      const version = p.new_version || (prop.version_bump ? String(Number(prop.version) + 1) : '1');
+      const diffSteps = p.changed_steps || [];
+      const diffTasks = p.changed_tasks || [];
+      const diffGates = p.changed_gates || [];
+
+      // Upsert new version row
+      const { error: upsertErr } = await supabase
+        .from('playbooks')
+        .upsert({
+          slug: p.slug || prop.slug,
+          version: version,
+          workflow_type: p.workflow_type || prop.workflow_type,
+          description: p.description || prop.description,
+          stages_json: p.new_steps || [],
+          tasks_json: p.new_tasks || [],
+          gates_json: p.new_gates || [],
+          metadata: JSON.stringify({
+            playbook_fix_id: prop.id,
+            old_version: prop.version,
+            new_version: version,
+            changed_steps: diffSteps,
+            changed_tasks: diffTasks,
+            changed_gates: diffGates
+          })
+        }, { onConflict: 'slug,version' });
+
+      if (upsertErr) throw upsertErr;
+
+      applied.playbook_fix_version = version;
+      applied.playbook_fix_diff = JSON.stringify({
+        old_version: prop.version,
+        new_version: version,
+        changed_steps: diffSteps,
+        changed_tasks: diffTasks,
+        changed_gates: diffGates
+        });
     }
 
     const { error: updErr } = await supabase
