@@ -25,18 +25,52 @@ interface ApprovalItem {
   created_at: string;
   approved_by?: string;
   reviewed_at?: string;
+  // Phase 6 GOAL 3 triage fields
+  risk_tier?: string;
+  triage_score?: number;
+  triage_reasons?: string[];
+  blocking?: boolean;
 }
+
+const WORKFLOW_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'WIN', label: 'WIN', types: ['outreach', 'onboarding'] },
+  { id: 'DELIVER', label: 'DELIVER', types: ['gate', 'deliverable_approval', 'task_approval', 'stuck_stage'] },
+  { id: 'CREATE', label: 'CREATE', types: ['content', 'design', 'strategy'] },
+  { id: 'GROW', label: 'GROW', types: ['publish', 'campaign'] },
+] as const;
 
 export default function ApprovalsPage() {
   const { connected, feed } = useWebSocket();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState<string | null>(null);
+  // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
+  const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
+  // Optionally bind onToggleSelect from parent if needed
+  const onToggleSelect = (id: string) => setSelected(s => {
+    const next = new Set(s);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
+  const [workflow, setWorkflow] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
 
   // Fetch approvals on mount and when feed updates
   const fetchApprovals = useCallback(async () => {
     try {
-      const res = await apiFetch('/api/v1/approvals/pending');
+      // Phase 6 GOAL 3: triage=1 → smart-priority sort server-side
+      // (blocking first, score desc — scores recompute on every fetch:
+      // new card, age crossing SLA, pipeline unblocked → fresh ranking).
+      const res = await apiFetch('/api/v1/approvals?triage=1&limit=200');
       if (res.ok) {
         const data = await res.json();
         setApprovals(data);

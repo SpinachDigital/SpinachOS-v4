@@ -10,9 +10,10 @@ import { app, authMiddleware, supabase, emitApproval } from '../ctx';
 // THE INBOX page ride the same machinery).
 import { logSlotEvent } from './grow';
 import { recordApprovalDecision, recordFounderCorrection } from '../memory-ledger';
+import { scoreCards } from '../inbox-triage';
 app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
-    const { client_id, status } = req.query;
+    const { client_id, status, triage } = req.query;
     const limit = Math.min(parseInt(String(req.query.limit || '100'), 10) || 100, 500);
     let query = supabase
       .from('approvals')
@@ -23,6 +24,13 @@ app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
     if (status) query = query.eq('status', String(status));
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
+    // Phase 6 GOAL 3: triage=1 → smart-priority sort (blocking first, score
+    // desc, oldest tiebreak) with triage_score/triage_reasons/blocking on each
+    // card. Default (no param) keeps the raw created_at order for old callers.
+    if (String(triage) === '1' && (data || []).length) {
+      const scored = await scoreCards(data as any);
+      return res.json(scored);
+    }
     res.json(data || []);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

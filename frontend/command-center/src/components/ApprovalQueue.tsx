@@ -26,6 +26,12 @@ interface ApprovalItem {
   payload_json?: any;
   created_at?: string;
   reviewed_at?: string;
+  // Phase 6 GOAL 3 — triage fields (from /api/v1/approvals?triage=1)
+  risk_tier?: string;
+  metadata?: any;
+  triage_score?: number;
+  triage_reasons?: string[];
+  blocking?: boolean;
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: string }> = {
@@ -51,10 +57,14 @@ interface ApprovalQueueProps {
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
   actionPending?: string | null;
+  // Phase 6 GOAL 3 — bulk + selection (explicit select → confirm, no silent bulk)
+  selected?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function ApprovalQueue({ approvals, onApprove, onReject, actionPending }: ApprovalQueueProps) {
+export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, selected, onToggleSelect }: ApprovalQueueProps) {
   const pendingApprovals = approvals.filter(a => a.status === 'pending');
+  const selCount = selected?.size || 0;
 
   return (
     <section className="animate-in">
