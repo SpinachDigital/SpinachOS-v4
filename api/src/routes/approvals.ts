@@ -182,11 +182,14 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
 
 app.post('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
-    const lintResult = lintAgentOutput(req.body.payload?.output || "");
+    // FIX 4: lint the agent output bound for THE INBOX — payload_json.text
+    // (OutputPreview shape) or payload.output; regex only, sub-ms, no LLM.
+    const lintText = String(req.body?.payload_json?.text ?? req.body?.payload?.output ?? '');
+    const lintResult = lintAgentOutput(lintText);
     const enrichedBody = {
       ...req.body,
       style_score: lintResult.score,
-      style_violations: lintResult.violations
+      style_violations: lintResult.violations,
     };
     const { data, error } = await supabase.from('approvals').insert(enrichedBody).select().single();
     if (error) throw error;

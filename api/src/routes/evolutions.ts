@@ -71,6 +71,7 @@ app.post('/api/v1/evolutions/:id/apply', authMiddleware, async (req: any, res) =
           slug: p.slug || prop.slug,
           version: version,
           workflow_type: p.workflow_type || prop.workflow_type,
+          name: p.name || prop.title,
           description: p.description || prop.description,
           stages_json: p.new_steps || [],
           tasks_json: p.new_tasks || [],
