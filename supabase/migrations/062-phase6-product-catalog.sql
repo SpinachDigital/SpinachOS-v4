@@ -17,6 +17,11 @@
 
 -- ---------- helper: playbooks already have (slug, version) unique ----------
 
+-- Live DB fix (054 created playbooks WITHOUT a metadata column — 062 inserts
+-- price/billing/package_key there). Idempotent add before any insert.
+alter table public.playbooks
+  add column if not exists metadata jsonb default '{}';
+
 -- ============ ONE-TIME PACKAGES (workflow_type='package') ============
 
 insert into public.playbooks (slug, name, workflow_type, version, description, stages_json, tasks_json, gates_json, metadata)
@@ -149,3 +154,26 @@ alter table public.clients
   add column if not exists package_slug text,
   add column if not exists package_price_inr integer,
   add column if not exists package_billing text default 'one_time';
+
+-- ============ packages table price sync (LIVE rows had stale prices) ============
+-- The public-site lineup is the source of truth (Phase 6 prompt, embed exactly):
+update public.packages set price_inr = 14999 where key = 'brand_identity';
+update public.packages set price_inr = 19999, name = 'Digital Launch' where key = 'digital_launch';
+update public.packages set price_inr = 12999, name = 'AI Chat Agent' where key = 'ai_chat_agent';
+update public.packages set price_inr = 24999, name = 'Workflow System' where key = 'workflow_system';
+update public.packages set price_inr = 14999, name = 'Growth Retainer',
+  billing = 'monthly' where key = 'growth';
+update public.packages set price_inr = 24999, name = 'Scale Retainer',
+  billing = 'monthly' where key = 'scale';
+update public.packages set price_inr = 7999, name = 'Agent Care Retainer',
+  billing = 'monthly' where key = 'agent_care';
+-- Rows that don't exist yet (older DBs had only 4): insert from the lineup.
+insert into public.packages (key, name, price_inr, billing)
+select 'ai_chat_agent', 'AI Chat Agent', 12999, 'one_time'
+where not exists (select 1 from public.packages where key = 'ai_chat_agent');
+insert into public.packages (key, name, price_inr, billing)
+select 'workflow_system', 'Workflow System', 24999, 'one_time'
+where not exists (select 1 from public.packages where key = 'workflow_system');
+insert into public.packages (key, name, price_inr, billing)
+select 'agent_care', 'Agent Care Retainer', 7999, 'monthly'
+where not exists (select 1 from public.packages where key = 'agent_care');

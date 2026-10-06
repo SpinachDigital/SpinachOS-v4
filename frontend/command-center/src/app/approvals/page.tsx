@@ -47,18 +47,6 @@ export default function ApprovalsPage() {
   const [actionPending, setActionPending] = useState<string | null>(null);
   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | keyof TYPE_FILTER>('all');
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkConfirm, setBulkConfirm] = useState<'approve' | 'reject' | null>(null);
-  // Optionally bind onToggleSelect from parent if needed
-  const onToggleSelect = (id: string) => setSelected(s => {
-    const next = new Set(s);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
-  // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
-  const [workflow, setWorkflow] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
