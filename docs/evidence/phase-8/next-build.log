@@ -1,0 +1,79 @@
+# FRESH-CLONE BUILD PROOF (Phase 8)
+# clone: C:\Users\Abhishek\AppData\Local/Temp/p8-clone @ b2682a786885d63dd3937ab91a0cdae4c9f7f202
+# BUILD_ID: p8-1791362684-b2682a7
+# command: npx next build (clean clone, npm install fresh, Next 14.0.4 — turbopack warning suppressed via env)
+# date: 2026-10-07T08:44:44Z
+   ▲ Next.js 14.0.4
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/assets/page.tsx
+258:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+311:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/app/pipeline/[id]/page.tsx
+88:6  Warning: React Hook useEffect has a missing dependency: 'data'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/tasks/[id]/page.tsx
+58:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/chat/TaskChat.tsx
+42:6  Warning: React Hook useCallback has an unnecessary dependency: 'taskId'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/OutputPreview.tsx
+98:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/26) ...
+   Generating static pages (6/26) 
+   Generating static pages (12/26) 
+   Generating static pages (19/26) 
+ ✓ Generating static pages (26/26) 
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    10.4 kB        95.9 kB
+├ ○ /_not-found                          869 B            83 kB
+├ ○ /agents                              5.05 kB        87.2 kB
+├ ○ /analytics                           3.41 kB        85.6 kB
+├ λ /api/auth/session                    0 B                0 B
+├ ○ /approvals                           5.25 kB        87.4 kB
+├ ○ /assets                              5.57 kB        87.7 kB
+├ ○ /calendar                            5.6 kB         87.8 kB
+├ ○ /chat                                7.39 kB         100 kB
+├ ○ /clients                             5.05 kB        94.3 kB
+├ λ /clients/[id]                        8.35 kB        97.6 kB
+├ ○ /comms                               6.17 kB        88.3 kB
+├ ○ /evolutions                          3.92 kB        86.1 kB
+├ ○ /keokarpin-3d                        190 kB          273 kB
+├ ○ /leads                               5.7 kB         94.9 kB
+├ ○ /ledger                              4.24 kB        86.4 kB
+├ ○ /marketing                           1.61 kB        83.8 kB
+├ ○ /marketing/calendar                  7.8 kB         89.9 kB
+├ ○ /marketing/engagement                7.86 kB          90 kB
+├ ○ /pipeline                            4.69 kB        93.9 kB
+├ λ /pipeline/[id]                       5.04 kB        87.2 kB
+├ ○ /playbooks                           4.66 kB        86.8 kB
+├ ○ /pnl                                 4.76 kB        86.9 kB
+├ ○ /portal                              4.12 kB        86.3 kB
+├ ○ /projects                            3.39 kB        85.5 kB
+├ ○ /settings                            9.25 kB        91.4 kB
+├ λ /tasks/[id]                          6.13 kB        88.3 kB
+└ ○ /team                                3.93 kB        93.2 kB
++ First Load JS shared by all            82.2 kB
+  ├ chunks/458-33a8d2193f67b0a9.js       26.7 kB
+  ├ chunks/fd9d1056-5c1082dd35c96066.js  53.3 kB
+  ├ chunks/main-app-1cf9555e54a7e21c.js  220 B
+  └ chunks/webpack-e3bb406957e3b7fc.js   1.97 kB
+
+
+ƒ Middleware                             40.3 kB
+
+○  (Static)   prerendered as static content
+λ  (Dynamic)  server-rendered on demand using Node.js
+
+exit: 0
