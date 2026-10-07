@@ -5,6 +5,11 @@
 // (localStorage) → read-only portal + THE ONE WRITE (approve/request-changes
 // on deliverables sent for their review). No dead buttons — every row acts
 // or explains why it can't.
+//
+// Phase 8.1 GOAL 2: PREVIEW-AS-CLIENT — /portal?preview_client_id=<uuid> with
+// a FOUNDER session renders EXACTLY what that client sees (same components,
+// same data path via /portal/preview/* routes). Preview is READ-ONLY: the
+// decision buttons are hidden and the write endpoint 403s preview contexts.
 
 import { useState, useEffect, useCallback } from 'react';
 
@@ -83,10 +88,21 @@ export default function PortalPage() {
   const [tab, setTab] = useState<'deliverables' | 'timeline'>('deliverables');
   const [deciding, setDeciding] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  // Phase 8.1 GOAL 2: preview-as-client state
+  const [previewClientId, setPreviewClientId] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   // ---- boot: check session cache, then ?token= redeem ----
   useEffect(() => {
     (async () => {
+      // Phase 8.1 GOAL 2: ?preview_client_id= → founder preview mode (checked FIRST)
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get('preview_client_id');
+      if (pid) {
+        setPreviewClientId(pid);
+        setBooting(false);
+        return; // preview path loads below with the founder session
+      }
       try {
         const raw = localStorage.getItem(SESSION_KEY);
         if (raw) {
@@ -101,7 +117,6 @@ export default function PortalPage() {
         /* fall through to redeem */
       }
       // ?token=... → redeem through the API (rate-limited, single-use)
-      const params = new URLSearchParams(window.location.search);
       const token = params.get('token');
       if (!token) {
         setBooting(false);
@@ -158,6 +173,39 @@ export default function PortalPage() {
     if (session) load();
   }, [session, load]);
 
+  // ---- Phase 8.1 GOAL 2: preview load (founder session + preview routes) ----
+  const loadPreview = useCallback(async () => {
+    if (!previewClientId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const H = { Authorization: `Bearer preview` }; // replaced below by real founder JWT
+      // founder JWT comes from the same session-mint path the UI uses
+      const sessionRes = await fetch('/api/auth/session');
+      if (!sessionRes.ok) { setPreviewError('Founder session required — log into the command center first.'); setLoading(false); return; }
+      const { token } = await sessionRes.json();
+      const fH = { Authorization: `Bearer ${token}` };
+      const q = `preview_client_id=${encodeURIComponent(previewClientId)}`;
+      const [ov, dl, tl] = await Promise.all([
+        fetch(`${API_BASE}/api/v1/portal/preview/overview?${q}`, { headers: fH }),
+        fetch(`${API_BASE}/api/v1/portal/preview/deliverables?${q}`, { headers: fH }),
+        fetch(`${API_BASE}/api/v1/portal/preview/timeline?${q}`, { headers: fH }),
+      ]);
+      if (ov.status === 401 || ov.status === 403) { setPreviewError('Founder session invalid — log into the command center first.'); setLoading(false); return; }
+      if (ov.ok) setOverview(await ov.json());
+      if (dl.ok) setDeliverables((await dl.json()).deliverables || []);
+      if (tl.ok) setTimeline((await tl.json()).events || []);
+      if (!ov.ok || !dl.ok || !tl.ok) setError('Some preview data failed to load — retry.');
+    } catch {
+      setPreviewError('Portal API unreachable — is the backend running?');
+    }
+    setLoading(false);
+  }, [previewClientId]);
+
+  useEffect(() => {
+    if (previewClientId) loadPreview();
+  }, [previewClientId, loadPreview]);
+
   // ---- THE ONE WRITE: approve / request-changes on a pending review ----
   const decide = async (id: string, decision: 'approved' | 'changes_requested') => {
     if (!session) return;
@@ -212,6 +260,109 @@ export default function PortalPage() {
   // ---- boot screen ----
   if (booting) {
     return <main style={{ padding: 40 }}>Loading portal…</main>;
+  }
+
+  // ---- Phase 8.1 GOAL 2: PREVIEW BANNER (founder sees what the client sees) ----
+  if (previewClientId) {
+    const pending = deliverables.filter((d) => d.metadata?.client_review === 'pending');
+    return (
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: 24 }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 10, padding: '10px 14px', marginBottom: 16, background: 'var(--accent, #004B63)', color: '#fff', borderRadius: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ fontSize: 13 }}>
+            <b>PREVIEW MODE</b> — viewing exactly what the client sees. Read-only: decisions are blocked (the write endpoint rejects preview sessions).
+          </div>
+          <a href={`/clients/${previewClientId}`} style={{ color: '#fff', fontSize: 13, textDecoration: 'underline', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>
+            ← Back to Client 360
+          </a>
+        </div>
+        {previewError && (
+          <div style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)', color: 'var(--muted-foreground)', marginBottom: 12 }}>
+            {previewError}
+          </div>
+        )}
+        {/* header (identical to the client's) */}
+        <div style={{ marginBottom: 16 }}>
+          <h1 style={{ fontSize: 22, marginBottom: 2 }}>{overview?.client_name || 'Client Portal'}</h1>
+          <span style={{ color: 'var(--muted-foreground)', fontSize: 13 }}>Preview of the client's portal view</span>
+        </div>
+        {/* summary strip */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 160px', padding: 14, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)' }}>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Active pipelines</div>
+            <div style={{ fontSize: 26, fontWeight: 600 }}>{overview?.active_count ?? '—'}</div>
+          </div>
+          <div style={{ flex: '1 1 160px', padding: 14, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)' }}>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Waiting on you</div>
+            <div style={{ fontSize: 26, fontWeight: 600, color: (overview?.waiting_on_you || 0) > 0 ? 'var(--accent)' : undefined }}>
+              {overview?.waiting_on_you ?? '—'}
+            </div>
+          </div>
+          <div style={{ flex: '1 1 160px', padding: 14, border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)' }}>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Deliverables filed</div>
+            <div style={{ fontSize: 26, fontWeight: 600 }}>{deliverables.length}</div>
+          </div>
+        </div>
+        {/* pipelines (identical) */}
+        <h2 style={{ fontSize: 15, margin: '16px 0 8px' }}>Pipelines</h2>
+        {(overview?.pipelines || []).length === 0 ? (
+          <p style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>No pipelines yet — the client's project is being set up.</p>
+        ) : (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
+            {(overview?.pipelines || []).map((p) => (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>step: {p.step || '—'}</div>
+                </div>
+                <div style={{ width: 140, height: 6, background: 'var(--border)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ width: `${p.progress || 0}%`, height: '100%', background: 'var(--accent)' }} />
+                </div>
+                <span style={{ fontSize: 12, width: 36, textAlign: 'right' }}>{p.progress || 0}%</span>
+                {statusPill(p.status)}
+              </div>
+            ))}
+          </div>
+        )}
+        {/* waiting on you — READ-ONLY in preview: no decision buttons */}
+        <h2 style={{ fontSize: 15, margin: '16px 0 8px' }}>Waiting on you</h2>
+        {pending.length === 0 ? (
+          <p style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>Nothing needs the client's sign-off right now.</p>
+        ) : (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
+            {pending.map((d) => (
+              <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
+                <div>
+                  <span style={{ fontWeight: 500 }}>{d.title}</span>
+                  <span style={{ fontSize: 12, color: 'var(--muted-foreground)', marginLeft: 8 }}>v{d.version} · filed {fmtDate(d.released_at)}</span>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>decisions hidden in preview</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* deliverables (identical, no download clicks in preview) */}
+        <h2 style={{ fontSize: 15, margin: '16px 0 8px' }}>Deliverables</h2>
+        {deliverables.length === 0 ? (
+          <p style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>No deliverables filed yet.</p>
+        ) : (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
+            {deliverables.map((d) => (
+              <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500 }}>{d.title}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+                    {d.kind} · v{d.version} · {fmtDate(d.created_at)}
+                    {d.metadata?.client_review === 'accepted' && ' · accepted'}
+                    {d.metadata?.client_review === 'changes_requested' && ' · changes requested'}
+                  </div>
+                </div>
+                <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{d.file_url ? 'download in client view' : 'view'}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    );
   }
 
   // ---- invite wall: no session, no token ----

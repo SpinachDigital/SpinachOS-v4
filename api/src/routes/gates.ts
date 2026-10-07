@@ -19,7 +19,7 @@
  * Table: supabase/migration-sprint10-deliver.sql (gate_actions).
  */
 import { createHash } from 'crypto';
-import { app, authMiddleware, emitApproval, supabase } from '../ctx';
+import { app, authMiddleware, emitApproval, emitFeed, supabase } from '../ctx';
 import { recordGateDecision, recordFounderCorrection } from '../memory-ledger';
 
 // Secrets/tokens never rendered raw — previews + logs redact these keys.
@@ -279,21 +279,48 @@ export const runGates = () => {
 
       if (gate.action === 'file_deliverable') {
         // §3: file the deliverable — stored + indexed + linked to the twin.
+        // Phase 8.1 GOAL 3: when the installed workflow is client_visible,
+        // the deliverable enters pending_client_review — the DELIVER loop
+        // closes (client's "waiting on you" fills; founder feed shows it).
+        // Phase 8.1 GOAL 3: pack-seeded gates carry { from_playbook, pack_version,
+        // after_step } — no title/kind. Derive a real deliverable title from the
+        // workflow + step (the pack's deliverable IS the step output); the
+        // payload's explicit title wins when present.
         const { title, kind = 'file', content, file_url } = (gate.payload_json || {}) as any;
-        if (!title) return res.status(400).json({ error: 'payload.title required for file_deliverable' });
+        const { data: wfMeta } = await supabase
+          .from('workflows')
+          .select('client_visible, name, current_step, steps_json')
+          .eq('id', gate.workflow_id)
+          .single();
+        const clientVisible = !!(wfMeta as any)?.client_visible;
+        const stepName = gate.metadata?.step_name
+          || (gate.payload_json as any)?.after_step
+          || (wfMeta as any)?.current_step
+          || 'deliverable';
+        const resolvedTitle = title
+          || `${stepName} — ${(wfMeta as any)?.name || 'deliverable'}`;
+        if (!resolvedTitle) return res.status(400).json({ error: 'payload.title required for file_deliverable' });
         const { data: filed, error: fileErr } = await supabase.from('deliverables').insert({
           client_id: gate.client_id, workflow_id: gate.workflow_id, gate_action_id: gate.id,
-          title, kind, content: content || null, file_url: file_url || null,
+          title: resolvedTitle, kind, content: content || null, file_url: file_url || null,
           released_by: gate.approved_by, released_at: new Date().toISOString(),
+          metadata: clientVisible
+            ? { client_review: 'pending', review_requested_at: new Date().toISOString(), gate_id: gate.id }
+            : {},
         }).select().single();
         if (fileErr) throw fileErr;
         await supabase.from('pipeline_events').insert({
           workflow_id: gate.workflow_id, client_id: gate.client_id, event: 'filed',
           actor: `gate:${gate.gate_name}`,
-          detail: { gate_id: gate.id, deliverable_id: filed.id, title, released_by: gate.approved_by },
+          detail: { gate_id: gate.id, deliverable_id: filed.id, title, released_by: gate.approved_by, client_review: clientVisible ? 'pending' : null },
         });
+        // client-visible filing → founder feed (the review request is visible
+        // where the founder already looks; NOT a second inbox)
+        if (clientVisible) {
+          emitFeed('deliver', 'review requested', `${title} filed — waiting on client sign-off`);
+        }
         await supabase.from('gate_actions').update({ metadata: { ...(gate.metadata || {}), ran_at: new Date().toISOString(), deliverable_id: filed.id } }).eq('id', gate.id);
-        return res.json({ ok: true, action: 'file_deliverable', deliverable: filed });
+        return res.json({ ok: true, action: 'file_deliverable', deliverable: filed, client_review: clientVisible ? 'pending' : null });
       }
 
       return res.status(400).json({ error: `gate action "${gate.action}" has no runner — deny-by-default` });

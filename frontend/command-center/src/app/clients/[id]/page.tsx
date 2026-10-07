@@ -8,6 +8,9 @@
 //   GET /api/v1/knowledge/context/:id  → { package, brand_branch, knowledge_chunks } (DNA card)
 //   GET /api/v1/retainer/schedule      → filtered by client_id (retainer section)
 //   GET /api/v1/packages              → package detail lookup
+// Phase 8.1: portal panel — founder invite management (create → link shown
+// ONCE → copy → revoke) + preview-as-client (renders exactly what the client
+// sees in /portal — the /portal page in preview mode).
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
@@ -15,6 +18,17 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface Props {
   params: { id: string };
+}
+
+interface PortalInvite {
+  id: string;
+  client_id: string;
+  email: string;
+  expires_at: string;
+  used_at: string | null;
+  revoked: boolean;
+  status: 'pending' | 'used' | 'expired' | 'revoked';
+  created_at: string;
 }
 
 function fmtDate(iso?: string) {
@@ -80,6 +94,13 @@ export default function Client360Page({ params }: Props) {
   const [onboarding, setOnboarding] = useState(false);
   const [onboardResult, setOnboardResult] = useState<any>(null);
   const [onboardError, setOnboardError] = useState<string | null>(null);
+  // Phase 8.1 GOAL 1: founder invite management state
+  const [invites, setInvites] = useState<PortalInvite[]>([]);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLink, setInviteLink] = useState<string | null>(null); // shown ONCE
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const runOnboard = async () => {
     if (!onboardPkg) { setOnboardError('Pehle package select karo.'); return; }
@@ -171,6 +192,73 @@ export default function Client360Page({ params }: Props) {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // ---- Phase 8.1 GOAL 1: invite lifecycle (create → link once → copy → revoke) ----
+  const loadInvites = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/v1/portal/invites?client_id=${id}`);
+      if (res.ok) setInvites(await res.json());
+      else setInvites([]);
+    } catch {
+      setInvites([]);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadInvites();
+  }, [loadInvites]);
+
+  const createInvite = async () => {
+    if (!inviteEmail.trim()) { setInviteError('Email required — the magic link goes to the client.'); return; }
+    setInviteBusy(true);
+    setInviteError(null);
+    setInviteLink(null);
+    setCopied(false);
+    try {
+      const res = await apiFetch('/api/v1/portal/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: id, email: inviteEmail.trim() }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { setInviteError(d.error || `API ${res.status}`); return; }
+      setInviteLink(d.link); // shown ONCE — never stored server-side
+      setInviteEmail('');
+      await loadInvites();
+    } catch (e: any) {
+      setInviteError(e?.message || 'Invite failed');
+    } finally {
+      setInviteBusy(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // clipboard unavailable — the link stays visible for manual copy
+    }
+  };
+
+  const revokeInvite = async (inviteId: string) => {
+    if (!confirm('Revoke this invite? The link stops working immediately (future redeems rejected).')) return;
+    try {
+      const res = await apiFetch(`/api/v1/portal/invites/${inviteId}/revoke`, { method: 'POST' });
+      if (res.ok) await loadInvites();
+    } catch {
+      /* honest state stays — the row refreshes on next load */
+    }
+  };
+
+  const inviteStatusPill = (s: PortalInvite['status']) => {
+    if (s === 'pending') return <span className="pill pending">{s}</span>;
+    if (s === 'used') return <span className="pill approved">{s}</span>;
+    if (s === 'revoked') return <span className="pill rejected">{s}</span>;
+    return <span className="pill draft">{s}</span>;
+  };
 
   if (loading) {
     return (
@@ -269,6 +357,9 @@ export default function Client360Page({ params }: Props) {
           </span>
           <Link href="/clients" className="btn btn-secondary btn-sm" style={{ textDecoration: 'none' }}>
             ← All clients
+          </Link>
+          <Link href={`/portal?preview_client_id=${id}`} className="btn btn-secondary btn-sm" style={{ textDecoration: 'none' }}>
+            Preview portal
           </Link>
           <button className="btn btn-secondary btn-sm" onClick={fetchAll}>Refresh</button>
         </div>
@@ -574,6 +665,88 @@ export default function Client360Page({ params }: Props) {
               </div>
             )}
           </div>
+        </div>
+
+        {/* ---------- Phase 8.1: PORTAL (invite management + client access) ---------- */}
+        <div className="panel">
+          <div className="panel-head">
+            <h3>Client portal</h3>
+            <Link href={`/portal?preview_client_id=${id}`} className="link">Preview as client →</Link>
+          </div>
+          {/* create invite: email input → magic link shown ONCE + copy */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
+            <input
+              className="input"
+              type="email"
+              placeholder="client@email.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              style={{ minHeight: 44, flex: '1 1 200px', maxWidth: 280 }}
+            />
+            <button
+              onClick={() => void createInvite()}
+              disabled={inviteBusy}
+              style={{ minHeight: 44, padding: '0 18px', border: 'none', borderRadius: 8, background: '#004B63', color: '#fff', fontSize: 13, cursor: inviteBusy ? 'wait' : 'pointer', opacity: inviteBusy ? 0.6 : 1 }}
+            >
+              {inviteBusy ? 'Creating…' : 'Create invite'}
+            </button>
+          </div>
+          {inviteError && (
+            <div role="alert" style={{ marginBottom: 10, padding: '8px 12px', borderRadius: 8, background: '#fdf2f2', border: '1px solid #e5b8b8', color: '#8a2b2b', fontSize: 12 }}>
+              {inviteError}
+            </div>
+          )}
+          {inviteLink && (
+            <div role="status" style={{ marginBottom: 12, padding: 12, borderRadius: 8, background: '#f2fbf4', border: '1px solid #b8e0c2' }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: '#1c5c34', marginBottom: 6 }}>✓ Magic link (shown once — copy it now)</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <code style={{ flex: '1 1 240px', fontSize: 12, wordBreak: 'break-all', padding: '6px 8px', background: '#fff', border: '1px solid var(--border-soft, #eee)', borderRadius: 6 }}>
+                  {inviteLink}
+                </code>
+                <button onClick={() => void copyLink()} style={{ minHeight: 44, padding: '0 16px' }}>
+                  {copied ? 'Copied ✓' : 'Copy'}
+                </button>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
+                Hand this to the client — it expires in 7 days and works once.
+              </div>
+            </div>
+          )}
+          {/* invite list with status chips + revoke */}
+          {invites.length === 0 ? (
+            <div className="t-meta" style={{ color: 'var(--text-faint)' }}>
+              No invites yet — create one above to give this client portal access.
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead><tr><th>Email</th><th>Status</th><th>Expires</th><th>Created</th><th></th></tr></thead>
+                <tbody>
+                  {invites.map((i) => (
+                    <tr key={i.id}>
+                      <td className="cell-main">{i.email}</td>
+                      <td>{inviteStatusPill(i.status)}</td>
+                      <td className="cell-dim">{fmtDate(i.expires_at)}</td>
+                      <td className="cell-dim">{fmtDate(i.created_at)}</td>
+                      <td>
+                        {i.status === 'pending' ? (
+                          <button onClick={() => void revokeInvite(i.id)} style={{ minHeight: 44, padding: '0 14px', fontSize: 12 }}>
+                            Revoke
+                          </button>
+                        ) : i.status === 'expired' ? (
+                          <span className="cell-dim" style={{ fontSize: 12 }}>expired — create a new one</span>
+                        ) : i.status === 'used' ? (
+                          <span className="cell-dim" style={{ fontSize: 12 }}>redeemed {fmtDate(i.used_at || undefined)}</span>
+                        ) : (
+                          <span className="cell-dim" style={{ fontSize: 12 }}>revoked — dead link</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* ---------- retainer ---------- */}

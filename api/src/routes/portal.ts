@@ -231,6 +231,55 @@ function scoped(req: Request) {
   return { ctx, c: c || supabase, rls: !!c, client_id: ctx.client_id };
 }
 
+// ============================================================
+// Phase 8.1 GOAL 2 — PREVIEW-AS-CLIENT (founder sees what the client sees)
+// ============================================================
+// Founder session + ?preview_client_id=<uuid> on the portal READ routes →
+// the SAME queries run against that client's data (founder override — the
+// service client + explicit filter, RLS unaffected). Preview mode is
+// READ-ONLY: previewSessions carries preview=true, and the decision
+// endpoint rejects preview sessions EXPLICITLY with 403 (a previewing
+// founder cannot approve as the client).
+
+// previewAuthMiddleware: a founder JWT with ?preview_client_id= → read-only
+// preview context. Client sessions CANNOT preview (403 — founder-only).
+export interface PreviewCtx {
+  client_id: string;
+  role: 'founder';
+  preview: true;
+}
+
+async function previewAuthMiddleware(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  let decoded: { sub: string; role: string };
+  try {
+    decoded = jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
+  } catch {
+    return res.status(401).json({ error: 'Invalid token', code: 'TOKEN_INVALID' });
+  }
+  if (decoded.role === 'client') {
+    // client sessions never preview — the preview is a FOUNDER tool
+    return res.status(403).json({ error: 'Founder routes only' });
+  }
+  const previewClientId = String((req.query as any).preview_client_id || '');
+  if (!previewClientId) return res.status(400).json({ error: 'preview_client_id required' });
+  // the client must exist (else the preview renders a fake empty state)
+  const { data: client } = await supabase.from('clients').select('id, name').eq('id', previewClientId).single();
+  if (!client) return res.status(404).json({ error: 'client not found' });
+  (req as any).client = { client_id: previewClientId, role: 'founder', preview: true } as PreviewCtx;
+  next();
+}
+
+// preview-scoped: ALWAYS the service client + explicit client_id filter
+// (founder override; RLS policies untouched — the service key bypasses RLS
+// by design, the filter HERE is the enforcement for the preview path).
+function previewScoped(req: Request) {
+  const ctx = (req as any).client as PreviewCtx;
+  return { ctx, c: supabase, rls: false, client_id: ctx.client_id };
+}
+
 // GET /api/v1/portal/overview — pipeline status summary + waiting-on-client
 app.get('/api/v1/portal/overview', clientAuthMiddleware, async (req: Request, res: Response) => {
   try {
@@ -312,6 +361,81 @@ app.get('/api/v1/portal/timeline', clientAuthMiddleware, async (req: Request, re
   }
 });
 
+// GET /api/v1/portal/reviews/:id/decision is defined at the bottom (THE ONE
+// WRITE). Phase 8.1: preview-mode READ routes mirror the client view.
+
+// ---- Phase 8.1 GOAL 2: PREVIEW read routes (founder + ?preview_client_id=) ----
+// Same data path as the client routes (same queries, same response shapes) —
+// the preview must be identical to what the client sees, not a mock.
+
+app.get('/api/v1/portal/preview/overview', previewAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { c, client_id } = previewScoped(req);
+    const { data: workflows } = await c.from('workflows').select('id, name, current_step, progress, status, updated_at').eq('client_id', client_id);
+    const { data: pending } = await c.from('deliverables').select('id, title, version').eq('client_id', client_id).eq('metadata->>client_review', 'pending');
+    const list = workflows || [];
+    res.json({
+      client_id,
+      client_name: (await c.from('clients').select('name').eq('id', client_id).single()).data?.name || '',
+      pipelines: list.map((w: any) => ({ id: w.id, name: w.name, step: w.current_step, progress: w.progress, status: w.status })),
+      active_count: list.filter((w: any) => w.status === 'active').length,
+      waiting_on_you: (pending || []).length,
+      waiting_on_you_items: (pending || []).map((d: any) => ({ id: d.id, title: d.title, version: d.version })),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/v1/portal/preview/deliverables', previewAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { c, client_id } = previewScoped(req);
+    const { data, error } = await c
+      .from('deliverables')
+      .select('id, client_id, title, kind, file_url, version, released_at, created_at, metadata')
+      .eq('client_id', client_id)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ client_id, deliverables: data || [] });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/v1/portal/preview/pending-reviews', previewAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { c, client_id } = previewScoped(req);
+    const { data, error } = await c
+      .from('deliverables')
+      .select('id, client_id, title, kind, version, file_url, released_at, created_at, metadata')
+      .eq('client_id', client_id)
+      .eq('metadata->>client_review', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ client_id, reviews: data || [] });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/v1/portal/preview/timeline', previewAuthMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { c, client_id } = previewScoped(req);
+    const { data: events, error } = await c
+      .from('pipeline_events')
+      .select('id, workflow_id, event, from_step, to_step, actor, detail, created_at')
+      .eq('client_id', client_id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ client_id, events: events || [] });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/v1/portal/pending-reviews — deliverables awaiting THEIR sign-off
 app.get('/api/v1/portal/pending-reviews', clientAuthMiddleware, async (req: Request, res: Response) => {
   try {
@@ -334,6 +458,13 @@ app.get('/api/v1/portal/pending-reviews', clientAuthMiddleware, async (req: Requ
 // POST /api/v1/portal/reviews/:id/decision — THE ONE WRITE (approve / request-changes)
 app.post('/api/v1/portal/reviews/:id/decision', clientAuthMiddleware, async (req: Request, res: Response) => {
   try {
+    // Phase 8.1 GOAL 2 guard: a PREVIEW context must NEVER write as the client.
+    // (clientAuthMiddleware only admits real sessions, but the check is
+    //  explicit here so a preview session type is rejected with 403, probed.)
+    const ctxAny = (req as any).client as ClientCtx & { preview?: boolean };
+    if ((ctxAny as any)?.preview) {
+      return res.status(403).json({ error: 'Preview is read-only — founders cannot decide as the client' });
+    }
     const { ctx, c, rls, client_id } = scoped(req);
     const { decision, note } = req.body || {};
     if (!['approved', 'changes_requested'].includes(decision)) {
@@ -359,12 +490,16 @@ app.post('/api/v1/portal/reviews/:id/decision', clientAuthMiddleware, async (req
       .select('id, title, version, metadata')
       .single();
     if (uErr) return res.status(500).json({ error: uErr.message });
-    // ledger entry (the decision is recorded — replayable)
-    void supabase.from('agent_memory').insert({
+    // ledger entry (the decision is recorded — replayable). Use upsert to
+    // handle the unique constraint gracefully (same deliverable decided twice
+    // shouldn't 500 the response — the decision already succeeded).
+    void supabase.from('agent_memory').upsert({
       agent_profile: 'client-portal',
       memory_type: 'decision',
       key: `client_review:${d.id}`,
       value: { deliverable_id: d.id, title: d.title, decision, note: note || null, client_id, at: new Date().toISOString() },
+    }, { onConflict: 'agent_profile,memory_type,key' }).then(({ error }) => {
+      if (error) console.error('[portal:review:decision] ledger upsert failed:', error.message);
     });
     // founder feed event — NOT a second inbox; the founder acts from THE INBOX
     emitFeed('client-portal', decision === 'approved' ? 'deliverable accepted' : 'changes requested', `${d.title} v${d.version} — ${note || 'no note'}`);

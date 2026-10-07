@@ -74,6 +74,8 @@ app.post('/api/v1/playbooks/:slug/install', authMiddleware, async (req, res) => 
 
     // The installed instance is independent: it carries pack_slug + pack_version
     // (v1 upgrades never silently rewrite it), but its steps_json is its own copy.
+    // Phase 8.1 GOAL 3: the instance INHERITS the pack's client_visible flag —
+    // the gate reads ONE table (workflows) at file time.
     const { data: wf, error: wfErr } = await supabase
       .from('workflows')
       .insert({
@@ -83,6 +85,7 @@ app.post('/api/v1/playbooks/:slug/install', authMiddleware, async (req, res) => 
         current_step: stages[0].name,
         progress: 0,
         steps_json: stages,
+        client_visible: !!(pack as any).client_visible,
         metadata: { pack_slug: pack.slug, pack_version: pack.version, installed_via: 'playbook', installed_at: new Date().toISOString() },
       })
       .select()
