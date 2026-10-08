@@ -108,9 +108,18 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
     if (error) throw error;
     // Phase 10 GOAL 2: grow_draft cards ride the SAME machinery —
     // approve → item status `approved`; deny → back to `draft` with note.
-    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any)?.payload_json?.item_id) {
+    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any).payload_json?.item_id) {
       const itemId = (data as any).payload_json.item_id;
       await supabase.from('content_items').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', itemId);
+    }
+    // Phase 11 GOAL 2: lead_qualified cards — approve → lead 'qualified'.
+    // (Disqualify rides /reject with the reason — deny IS the disqualify.)
+    if ((data as any)?.payload_json?.kind === 'lead_qualified' && (data as any).payload_json?.lead_id) {
+      const leadId = (data as any).payload_json.lead_id;
+      const { data: leadRow } = await supabase.from('leads').select('status').eq('id', leadId).single();
+      if (leadRow?.status === 'new') {
+        await supabase.from('leads').update({ status: 'qualified', updated_at: new Date().toISOString() }).eq('id', leadId);
+      }
     }
     // Phase 9 GOAL 2: support_ticket cards ride the SAME machinery —
     // approve = acknowledge (no-op on the ticket, closes the card),
@@ -168,12 +177,24 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
     if (error) throw error;
     // Phase 10 GOAL 2: grow_draft cards — deny → back to `draft` with the
     // founder's note attached (the note is visible on the item — the loop teaches).
-    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any)?.payload_json?.item_id) {
+    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any).payload_json?.item_id) {
       const itemId = (data as any).payload_json.item_id;
       await supabase.from('content_items').update({
         status: 'draft', updated_at: new Date().toISOString(),
         error: reason ? `Rejected: ${String(reason).trim()}` : null,
       }).eq('id', itemId);
+    }
+    // Phase 11 GOAL 2: lead_qualified cards — deny = DISQUALIFY the lead
+    // (the founder's reason IS the disqualify note; visible on the lead).
+    if ((data as any)?.payload_json?.kind === 'lead_qualified' && (data as any).payload_json?.lead_id) {
+      const leadId = (data as any).payload_json.lead_id;
+      const { data: leadRow } = await supabase.from('leads').select('status').eq('id', leadId).single();
+      if (leadRow?.status === 'new') {
+        await supabase.from('leads').update({
+          status: 'disqualified', updated_at: new Date().toISOString(),
+          notes: reason ? `Disqualified: ${String(reason).trim()}` : 'Disqualified (no reason given)',
+        }).eq('id', leadId);
+      }
     }
     // Phase 9 GOAL 2: support_ticket cards — deny = close ticket as resolved.
     if ((data as any)?.payload_json?.kind === 'support_ticket' && (data as any)?.payload_json?.ticket_id) {

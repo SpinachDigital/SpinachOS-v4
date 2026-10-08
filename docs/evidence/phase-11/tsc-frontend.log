@@ -1,0 +1,4 @@
+# tsc --noEmit — Frontend command-center (Phase 11)
+# Command: cd frontend/command-center && npx tsc --noEmit 2>&1 | tee docs/evidence/phase-11/tsc-frontend.log; echo "exit: ${PIPESTATUS[0]}" >> docs/evidence/phase-11/tsc-frontend.log
+# tsc emitted no errors on stdout/stderr (clean run — exit 0):
+exit: 0

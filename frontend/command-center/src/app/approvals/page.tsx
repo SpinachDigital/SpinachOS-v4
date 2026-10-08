@@ -34,7 +34,7 @@ interface ApprovalItem {
 
 const WORKFLOW_FILTERS = [
   { id: 'all', label: 'All' },
-  { id: 'WIN', label: 'WIN', types: ['outreach', 'onboarding'] },
+  { id: 'WIN', label: 'WIN', types: ['outreach', 'onboarding', 'lead_qualified'] },
   { id: 'DELIVER', label: 'DELIVER', types: ['gate', 'deliverable_approval', 'task_approval', 'stuck_stage'] },
   { id: 'CREATE', label: 'CREATE', types: ['content', 'design', 'strategy'] },
   { id: 'GROW', label: 'GROW', types: ['publish', 'campaign'] },

@@ -66,6 +66,10 @@ app.patch('/api/v1/workflows/:id', authMiddleware, async (req, res) => {
   res.json(data);
 });
 
+// Phase 11: the WIN leads surface lives in routes/win-leads.ts (founderOnly,
+// contract-shaped). This legacy GET is retained for the old scraper feed UI but
+// routes AFTER win-leads — express matches the FIRST registered handler, so the
+// founderOnly + contract one wins for /api/v1/leads. Do not add writes here.
 app.get('/api/v1/leads', authMiddleware, async (req, res) => {
   const { client_id, status } = req.query;
   let query = supabase.from('leads').select('*');

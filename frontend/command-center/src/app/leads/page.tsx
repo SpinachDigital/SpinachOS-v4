@@ -1,213 +1,261 @@
 'use client';
 
-// Leads — WIN §1: the lead inbox (plumbing existed, surface didn't).
-// Wired to GET /api/v1/leads (DB rows only — every number traces to a row).
-// Filters that work: source + qualification status + search.
-// Row actions: Qualify (deterministic 3-signal rules via /outreach/qualify).
-// Honest empty state: "no leads yet — scrapers run on schedule" (real cadence below).
-// 360px: single column, 44px touch targets, no horizontal scroll.
+// /leads — WIN pipeline (Phase 11, parallel lane; rebuilt against the frozen contract).
+// Contract (hermes-phase-11-prompt.md):
+//   GET  /api/v1/leads?status= → [{ id, name, email, company, source, status, score, updated_at }]
+//   POST /api/v1/leads { name, email, company?, phone?, source? } → 201 { id, status:'new' }
+//   POST /api/v1/leads/:id/qualify → 200 { id, score, rationale, card_id }
+//   POST /api/v1/leads/:id/draft-outreach → 200 { draft_id, subject, style_score, card_id }
+//   POST /api/v1/leads/:id/onboard { playbook_pack_slug } → 200 { lead_id, client_id, pipeline_id, invite_id }
+// Stages: new → qualified → outreached → responded → onboarded (+ disqualified/dead).
+// Approval gates are law: qualify/draft/outreach go through inbox cards — this UI
+// only TRIGGERS them; the founder approves in THE INBOX.
+
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
-import { useWebSocket } from '@/hooks/useWebSocket';
+
+type Status = 'new' | 'qualified' | 'disqualified' | 'outreached' | 'responded' | 'onboarded' | 'dead';
 
 interface Lead {
   id: string;
-  source: string;
   name: string;
-  email: string | null;
-  company: string | null;
-  role: string | null;
-  status: string;
-  score: number | null;
-  budget_signal?: string | null;
-  intent_signal?: string | null;
-  fit_signal?: string | null;
-  qualified_at?: string | null;
-  last_outreach_at?: string | null;
-  created_at: string;
+  email: string;
+  company?: string | null;
+  source: string;
+  status: Status;
+  score?: number | null;
+  client_id?: string | null;
+  updated_at: string;
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  github: 'GitHub', hackernews: 'HackerNews', google_maps: 'Google Maps',
-  linkedin: 'LinkedIn', apollo: 'Apollo', clutch: 'Clutch', goodfirms: 'GoodFirms', test: 'Test',
+const STAGES: { key: Status; label: string }[] = [
+  { key: 'new', label: 'New' },
+  { key: 'qualified', label: 'Qualified' },
+  { key: 'outreached', label: 'Outreached' },
+  { key: 'responded', label: 'Responded' },
+  { key: 'onboarded', label: 'Onboarded' },
+];
+
+const STALE_DAYS = 7;
+
+const btn: React.CSSProperties = {
+  minHeight: 44, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
+  background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+};
+const btnGhost: React.CSSProperties = { ...btn, background: 'transparent', color: 'var(--text)' };
+const btnSm: React.CSSProperties = { ...btnGhost, minHeight: 36, padding: '0 12px', fontSize: 13 };
+const input: React.CSSProperties = {
+  width: '100%', minHeight: 44, padding: '0 12px', borderRadius: 8,
+  border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 14,
 };
 
-function sourceBadge(source?: string) {
-  const s = (source || 'unknown').toLowerCase();
-  return <span className="pill draft" style={{ fontSize: 11 }}>{SOURCE_LABELS[s] || s}</span>;
+function daysInStage(updatedAt: string) {
+  const d = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 864e5);
+  return Math.max(0, d);
 }
 
-function qualPill(lead: Lead) {
-  const qualified = !!lead.qualified_at;
-  const signals = [lead.budget_signal, lead.intent_signal, lead.fit_signal];
-  const hits = signals.filter(s => s && s !== 'unknown').length;
-  if (qualified) return <span className="pill approved">qualified · 3/3</span>;
-  if (hits > 0) return <span className="pill paused">{hits}/3 signals</span>;
-  return <span className="pill draft">unqualified</span>;
-}
-
-function fmtAge(iso?: string) {
-  if (!iso) return '—';
-  try {
-    const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-    if (days <= 0) return 'today';
-    if (days === 1) return '1d ago';
-    if (days < 30) return `${days}d ago`;
-    return `${Math.floor(days / 30)}mo ago`;
-  } catch { return '—'; }
+function scoreColor(s?: number | null) {
+  if (s == null) return 'var(--muted-foreground)';
+  if (s >= 70) return '#16a34a';
+  if (s >= 40) return '#d97706';
+  return '#dc2626';
 }
 
 export default function LeadsPage() {
-  const { connected } = useWebSocket();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sourceFilter, setSourceFilter] = useState('all');
-  const [qualFilter, setQualFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [qualifying, setQualifying] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [fName, setFName] = useState('');
+  const [fEmail, setFEmail] = useState('');
+  const [fCompany, setFCompany] = useState('');
+  const [csv, setCsv] = useState('');
+  const [packSlug, setPackSlug] = useState('client-onboarding');
 
-  const fetchLeads = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async () => {
+    setLoading(true); setError(null);
     try {
-      const res = await apiFetch('/api/v1/leads');
-      if (!res.ok) throw new Error(`API ${res.status}`);
-      const data = await res.json();
-      setLeads(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setError(e?.message || 'Failed to load leads');
-    } finally {
-      setLoading(false);
-    }
+      const r = await apiFetch('/api/v1/leads');
+      if (!r.ok) throw new Error('Could not load leads.');
+      setLeads(await r.json());
+    } catch (e: any) { setError(e.message || 'Could not load leads.'); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void fetchLeads(); }, [fetchLeads]);
+  useEffect(() => { load(); }, [load]);
 
-  const qualify = async (id: string) => {
-    setQualifying(id);
-    setToast(null);
+  async function post(path: string, body?: any) {
+    const r = await apiFetch(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Request failed.');
+    return d;
+  }
+
+  async function doAction(key: string, fn: () => Promise<any>, okMsg: string) {
+    setBusy(key); setNotice(null);
     try {
-      const res = await apiFetch(`/api/v1/outreach/qualify/${id}`, { method: 'POST' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setToast(`Qualify failed: ${data.error || res.status}`);
-        return;
-      }
-      setToast(data.qualified
-        ? 'Qualified — 3/3 deterministic signals hit. Draft ab ban sakta hai.'
-        : `Not qualified — ${data.score}/3 signals (rules visible on the row).`);
-      await fetchLeads();
-    } catch (e: any) {
-      setToast(e?.message || 'Qualify failed');
-    } finally {
-      setQualifying(null);
-    }
-  };
+      await fn();
+      setNotice(okMsg);
+      await load();
+    } catch (e: any) { setNotice(e.message || 'Action failed.'); }
+    finally { setBusy(null); }
+  }
 
-  // Working filters — every number on screen traces to a DB row
-  const sources = Array.from(new Set(leads.map(l => (l.source || 'unknown').toLowerCase())));
-  const filtered = leads.filter(l => {
-    if (sourceFilter !== 'all' && (l.source || 'unknown').toLowerCase() !== sourceFilter) return false;
-    if (qualFilter === 'qualified' && !l.qualified_at) return false;
-    if (qualFilter === 'unqualified' && l.qualified_at) return false;
-    if (search) {
-      const hay = `${l.name} ${l.company || ''} ${l.email || ''} ${l.role || ''}`.toLowerCase();
-      if (!hay.includes(search.toLowerCase())) return false;
-    }
-    return true;
-  });
-
-  const qualifiedCount = leads.filter(l => l.qualified_at).length;
+  const byStatus = (s: Status) => leads.filter((l) => l.status === s);
+  const dead = leads.filter((l) => l.status === 'disqualified' || l.status === 'dead');
 
   return (
-    <div style={{ maxWidth: 980, margin: '0 auto', padding: '24px 16px 48px' }}>
-      <header style={{ marginBottom: 18 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text, #111)', margin: 0 }}>Lead Inbox</h1>
-        <p style={{ fontSize: 13, color: 'var(--muted-foreground, #666)', margin: '4px 0 0' }}>
-          {leads.length} leads · {qualifiedCount} qualified · scrapers: lead ingest Wed 9:00 · SEO scan Mon 9:00 (Scraper page pe manual run bhi hai)
-          {connected ? '' : ' · offline'}
-        </p>
-      </header>
-
-      {/* Working filters */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}
-          style={{ minHeight: 44, padding: '0 10px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, background: 'var(--card, #fff)', color: 'var(--text, #111)', fontSize: 13 }}>
-          <option value="all">All sources ({leads.length})</option>
-          {sources.map(s => <option key={s} value={s}>{SOURCE_LABELS[s] || s} ({leads.filter(l => (l.source || 'unknown').toLowerCase() === s).length})</option>)}
-        </select>
-        <select value={qualFilter} onChange={e => setQualFilter(e.target.value)}
-          style={{ minHeight: 44, padding: '0 10px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, background: 'var(--card, #fff)', color: 'var(--text, #111)', fontSize: 13 }}>
-          <option value="all">All qualifications</option>
-          <option value="qualified">Qualified ({qualifiedCount})</option>
-          <option value="unqualified">Unqualified ({leads.length - qualifiedCount})</option>
-        </select>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name / company / email…"
-          style={{ minHeight: 44, flex: 1, minWidth: 160, padding: '0 12px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, background: 'var(--card, #fff)', color: 'var(--text, #111)', fontSize: 13 }} />
-        <button onClick={() => void fetchLeads()} disabled={loading}
-          style={{ minHeight: 44, padding: '0 16px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, background: 'var(--card, #fff)', color: 'var(--text, #111)', fontSize: 13, cursor: 'pointer' }}>
-          {loading ? '…' : 'Refresh'}
-        </button>
+    <main style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+        <h1 style={{ fontSize: 22, margin: 0 }}>WIN — leads pipeline</h1>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button style={btnGhost} onClick={() => { setShowImport((s) => !s); setShowAdd(false); }}>Import</button>
+          <button style={btn} onClick={() => { setShowAdd((s) => !s); setShowImport(false); }}>
+            {showAdd ? 'Cancel' : '+ Add lead'}
+          </button>
+        </div>
       </div>
 
-      {toast && (
-        <div role="status" style={{ padding: '10px 14px', marginBottom: 12, borderRadius: 8, background: 'var(--accent-soft, #eef6f6)', border: '1px solid var(--accent, #004B63)', color: 'var(--text, #111)', fontSize: 13 }}>
-          {toast}
-        </div>
+      {notice && (
+        <p style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px',
+          background: 'var(--card)', fontSize: 14, margin: '0 0 16px' }}>{notice}</p>
       )}
 
-      {/* Honest loading / error / empty states */}
-      {loading && <p style={{ color: 'var(--muted-foreground, #666)', fontSize: 14 }}>Loading leads…</p>}
-      {!loading && error && (
-        <div style={{ padding: 14, borderRadius: 8, background: '#fdf2f2', border: '1px solid #e5b8b8', color: '#8a2b2b', fontSize: 13, marginBottom: 12 }}>
-          Error: {error}
-        </div>
+      {showAdd && (
+        <section style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 20, background: 'var(--card)' }}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <input style={{ ...input, flex: '1 1 160px' }} value={fName} onChange={(e) => setFName(e.target.value)} placeholder="Name" maxLength={80} />
+            <input style={{ ...input, flex: '1 1 200px' }} value={fEmail} onChange={(e) => setFEmail(e.target.value)} placeholder="Email" maxLength={120} />
+            <input style={{ ...input, flex: '1 1 160px' }} value={fCompany} onChange={(e) => setFCompany(e.target.value)} placeholder="Company (optional)" maxLength={80} />
+            <button style={btn} disabled={busy === 'add' || !fName.trim() || !fEmail.trim()}
+              onClick={() => doAction('add',
+                () => post('/api/v1/leads', { name: fName.trim(), email: fEmail.trim(), company: fCompany.trim() || undefined }),
+                'Lead added.').then(() => { setFName(''); setFEmail(''); setFCompany(''); setShowAdd(false); })}>
+              {busy === 'add' ? 'Adding…' : 'Add'}
+            </button>
+          </div>
+        </section>
       )}
+
+      {showImport && (
+        <section style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, marginBottom: 20, background: 'var(--card)' }}>
+          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 8px' }}>
+            Paste CSV: <code>name,email,company</code> — one per line, max 200. Duplicates on email are skipped.
+          </p>
+          <textarea style={{ ...input, minHeight: 110, padding: 12 }} value={csv}
+            onChange={(e) => setCsv(e.target.value)} placeholder={'Aarav Sharma,aarav@acme.in,Acme\nMeera Iyer,meera@beta.co,Beta'} />
+          <button style={{ ...btn, marginTop: 10 }} disabled={busy === 'import' || !csv.trim()}
+            onClick={() => doAction('import', () => post('/api/v1/leads/import', { csv }),
+              'Import done — duplicates skipped.').then(() => { setCsv(''); setShowImport(false); })}>
+            {busy === 'import' ? 'Importing…' : 'Import leads'}
+          </button>
+        </section>
+      )}
+
+      {loading && <p style={{ color: 'var(--muted-foreground)' }}>Loading leads…</p>}
+      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+
       {!loading && !error && leads.length === 0 && (
-        <div style={{ padding: 24, borderRadius: 8, border: '1px dashed var(--border, #e5e5e0)', textAlign: 'center', color: 'var(--muted-foreground, #666)', fontSize: 14 }}>
-          No leads yet — scrapers run on schedule. Trigger a run from the Sources panel below.
-        </div>
-      )}
-      {!loading && !error && leads.length > 0 && filtered.length === 0 && (
-        <p style={{ color: 'var(--muted-foreground, #666)', fontSize: 14 }}>No leads match these filters.</p>
+        <section style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
+          <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 6px' }}>No leads yet</p>
+          <p style={{ color: 'var(--muted-foreground)', fontSize: 14, margin: 0 }}>
+            Add one above or import a list — then qualify, outreach, onboard.
+          </p>
+        </section>
       )}
 
-      {/* Lead rows — deep-link per lead (task-style detail later; drawer here) */}
-      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {filtered.map(l => (
-          <li key={l.id}
-            style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '12px 14px', marginBottom: 8, background: 'var(--card, #fff)', border: '1px solid var(--border-soft, #eee)', borderRadius: 10 }}>
-            <div style={{ minWidth: 180, flex: 2 }}>
-              <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #111)' }}>
-                {l.name || '(unnamed)'} {sourceBadge(l.source)}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+        {STAGES.map((st) => {
+          const items = byStatus(st.key);
+          return (
+            <section key={st.key} style={{ border: '1px solid var(--border)', borderRadius: 12,
+              background: 'var(--card)', padding: 12, minHeight: 200 }}>
+              <h2 style={{ fontSize: 14, margin: '0 0 10px', display: 'flex', justifyContent: 'space-between' }}>
+                {st.label}
+                <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{items.length}</span>
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {items.map((l) => {
+                  const stale = daysInStage(l.updated_at) >= STALE_DAYS && st.key !== 'onboarded';
+                  const k = `act:${l.id}`;
+                  return (
+                    <div key={l.id} style={{ border: '1px solid var(--border)', borderRadius: 8,
+                      padding: '10px 12px', background: 'var(--background)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                        <strong style={{ fontSize: 14 }}>{l.name}</strong>
+                        {l.score != null && (
+                          <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(l.score) }}>
+                            {l.score}/100
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '2px 0 8px' }}>
+                        {l.company ? `${l.company} · ` : ''}{l.email} · {l.source}
+                        <span style={{ color: stale ? '#d97706' : 'inherit', fontWeight: stale ? 700 : 400 }}>
+                          {' '}· {daysInStage(l.updated_at)}d here{stale ? ' — stale' : ''}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {l.status === 'new' && (
+                          <button style={btnSm} disabled={busy === k}
+                            onClick={() => doAction(k, () => post(`/api/v1/leads/${l.id}/qualify`),
+                              `Qualify triggered for ${l.name} — check THE INBOX for the score card.`)}>
+                            {busy === k ? '…' : 'Qualify'}
+                          </button>
+                        )}
+                        {l.status === 'qualified' && (
+                          <button style={btnSm} disabled={busy === k}
+                            onClick={() => doAction(k, () => post(`/api/v1/leads/${l.id}/draft-outreach`),
+                              `Outreach draft for ${l.name} is in your inbox — approve it there to send.`)}>
+                            {busy === k ? '…' : 'Draft outreach'}
+                          </button>
+                        )}
+                        {l.status === 'responded' && (
+                          <>
+                            <input style={{ ...input, minHeight: 36, fontSize: 13 }} value={packSlug}
+                              onChange={(e) => setPackSlug(e.target.value)} placeholder="playbook pack slug"
+                              title="Playbook pack to install on onboard" />
+                            <button style={btnSm} disabled={busy === k}
+                              onClick={() => doAction(k, () => post(`/api/v1/leads/${l.id}/onboard`, { playbook_pack_slug: packSlug }),
+                                `${l.name} onboarded — client + pipeline + portal invite created.`)}>
+                              {busy === k ? '…' : 'Onboard →'}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {items.length === 0 && (
+                  <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0 }}>—</p>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground, #666)', marginTop: 2 }}>
-                {[l.role, l.company].filter(Boolean).join(' · ') || '—'} {l.email ? `· ${l.email}` : ''}
+            </section>
+          );
+        })}
+      </div>
+
+      {dead.length > 0 && (
+        <details style={{ marginTop: 20 }}>
+          <summary style={{ cursor: 'pointer', fontSize: 14, color: 'var(--muted-foreground)', minHeight: 44 }}>
+            Disqualified / dead ({dead.length})
+          </summary>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+            {dead.map((l) => (
+              <div key={l.id} style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>
+                {l.name} · {l.company || l.email} · {l.status}
               </div>
-            </div>
-            <div style={{ minWidth: 110 }}>{qualPill(l)}</div>
-            <div style={{ minWidth: 70, fontSize: 12, color: 'var(--muted-foreground, #666)' }}>{fmtAge(l.created_at)}</div>
-            {l.last_outreach_at && (
-              <div style={{ minWidth: 80, fontSize: 12, color: '#4CAF50' }}>outreach ✓</div>
-            )}
-            <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-              {!l.qualified_at && (
-                <button onClick={() => void qualify(l.id)} disabled={qualifying === l.id}
-                  style={{ minHeight: 44, padding: '0 14px', border: 'none', borderRadius: 8, background: '#004B63', color: '#fff', fontSize: 13, cursor: 'pointer' }}>
-                  {qualifying === l.id ? '…' : 'Qualify'}
-                </button>
-              )}
-              <Link href={`/tasks?lead=${l.id}`}
-                style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 14px', border: '1px solid var(--border, #e5e5e0)', borderRadius: 8, color: 'var(--text, #111)', fontSize: 13, textDecoration: 'none' }}>
-                Details
-              </Link>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            ))}
+          </div>
+        </details>
+      )}
+
+      <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 20 }}>
+        Qualify and outreach run through inbox approval cards — nothing sends without your approval there.
+      </p>
+    </main>
   );
 }
