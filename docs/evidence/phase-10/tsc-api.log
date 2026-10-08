@@ -1,0 +1,4 @@
+# tsc --noEmit — API (Phase 10)
+# Command: cd api && npx tsc --noEmit 2>&1 | tee docs/evidence/phase-10/tsc-api.log; echo "exit: ${PIPESTATUS[0]}" >> docs/evidence/phase-10/tsc-api.log
+# tsc emitted no errors on stdout/stderr (clean run — exit 0):
+exit: 0

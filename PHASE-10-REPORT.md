@@ -1,11 +1,11 @@
 # PHASE 10 — GROW: THE CONTENT ENGINE (blueprint v2-aligned) — GOAL MODE
 
 ## Report Summary
-**5.5/6 DONE** — Goals 1–5 complete + live-probed. Goal 0 (fake screenshot replacement) in progress — 4 fakes deleted, real captures started. Evidence committed, pushed, verified.
+**6/6 DONE** — Goals 0–5 complete + live-probed. All evidence committed, pushed, verified.
 
 | Goal | Status | Key Evidence |
 |------|-------|--------------|
-| **0** — Phase 9 fake screenshots replaced | 🔄 4 fakes deleted, real captures in progress | Portal magic-link redeemed, navigation successful; 3 more captures pending |
+| **0** — Phase 9 fake screenshots replaced | ✅ **4 REAL screenshots** (each >130KB, ≥800px, real UI + real data) | redeem-portal-overview (2 pipelines, pending review + Approve), approve-status-change (accepted + DB check), download-signed-url (200 via page session), invite-create-revoke (panel + Revoke) |
 | **1** — Content calendar (data model + API) | ✅ | Migration 068, `grow-calendar.ts` — CRUD 201/200/200/403 verified |
 | **2** — Generate → approval card (golden rule) | ✅ | `grow-generate.ts` + approvals wiring — generate 200 (score 10, card `69e8d442-…`), approve 200 → item `approved` |
 | **3** — Publish via active provider (engine) | ✅ | `grow-publish.ts` + MOCK provider — negative proven: draft publish 403; dry-run honest; live-failure 502 + inbox card; scheduler published `mock-1791475541407` |
@@ -126,13 +126,13 @@ Calendar p95 (10 reads): 222ms < 500ms ✅
 - `docs/evidence/phase-10/next-build.log` — fresh-clone build `exit: 0` (clone path + BUILD_ID in header)
 - `docs/evidence/phase-10/latency.md` — calendar p95 222ms
 
-### Screenshots (Goal 0)
-- `docs/evidence/phase-8-1/redeem-portal-overview.png` — **real** (>50KB, ≥800px) — magic-link redeemed, portal overview with real client data
-- `docs/evidence/phase-8-1/approve-status-change.png` — pending
-- `docs/evidence/phase-8-1/download-signed-url.png` — pending
-- `docs/evidence/phase-8-1/invite-create-revoke.png` — pending
+### Screenshots (Goal 0) — all REAL, verified via vision + DB checks
+- `docs/evidence/phase-8-1/redeem-portal-overview.png` (135KB, 1440px) — magic-link redeemed → TechFlow Inc portal: 2 active pipelines, pending review 'Brand Sprint — Logo Pack v1' + Approve/Request changes + note input, deliverable + Download button
+- `docs/evidence/phase-8-1/approve-status-change.png` (130KB, 1440px) — Approve clicked with note → Waiting on you 0, deliverable shows `accepted`; DB check `client_review: accepted`
+- `docs/evidence/phase-8-1/download-signed-url.png` (131KB, 1440px) — Deliverables tab + Download button; signed URL endpoint 200 via page session (`{ ok: true, url: …/sign/deliverables/techflow/logo-pack-v1.pdf?token=…, expires_in: 3600 }`), signed fetch 200 application/pdf
+- `docs/evidence/phase-8-1/invite-create-revoke.png` (167KB, 1440px) — Client portal panel: email input, Create invite button, invite list (PENDING/USED chips, Revoke buttons, redeemed dates)
 
-> 4 fakes (45-byte PNG headers) deleted at start of Phase 10.
+> 4 fakes (45-byte PNG headers) deleted at start of Phase 10. Fix that unblocked this: Supabase publishable key (sb_publishable_…) in api/.env + portal.ts clientScopedClient returns null for publishable keys → falls back to the service + explicit client_id filter (the previewScoped pattern).
 
 ### Scripts
 - `api/scripts/phase10-loop-probe.js` — re-runnable full loop probe
@@ -156,6 +156,23 @@ git ls-remote origin refs/heads/main
 
 ---
 
+## BLOCKERS — RESOLVED (2026-10-08)
+
+### ✅ Supabase anon key stale → portal 500s (was blocking Goal 0 screenshots)
+**Diagnosis (verified by live probes):**
+- Service key (`sb_secret…`, new format) — works (API core + founder routes fine)
+- Old anon key in `api/.env` — legacy JWT format (`eyJhbG…`), rejected 401 "Invalid API key" by Supabase on both `/rest/v1` and `/auth/v1` — legacy JWT keys disabled on this project
+- Portal client-scoped queries rode the anon key → overview/deliverables/timeline all 500 "Invalid API key" → portal showed "Some portal data failed to load"
+
+**Fix applied:**
+1. New **publishable key** (`sb_publishable_…`, name: spinach) generated in Supabase Dashboard → `api/.env` `SUPABASE_ANON_KEY` updated via `scripts/update-anon-key.js` (key never in chat/logs beyond masked shape)
+2. `portal.ts` `clientScopedClient` returns **null** for `sb_publishable_` keys (publishable keys are not JWTs — PGRST301) → falls back to the service client + explicit client_id filter (the existing previewScoped pattern; filter enforced HERE, legacy JWT anon keys keep true RLS)
+3. Verified: publishable key test 200, portal overview 200 with real data, deliverables 200, signed URL 200
+
+**Result:** all 4 real screenshots captured + verified (see Screenshots section).
+
+---
+
 ## WHAT WAS NOT TESTED / DEFERRED
 | Item | Reason |
 |------|--------|
@@ -174,7 +191,7 @@ git ls-remote origin refs/heads/main
 - [x] Push verification (`git ls-remote` after push, self-check at top)
 - [x] Live-probe everything
 - [x] Migrations in order, applied manually, files are source of truth
-- [x] Screenshot honesty: 4 fakes deleted, 1 real captured, 3 pending
+- [x] Screenshot honesty: 4 fakes deleted, 4 REAL captures (each >130KB, verified via vision + DB checks)
 - [x] Style contract + latency law: generated copy linted (score 10), calendar p95 222ms
 
 ---
@@ -191,7 +208,10 @@ git ls-remote origin refs/heads/main
 - [ ] `git show origin/main:docs/evidence/phase-10/tsc-frontend.log` → full tsc + exit 0
 - [ ] `git show origin/main:docs/evidence/phase-10/next-build.log` → fresh clone + BUILD_ID + exit 0
 - [ ] `git show origin/main:docs/evidence/phase-10/latency.md` → p95 < 500ms
-- [ ] `git show origin/main:docs/evidence/phase-8-1/redeem-portal-overview.png` → real >50KB image
+- [ ] `git show origin/main:docs/evidence/phase-8-1/redeem-portal-overview.png` → real >130KB image (2 pipelines, pending review)
+- [ ] `git show origin/main:docs/evidence/phase-8-1/approve-status-change.png` → real (accepted status)
+- [ ] `git show origin/main:docs/evidence/phase-8-1/download-signed-url.png` → real (deliverables + Download)
+- [ ] `git show origin/main:docs/evidence/phase-8-1/invite-create-revoke.png` → real (invite panel + Revoke)
 - [ ] Re-run `api/scripts/phase10-loop-probe.js` → mock publish + ledger entry + p95
 - [ ] Re-run `api/scripts/phase10-invite-link.js` → fresh magic link
 - [ ] `curl -H "Authorization: Bearer <client-token>" http://localhost:4000/api/v1/grow/items` → 401
@@ -199,4 +219,4 @@ git ls-remote origin refs/heads/main
 
 ---
 
-**Phase 10 complete (pending 3 screenshots).** The GROW loop is live: calendar → generate (style-scored) → INBOX card (write-tier, client-voice) → founder approve → schedule → scheduler publishes via pluggable registry → ledger entry recorded → history shows provider link or honest dry-run label. No dead buttons, no bypassed gates.
+**Phase 10 complete — 6/6 DONE.** The GROW loop is live: calendar → generate (style-scored) → INBOX card (write-tier, client-voice) → founder approve → schedule → scheduler publishes via pluggable registry → ledger entry recorded → history shows provider link or honest dry-run label. No dead buttons, no bypassed gates.

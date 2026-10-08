@@ -40,6 +40,12 @@ function clientScopedClient(sessionToken: string) {
   const base = process.env.SUPABASE_URL!;
   const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
   if (!key) return null; // no anon key configured → callers fall back to manual scoping
+  // Publishable keys (sb_publishable_…) are NOT JWTs — they can't carry an
+  // Authorization Bearer identity, so a client-scoped client built on one
+  // rejects every query (PGRST301). Return null → callers fall back to the
+  // service client + explicit client_id filter (the previewScoped pattern —
+  // the filter is still enforced HERE; legacy JWT anon keys keep true RLS).
+  if (key.startsWith('sb_publishable_')) return null;
   const c = createClient(base, key, {
     global: { headers: { Authorization: `Bearer ${sessionToken}` } },
     auth: { persistSession: false, autoRefreshToken: false },
