@@ -15,7 +15,29 @@
  *   POST   /assets/:id/reuse      — attach/copy into a workflow or draft
  *                                   (one click, logged)
  */
-import { app, authMiddleware, supabase } from '../ctx';
+import { app, authMiddleware, supabase, JWT_SECRET } from '../ctx';
+import { recordMemory } from '../memory-ledger';
+import jwt from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from 'express';
+
+// Phase 12 SECURITY: the assets library is founder-only — client sessions
+// are rejected explicitly (probe: client JWT → 401 here). The library spans
+// ALL clients' work; a client session must never read another client's assets.
+function founderOnly(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
+    if (decoded.role === 'client') {
+      return res.status(401).json({ error: 'Founder routes only' });
+    }
+    (req as any).user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid token', code: 'TOKEN_INVALID' });
+  }
+}
 
 // Bucket per kind (blueprint §2.8) — uploads land in the right bucket.
 const BUCKET_FOR_KIND: Record<string, string> = {
@@ -50,7 +72,7 @@ void (async () => {
   }
 })();
 
-app.get('/api/v1/assets', authMiddleware, async (req, res) => {
+app.get('/api/v1/assets', founderOnly, async (req, res) => {
   try {
     if (!_bucketsEnsured) { await ensureBuckets(); _bucketsEnsured = true; }
     const { client_id, kind, since } = req.query;
@@ -86,7 +108,7 @@ app.get('/api/v1/assets', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/v1/assets/upload', authMiddleware, async (req, res) => {
+app.post('/api/v1/assets/upload', founderOnly, async (req, res) => {
   try {
     if (!_bucketsEnsured) { await ensureBuckets(); _bucketsEnsured = true; }
     const { client_id, title, kind = 'file', content_base64, content_text, file_name } = req.body || {};
@@ -126,7 +148,7 @@ app.post('/api/v1/assets/upload', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/v1/assets/:id/download', authMiddleware, async (req, res) => {
+app.get('/api/v1/assets/:id/download', founderOnly, async (req, res) => {
   try {
     const { data: asset } = await supabase.from('deliverables').select('id, title, file_url, kind').eq('id', req.params.id).single();
     if (!asset) return res.status(404).json({ error: 'asset not found' });
@@ -141,12 +163,41 @@ app.get('/api/v1/assets/:id/download', authMiddleware, async (req, res) => {
   }
 });
 
-app.post('/api/v1/assets/:id/reuse', authMiddleware, async (req, res) => {
+app.post('/api/v1/assets/:id/reuse', founderOnly, async (req, res) => {
   try {
-    const { workflow_id, note } = req.body || {};
-    if (!workflow_id) return res.status(400).json({ error: 'workflow_id required — reuse without a target is a dead click' });
-    const { data: asset } = await supabase.from('deliverables').select('id, title, kind, content, file_url, client_id').eq('id', req.params.id).single();
+    const { workflow_id, note, target } = req.body || {};
+    const { data: asset } = await supabase.from('deliverables').select('id, client_id, title, kind, content, file_url, version').eq('id', req.params.id).single();
     if (!asset) return res.status(404).json({ error: 'asset not found' });
+
+    // Phase 12 GOAL 3 — CREATE→GROW: target 'grow_draft' prefills a GROW
+    // content_items draft from the asset (title/body, metadata.reused_from_asset_id),
+    // logged in the ledger. The existing workflow-target path stays unchanged.
+    if (target === 'grow_draft') {
+      const { data: draft, error: gErr } = await supabase.from('content_items').insert({
+        title: asset.title,
+        body_text: asset.content || asset.file_url || '',
+        channel: 'blog',
+        status: 'draft',
+        created_by: 'founder',
+        client_id: asset.client_id,
+        metadata: { reused_from_asset_id: asset.id, source: 'asset_reuse', note: note || null },
+      }).select().single();
+      if (gErr) throw gErr;
+      // Audit trail: a reuse nobody can see is not a reuse.
+      await supabase.from('pipeline_events').insert({
+        workflow_id: null, client_id: asset.client_id, event: 'asset_reused_to_grow',
+        actor: 'founder',
+        detail: { asset_id: asset.id, draft_id: draft.id, title: asset.title, note: note || null },
+      });
+      void recordMemory(supabase, {
+        agent_profile: 'founder', memory_type: 'decision', key: `asset_reuse:${asset.id}:${draft.id}`,
+        value: { what: 'asset reused into GROW draft', asset_id: asset.id, draft_id: draft.id, at: new Date().toISOString() },
+      });
+      return res.json({ ok: true, draft_id: draft.id, draft });
+    }
+
+    // Legacy path: reuse = copy the asset onto the target workflow (logged). One click.
+    if (!workflow_id) return res.status(400).json({ error: 'workflow_id or target required — reuse without a target is a dead click' });
 
     // Reuse = copy the asset onto the target workflow (logged). One click.
     const { data: copy, error } = await supabase.from('deliverables').insert({

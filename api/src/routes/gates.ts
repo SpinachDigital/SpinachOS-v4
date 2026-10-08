@@ -44,6 +44,16 @@ const payloadHash = (payload: unknown): string =>
 // the one last approved on this workflow needs fresh explicit approval.
 const TIER_RANK: Record<string, number> = { read: 1, write: 2, external: 3 };
 
+// Phase 12 GOAL 2: deliverable kind → library bucket (mirrors assets.ts
+// BUCKET_FOR_KIND — the gate files straight into the library's shape).
+const BUCKET_FOR_GATE_KIND: Record<string, string> = {
+  file: 'client-assets',
+  image: 'client-assets',
+  link: 'content',
+  post: 'content',
+  report: 'deliverables',
+};
+
 export const runGates = () => {
   // ------------------------------------------------------------------
   // POST /gates — register a gate action (watcher/agent side). Deny-by-
@@ -304,11 +314,32 @@ export const runGates = () => {
           client_id: gate.client_id, workflow_id: gate.workflow_id, gate_action_id: gate.id,
           title: resolvedTitle, kind, content: content || null, file_url: file_url || null,
           released_by: gate.approved_by, released_at: new Date().toISOString(),
-          metadata: clientVisible
-            ? { client_review: 'pending', review_requested_at: new Date().toISOString(), gate_id: gate.id }
-            : {},
+          metadata: {
+            // Phase 12 GOAL 2: filing IS library-ing — the asset row this
+            // deliverable already is (deliverables = the ONE assets table)
+            // gets its library stamp at file time. No second row, no manual step.
+            library: {
+              bucket: BUCKET_FOR_GATE_KIND[kind] || 'client-assets',
+              filed_from_deliverable_id: null, // same row — set post-insert below
+              pipeline_id: gate.workflow_id,
+              version: 1,
+              filed_from_gate: gate.gate_name,
+              filed_at: new Date().toISOString(),
+            },
+            ...(clientVisible
+              ? { client_review: 'pending', review_requested_at: new Date().toISOString(), gate_id: gate.id }
+              : {}),
+          },
         }).select().single();
         if (fileErr) throw fileErr;
+        // Phase 12 GOAL 2: the library stamp's self-link (the deliverable IS
+        // the asset — same row). One update, then the pipeline event.
+        await supabase.from('deliverables').update({
+          metadata: {
+            ...(filed.metadata || {}),
+            library: { ...(filed.metadata as any)?.library, filed_from_deliverable_id: filed.id },
+          },
+        }).eq('id', filed.id);
         await supabase.from('pipeline_events').insert({
           workflow_id: gate.workflow_id, client_id: gate.client_id, event: 'filed',
           actor: `gate:${gate.gate_name}`,

@@ -28,6 +28,7 @@ import { app, authMiddleware, emitApproval, emitFeed, sanitizeText, supabase, JW
 import { lintAgentOutput } from '../agents/style-lint';
 import { recordMemory, recordApprovalDecision } from '../memory-ledger';
 import { runSpecialistTask } from '../bridge';
+import { getEmailSender, sendEmail } from '../providers/email';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -178,6 +179,19 @@ app.post('/api/v1/leads/import', founderOnly, async (req: Request, res: Response
     }
     emitFeed('sales', 'LEADS_IMPORTED', { created, skipped_dupe: skippedDupe, skipped_bad: skippedBad });
     res.json({ ok: true, created, skipped_dupe: skippedDupe, skipped_bad: skippedBad });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================
+// Phase 12 GOAL 1 — email sender status (no secrets, founder-only)
+// GET /api/v1/providers/email/status → { connected, provider }
+// ============================================================
+app.get('/api/v1/providers/email/status', founderOnly, async (_req: Request, res: Response) => {
+  try {
+    const sender = await getEmailSender();
+    res.json({ connected: sender.connected, provider: sender.provider });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -424,13 +438,16 @@ app.post('/api/v1/outreach/:draft_id/approve-and-send', founderOnly, async (req:
       .from('outreach_messages').select('id').eq('lead_id', draft.lead_id).eq('channel', 'email').maybeSingle();
     if (existingMsg) return res.status(409).json({ error: 'duplicate: this lead+channel was already sent' });
 
-    // §NO FAKE-SEND: is there a connected sending identity? (providers BYOK —
-    // Phase 5 provider_keys; email sender credentials live there, e.g. 'resend')
-    const { data: emailProvider } = await supabase
-      .from('provider_keys').select('id, provider, is_active').eq('is_active', true)
-      .in('provider', ['resend', 'sendgrid', 'smtp', 'email']).maybeSingle();
+    // §NO FAKE-SEND: deliver via the founder's connected sending identity
+    // (Phase 12 GOAL 1 — api/src/providers/email.ts reads provider_keys,
+    // Resend first). No sender → pending_send honest (below).
+    const send = await sendEmail({
+      to: (draft as any).leads?.email || (draft as any).leads?.[0]?.email,
+      subject: draft.subject || '(no subject)',
+      body: draft.body,
+    });
 
-    if (!emailProvider) {
+    if (!send.ok && send.reason === 'no_sender') {
       // HONEST pending state — no sender connected. NEVER marked sent.
       await supabase.from('outreach_drafts').update({
         status: 'pending_send', updated_at: new Date().toISOString(),
@@ -453,11 +470,52 @@ app.post('/api/v1/outreach/:draft_id/approve-and-send', founderOnly, async (req:
       });
     }
 
-    // TODO(provider-wiring): deliver via the connected provider's API here.
-    // Until that wiring lands, the draft above is the ONLY honest path — we do
-    // NOT insert an outreach_messages row (that would fake a send).
+    if (!send.ok) {
+      // provider connected but delivery failed — honest failure, retryable.
+      // The draft goes back to pending_send with the provider error; the lead
+      // still advances (the founder approved the outreach). NEVER marked sent.
+      await supabase.from('outreach_drafts').update({
+        status: 'pending_send', updated_at: new Date().toISOString(),
+        qualification: { ...(draft.qualification || {}), pending_reason: `delivery failed: ${send.reason}` },
+      }).eq('id', draft.id);
+      await supabase.from('leads').update({
+        status: 'outreached', last_outreach_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      }).eq('id', draft.lead_id);
+      emitFeed('sales', 'OUTREACH_SEND_FAILED', { draft_id: draft.id, lead_id: draft.lead_id, reason: send.reason });
+      return res.status(502).json({
+        draft_id: draft.id, status: 'pending_send',
+        note: `delivery failed (${send.provider}): ${send.reason} — draft stays pending_send, never faked`,
+      });
+    }
 
-    res.json({ draft_id: draft.id, status: 'pending_send', note: 'sender connected but delivery wiring pending — still queued, never faked' });
+    // DELIVERED. The audit row IS the send record (approved_by + sent_at +
+    // provider_message_id — the trail or it didn't happen).
+    const { data: msg, error: mErr } = await supabase.from('outreach_messages').insert({
+      draft_id: draft.id, lead_id: draft.lead_id, channel: 'email',
+      subject: draft.subject, body: draft.body,
+      sent_by: 'founder', approved_by: approval.approved_by || 'director',
+      provider_message_id: send.message_id || null,
+    }).select().single();
+    if (mErr) return res.status(500).json({ error: `audit row failed (email delivered: ${send.provider} ${send.message_id}): ${mErr.message}` });
+
+    await supabase.from('outreach_drafts').update({
+      status: 'sent', updated_at: new Date().toISOString(),
+      qualification: { ...(draft.qualification || {}), delivered_via: send.provider, provider_message_id: send.message_id || null },
+    }).eq('id', draft.id);
+    await supabase.from('leads').update({
+      status: 'outreached', last_outreach_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    }).eq('id', draft.lead_id);
+    void recordMemory(supabase, {
+      agent_profile: 'sales', memory_type: 'decision', key: `outreach:${draft.id}`,
+      value: { what: 'outreach delivered', lead_id: draft.lead_id, draft_id: draft.id, provider: send.provider, message_id: send.message_id, approved_by: approval.approved_by || 'director', at: new Date().toISOString() },
+    });
+    emitFeed('sales', 'OUTREACH_SENT', { draft_id: draft.id, lead_id: draft.lead_id, provider: send.provider, message_id: send.message_id });
+    res.json({
+      draft_id: draft.id, status: 'sent',
+      provider: send.provider, message_id: send.message_id,
+      audit_row: msg.id,
+      lead_status: 'outreached',
+    });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

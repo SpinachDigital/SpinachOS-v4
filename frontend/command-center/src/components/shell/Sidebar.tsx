@@ -27,6 +27,7 @@ type NavEntry = { href: string; label: string; sub: string; icon: React.ReactNod
 
 const NAV: NavEntry[] = [
   { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
+  { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
   { href: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: I.projects },
   { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },

@@ -35,6 +35,7 @@ import './routes/tasks';        // Sprint 1: task detail + outputs
 import './routes/approvals';
 import './routes/outreach';   // Sprint 9 §2: SAFE approval-gated outreach (WIN)
 import './routes/win-leads';  // Phase 11: WIN leads pipeline — BEFORE workflows (route shadow: founderOnly GET /leads must win over the legacy authMiddleware one)
+import './routes/overview';   // Phase 12 GOAL 4: company overview (one screen, founder-only)
 import './routes/clients';
 import './routes/knowledge';
 import './routes/workflows';
