@@ -12,6 +12,7 @@
 // decision buttons are hidden and the write endpoint 403s preview contexts.
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 const SESSION_KEY = 'spinach_portal_session';
@@ -395,7 +396,12 @@ export default function PortalPage() {
             Session valid till {fmtDate(session.expires_at)}
           </span>
         </div>
-        <button onClick={logout} style={{ padding: '6px 14px' }}>Log out</button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Link href="/portal/tickets" style={{ padding: '6px 14px', textDecoration: 'none', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--foreground)' }}>
+            Support tickets
+          </Link>
+          <button onClick={logout} style={{ padding: '6px 14px' }}>Log out</button>
+        </div>
       </div>
 
       {/* summary strip */}

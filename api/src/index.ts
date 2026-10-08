@@ -52,6 +52,7 @@ import './routes/jobs';        // Phase 5 GOAL 1: job queue read side (DLQ visib
 import './routes/providers';   // Phase 5 GOAL 8+9: BYOK keys + publishing registry
 import './routes/evolutions'; // Phase 7 GOAL 1: learning loop (mine → propose → inbox)
 import './routes/portal';     // Phase 8: client portal (invite auth + Client Twin + RLS-scoped reads)
+import './routes/support-tickets'; // Phase 9: support tickets (client + founder)
 import { startWorkflowWatcher } from './workflow-watcher';
 startWorkflowWatcher();
 import { startGrowScheduler } from './routes/grow';

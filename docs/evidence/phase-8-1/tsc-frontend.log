@@ -1,1 +1,5 @@
+# Phase 8.1 - tsc --noEmit (Frontend)
+# Run: npx tsc --noEmit
+# Exit: 0
+
 exit: 0

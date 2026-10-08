@@ -12,6 +12,7 @@ import { app, authMiddleware, supabase, emitApproval } from '../ctx';
 import { logSlotEvent } from './grow';
 import { recordApprovalDecision, recordFounderCorrection } from '../memory-ledger';
 import { scoreCards } from '../inbox-triage';
+import { closeTicketInboxCard } from '../ticket-inbox';
 app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
     const { client_id, status, triage } = req.query;
@@ -105,6 +106,13 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+    // Phase 9 GOAL 2: support_ticket cards ride the SAME machinery —
+    // approve = acknowledge (no-op on the ticket, closes the card),
+    // deny = close ticket as resolved.
+    if ((data as any)?.payload_json?.kind === 'support_ticket' && (data as any)?.payload_json?.ticket_id) {
+      const ticketId = (data as any).payload_json.ticket_id;
+      await supabase.from('support_tickets').update({ unread_founder: false, updated_at: new Date().toISOString() }).eq('id', ticketId);
+    }
     // Sprint 9 §2: outreach drafts ride the SAME object — approving the card
     // moves the linked draft to 'approved' so /outreach/send can fire.
     // (Observed: approval row went 'approved' but the draft stayed
@@ -152,6 +160,12 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+    // Phase 9 GOAL 2: support_ticket cards — deny = close ticket as resolved.
+    if ((data as any)?.payload_json?.kind === 'support_ticket' && (data as any)?.payload_json?.ticket_id) {
+      const ticketId = (data as any).payload_json.ticket_id;
+      await supabase.from('support_tickets').update({ status: 'resolved', unread_founder: false, unread_client: false, updated_at: new Date().toISOString() }).eq('id', ticketId);
+      await closeTicketInboxCard(ticketId);
+    }
     // Sprint 9 §2: rejection reason on reject (UI passes it) — stored on the
     // approval row + linked outreach draft moves to 'rejected'.
     if ((data as any)?.payload_json?.kind === 'outreach' && (data as any)?.payload_json?.draft_id) {
