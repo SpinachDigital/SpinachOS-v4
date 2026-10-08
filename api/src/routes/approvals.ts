@@ -106,6 +106,12 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+    // Phase 10 GOAL 2: grow_draft cards ride the SAME machinery —
+    // approve → item status `approved`; deny → back to `draft` with note.
+    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any)?.payload_json?.item_id) {
+      const itemId = (data as any).payload_json.item_id;
+      await supabase.from('content_items').update({ status: 'approved', updated_at: new Date().toISOString() }).eq('id', itemId);
+    }
     // Phase 9 GOAL 2: support_ticket cards ride the SAME machinery —
     // approve = acknowledge (no-op on the ticket, closes the card),
     // deny = close ticket as resolved.
@@ -160,6 +166,15 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+    // Phase 10 GOAL 2: grow_draft cards — deny → back to `draft` with the
+    // founder's note attached (the note is visible on the item — the loop teaches).
+    if ((data as any)?.payload_json?.kind === 'grow_draft' && (data as any)?.payload_json?.item_id) {
+      const itemId = (data as any).payload_json.item_id;
+      await supabase.from('content_items').update({
+        status: 'draft', updated_at: new Date().toISOString(),
+        error: reason ? `Rejected: ${String(reason).trim()}` : null,
+      }).eq('id', itemId);
+    }
     // Phase 9 GOAL 2: support_ticket cards — deny = close ticket as resolved.
     if ((data as any)?.payload_json?.kind === 'support_ticket' && (data as any)?.payload_json?.ticket_id) {
       const ticketId = (data as any).payload_json.ticket_id;

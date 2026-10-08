@@ -165,6 +165,37 @@ export async function deleteKey(provider: string): Promise<boolean> {
 const registry = new Map<string, Publisher>();
 registry.set('publora', publora);
 
+// MOCK provider — Phase 10 GOAL 3: proves pluggability (the interface works
+// with any registered provider; founder connects real ones via the registry).
+// Activated only when a provider_keys row provider='mock' is active.
+const mock: Publisher = {
+  name: 'mock',
+  getCapabilities(): PublisherCapabilities {
+    return { platforms: ['x', 'linkedin', 'instagram', 'blog'], scheduling: true, threads: false, carousels: false, media: false };
+  },
+  async isConnected(): Promise<boolean> {
+    return !!(await getStoredKey('mock'));
+  },
+  async connect(credentials): Promise<boolean> {
+    return await storeKey('mock', credentials.token, 'MOCK provider (E2E/testing)');
+  },
+  async disconnect(): Promise<boolean> {
+    return await deleteKey('mock');
+  },
+  async publish(req): Promise<PublishResult> {
+    if (!(await getStoredKey('mock'))) return { mode: 'dry-run', postId: `dryrun-${Date.now()}` };
+    return { mode: 'live', postId: `mock-${Date.now()}` };
+  },
+  async schedule(req): Promise<PublishResult> {
+    if (!(await getStoredKey('mock'))) return { mode: 'dry-run', scheduledId: `dryrun-${Date.now()}` };
+    return { mode: 'live', scheduledId: `mock-sched-${Date.now()}` };
+  },
+  async status(postId) {
+    return { state: postId.startsWith('mock-') ? 'published' : 'unknown' };
+  },
+};
+registry.set('mock', mock);
+
 export function listPublishers(): { name: string; connected: boolean; capabilities: PublisherCapabilities }[] {
   // Synchronous list of names; connected/capabilities filled by the async route.
   return [...registry.keys()].map((name) => ({ name, connected: false, capabilities: registry.get(name)!.getCapabilities() }));

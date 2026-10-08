@@ -53,10 +53,15 @@ import './routes/providers';   // Phase 5 GOAL 8+9: BYOK keys + publishing regis
 import './routes/evolutions'; // Phase 7 GOAL 1: learning loop (mine → propose → inbox)
 import './routes/portal';     // Phase 8: client portal (invite auth + Client Twin + RLS-scoped reads)
 import './routes/support-tickets'; // Phase 9: support tickets (client + founder)
+import './routes/grow-calendar'; // Phase 10: content calendar CRUD
+import './routes/grow-generate'; // Phase 10: generate → approval card
+import './routes/grow-publish'; // Phase 10: publish via active provider
 import { startWorkflowWatcher } from './workflow-watcher';
 startWorkflowWatcher();
 import { startGrowScheduler } from './routes/grow';
 startGrowScheduler();
+import { startContentItemScheduler } from './routes/grow-publish';
+startContentItemScheduler();
 // Phase 5 GOAL 1: the queue worker — registered handlers run with retry/
 // backoff; dead-letters visible. Handlers registered below BEFORE the worker
 // starts (module imports run top-to-bottom; handler registration is in the
