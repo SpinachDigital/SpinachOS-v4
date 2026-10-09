@@ -77,7 +77,8 @@ import './routes/command';
 import './routes/laya';
 import './routes/calendar';
 import './routes/images';      // Sprint 8 §6: image-gen wiring (Hermes plugin path)
-import './routes/comms';
+// import './routes/comms';  // REMOVED Phase 13 GOAL 2 — dead pair with the /comms
+// page (both deleted). War-room posts go direct to DB via warroom-helpers.
 import './routes/scrapers';
 import './routes/telegram';
 import './routes/marketing';

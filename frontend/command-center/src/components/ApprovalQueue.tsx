@@ -97,6 +97,9 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
             // get a risk-tier badge + escalation flag + redacted payload
             // preview. No longer a generic approval row.
             const isGate = approval.type === 'gate';
+            // Phase 13 GOAL 1: style-score chip — the lint score rides the card
+            // payload (metadata.style_score, attachStyleLint). Render it visible.
+            const styleScore = (approval as any).metadata?.style_score ?? (approval as any).payload_json?.style_score ?? null;
             const gateTier = isGate ? (approval as any).risk_tier || (approval as any).payload_json?.risk_tier || null : null;
             const gateEscalation = isGate && ((approval as any).metadata?.escalation || (approval as any).payload_json?.escalation);
             const TIER_STYLE: Record<string, { bg: string; color: string }> = {
@@ -159,6 +162,19 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                             tier escalation — {gateTier} never approved before on this workflow
                           </span>
                         )}
+                      </div>
+                    )}
+                    {styleScore != null && (
+                      <div className="flex items-center gap-2" style={{ marginTop: 4, flexWrap: 'wrap' }}>
+                        {/* Phase 13 GOAL 1: style-score chip — lint score on the card */}
+                        <span className="t-mono" style={{
+                          padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
+                          textTransform: 'uppercase', letterSpacing: '0.05em',
+                          background: styleScore >= 7 ? 'rgba(76,175,80,0.16)' : styleScore >= 3 ? 'rgba(245,158,11,0.16)' : 'rgba(239,68,68,0.14)',
+                          color: styleScore >= 7 ? '#2E7D32' : styleScore >= 3 ? '#b45309' : '#b91c1c',
+                        }}>
+                          style {styleScore}/10
+                        </span>
                       </div>
                     )}
                     {approval.platform && (

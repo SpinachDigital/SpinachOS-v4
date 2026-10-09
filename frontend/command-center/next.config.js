@@ -15,6 +15,11 @@ const nextConfig = {
       // catches any stale links/bookmarks. (Sprint 6's "Living Office ships
       // at /office" is superseded — / renders the diorama + dept tags.)
       { source: '/office', destination: '/', permanent: false },
+      // Phase 13 GOAL 2: dead pages deleted — redirects catch stale links.
+      // /comms (internal chat UI) → /chat is the canonical chat surface.
+      { source: '/comms', destination: '/chat', permanent: false },
+      // /calendar (unlinked week/month view) → /marketing has the content calendar.
+      { source: '/calendar', destination: '/marketing', permanent: false },
       // /assets redirect DELETED (Sprint 11 §1) — /assets is now the REAL
       // library page (src/app/assets/page.tsx).
       { source: '/logs', destination: '/analytics', permanent: false },

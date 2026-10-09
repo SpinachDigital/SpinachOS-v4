@@ -6,7 +6,28 @@
 import { reciprocalRankFuse, embed } from '../rag';
 
 // -- imports auto-added by fix-imports (Phase 3)
-import { app, authMiddleware, emitFeed, supabase } from '../ctx';
+import { app, authMiddleware, emitFeed, supabase, JWT_SECRET } from '../ctx';
+import jwt from 'jsonwebtoken';
+import type { Request, Response, NextFunction } from 'express';
+
+// Phase 13 SECURITY (prompt non-negotiable #1): the RAG query surface is
+// founder-only. A client session must NEVER query the index — client_id
+// filters are a convenience for the founder, not an isolation mechanism.
+function founderOnly(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { sub: string; role: string };
+    if (decoded.role === 'client') {
+      return res.status(401).json({ error: 'Founder routes only' });
+    }
+    (req as any).user = decoded;
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid token', code: 'TOKEN_INVALID' });
+  }
+}
 import { hybridRetrieve } from '../knowledge-helper';
 app.post('/api/v1/knowledge/ingest', authMiddleware, async (req, res) => {
   const { client_id = null, scope, kind = 'document', title, content, source, metadata = {} } = req.body;
@@ -57,7 +78,7 @@ app.post('/api/v1/knowledge/backfill-embeddings', authMiddleware, async (_req, r
 // GET /api/v1/knowledge/query?q=...&client_id=...&limit=5 — HYBRID semantic+lexical retrieval (Phase 4)
 // pgvector cosine (nemotron-3-embed-1b, 2048d) + tsvector, fused via Reciprocal Rank Fusion.
 // Client isolation unchanged: client scope sees own + agency-wide; agency sees agency only.
-app.get('/api/v1/knowledge/query', authMiddleware, async (req, res) => {
+app.get('/api/v1/knowledge/query', founderOnly, async (req, res) => {
   const q = (req.query.q || '').toString().trim();
   const clientId = (req.query.client_id || '').toString() || null;
   const limit = Math.min(parseInt((req.query.limit || '5').toString(), 10) || 5, 20);
@@ -115,7 +136,7 @@ app.get('/api/v1/knowledge/query', authMiddleware, async (req, res) => {
 // GET /api/v1/knowledge/context/:client_id — the D5 brief builder: task + client DNA + top-5 chunks.
 // Phase 4: retrieval is now HYBRID (semantic + lexical, RRF) when a task/query is given
 // (q param); without q it returns the freshest 5 chunks (DNA-first ordering).
-app.get('/api/v1/knowledge/context/:client_id', authMiddleware, async (req, res) => {
+app.get('/api/v1/knowledge/context/:client_id', founderOnly, async (req, res) => {
   const clientId = req.params.client_id;
   const q = (req.query.q || '').toString().trim();
   const { data: client } = await supabase.from('clients').select('id, name, business_type, goal, metadata').eq('id', clientId).maybeSingle();

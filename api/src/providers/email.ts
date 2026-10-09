@@ -97,9 +97,33 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
     }
 
     if (provider === 'smtp') {
-      // SMTP needs a session lib (nodemailer) — not wired. Honest failure,
-      // never a fake success.
-      return { ok: false, provider, reason: 'provider_error:smtp transport not wired (use resend/sendgrid)' };
+      // Phase 13 GOAL 1: nodemailer transport — the fallback behind Resend.
+      // Key format (DB-backed, one string): host|port|user|pass
+      // (optionally host|port|user|pass|from). A stale/failed key → honest
+      // provider_error, NEVER a fake send. Credentials never logged.
+      const parts = (apiKey || '').split('|').map(s => s.trim());
+      if (parts.length < 4 || parts.some(p => !p)) {
+        return { ok: false, provider, reason: 'provider_error:smtp key malformed — expected host|port|user|pass' };
+      }
+      const [host, portStr, user, pass, fromOverride] = parts;
+      const port = parseInt(portStr, 10);
+      if (!host || !port || !user || !pass) {
+        return { ok: false, provider, reason: 'provider_error:smtp key malformed — expected host|port|user|pass' };
+      }
+      const nodemailer = await import('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host, port,
+        secure: port === 465,
+        auth: { user, pass },
+      });
+      const info = await transporter.sendMail({
+        from: fromOverride || from,
+        to: input.to,
+        subject: input.subject,
+        text: input.body,
+        ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+      });
+      return { ok: true, provider, message_id: info?.messageId || null };
     }
 
     return { ok: false, provider, reason: `provider_error:unknown provider ${provider}` };
