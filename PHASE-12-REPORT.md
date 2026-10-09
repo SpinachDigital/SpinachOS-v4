@@ -28,13 +28,12 @@ end-to-end — proven by one continuous 22-step probe.
 **Files:** `api/src/providers/email.ts` (new), `api/src/routes/win-leads.ts`
 (approve-and-send wired), status endpoint.
 
-**Live probes (phase12-probe.js + full-loop):**
-- `GET /api/v1/providers/email/status` → **200** `{ connected: false, provider: null }` — honest: no email key in provider_keys
-- Lead `e8a3a55d…` → qualify (score 12) → approve → draft (style 10, draft `cfebf4d9…`, card `c7b4f10e…`)
-- **NEGATIVE: direct send without card approval → 403** (re-probed — the Phase 11 gate stands)
-- approve → send → **200 `pending_send`** + honest note "no sender connected" (path B, live-probed)
-- Delivery path (path A) is fully wired: sender connected → Resend API → `sent` + `outreach_messages` audit row (approved_by + provider_message_id) + draft `sent` + lead `outreached` + ledger entry; provider failure → **502** honest, draft stays `pending_send`, **never fake-sent**
-- **No test key was available** — the connected path is code-complete + probed at the no-sender boundary, stated honestly (autonomy rule 2)
+**Live probes (phase12-probe.js + full-loop + phase12-real-send.js):**
+- `GET /api/v1/providers/email/status` → **200** `{ connected: true, provider: 'resend' }` — founder connected the Resend key via `POST /api/v1/providers/keys/resend` (masked ack `re_6…jkUL`, key DB-backed, never logged)
+- Lead → qualify → approve → draft (style 10) → approve card → send → **200 `sent` — REAL DELIVERY via Resend**: `message_id 01a11f55-aa50-7a49-b684-3ff2bf69efbf`, audit row `0e8865ea…` (channel email, approved_by director, sent_at), draft `sent`, lead `outreached`, ledger entry `outreach delivered` (provider resend + message_id) — all verified by direct DB read
+- **Resend's own 403 boundary probed live:** sending to a non-owner address on an unverified domain → our API returns **502 honest** (`pending_send`, never faked) with Resend's message verbatim in the note — the failure path is production-grade too
+- **NEGATIVE: no send without approved card → 403** (full-loop STEP 5, re-probed)
+- Delivery path (path A): Resend API → `sent` + `outreach_messages` audit row (approved_by + provider_message_id) + draft `sent` + lead `outreached` + ledger entry; provider failure → **502** honest, draft stays `pending_send`, **never fake-sent**
 
 **Founder setup (documented, key never in chat):** Supabase dashboard →
 `provider_keys` row: `provider='resend'`, `key_ciphertext='re_…'` (or
@@ -141,14 +140,8 @@ Migration: `070-phase12-content-metadata.sql` — applied live (Management API,
 201), file committed in `supabase/migrations/`.
 
 ## WHAT WAS NOT TESTED / DEFERRED (honest)
-- **Real email delivery (path A):** no Resend/SendGrid key exists in
-  provider_keys — the delivery code is complete (Resend API + audit row +
-  draft→sent + ledger), but the live probe ran the no-sender path
-  (`pending_send` honest). Connecting a real key is a founder dashboard step;
-  the moment it exists, the same probe exercises path A with zero code changes.
-- **SMTP transport:** connected-state returns honest `provider_error: smtp
-  transport not wired` — nodemailer wiring deferred (Resend is the primary
-  path; a stale SMTP key can never fake a send).
+- ~~**Real email delivery (path A):** no Resend/SendGrid key exists~~ — **DONE after the founder connected the Resend key:** full real-send loop probed live (sent + message_id + audit row + ledger). Resend's free tier only delivers to the owner's own address until a domain is verified at resend.com/domains — other recipients need that verification (Resend's policy, not our code).
+- **SMTP transport:** connected-state returns honest `provider_error: smtp transport not wired` — nodemailer wiring deferred (Resend is the primary path; a stale SMTP key can never fake a send).
 - **Overview UI at 360px:** grid auto-fit stacks; captured at 1440px only.
 - **GROW week "planned" count is 0** in the capture because the probe's
   scheduled item was published seconds later by the mock — real row states,
