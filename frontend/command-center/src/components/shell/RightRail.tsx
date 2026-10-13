@@ -52,6 +52,19 @@ export default function RightRail() {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
+  // The health pill tells the truth: derived from actual fetch state,
+  // never hardcoded. (QA #1: "ALL OPERATIONAL" next to "API unreachable".)
+  const healthPill = () => {
+    if (!loadedOnce) return <span className="pill">Checking…</span>;
+    if (apiError) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Degraded</span>;
+    if (health.length === 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Offline</span>;
+    const down = health.filter(h => h.status === 'down').length;
+    const warn = health.filter(h => h.status === 'warn').length;
+    if (down > 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Degraded</span>;
+    if (warn > 0) return <span className="pill" style={{ background: 'rgba(245,158,11,.12)', color: 'var(--amber, #f59e0b)' }}>Degraded</span>;
+    return <span className="pill completed">All Operational</span>;
+  };
+
   return (
     <>
       {apiError && (
@@ -122,13 +135,12 @@ export default function RightRail() {
               </div>
             </div>
           ))}
-          {agents.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>Agents offline.</div>}
         </div>
         <button className="hud-btn" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} type="button" onClick={() => router.push('/agents')}>View All Agents</button>
       </section>
 
       <section className="panel">
-        <div className="panel-head"><h3>System Health</h3><span className="pill completed">All Operational</span></div>
+        <div className="panel-head"><h3>System Health</h3>{healthPill()}</div>
         <div>
           {!loadedOnce && health.length === 0 && (
             <>

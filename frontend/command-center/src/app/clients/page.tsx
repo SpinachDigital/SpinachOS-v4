@@ -89,7 +89,7 @@ export default function ClientsPage() {
         <div>
           <h1>Clients</h1>
           <p className="sub">
-            {loading ? 'Loading clients…' : `${counts.total} total · ${counts.active} active · ${counts.paused} paused`}
+            {loading ? 'Loading clients…' : error ? '— clients unavailable' : `${counts.total} total · ${counts.active} active · ${counts.paused} paused`}
           </p>
         </div>
         <div className="actions">

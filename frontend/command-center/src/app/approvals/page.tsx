@@ -135,22 +135,23 @@ export default function ApprovalsPage() {
         </div>
       </div>
 
-      {/* Stats — inline text row, not monument cards */}
+      {/* Stats — inline text row, not monument cards.
+          Counts show "—" until the first fetch lands: never a wrong 0. */}
       <div className="flex items-center gap-6 px-6 py-3" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{pending}</span>
+          <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{loading ? '—' : pending}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Pending</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{approved}</span>
+          <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{loading ? '—' : approved}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Approved</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{rejected}</span>
+          <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{loading ? '—' : rejected}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Rejected</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--text)', fontWeight: 700 }}>{approvals.length}</span>
+          <span className="t-mono" style={{ color: 'var(--text)', fontWeight: 700 }}>{loading ? '—' : approvals.length}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Total</span>
         </span>
       </div>

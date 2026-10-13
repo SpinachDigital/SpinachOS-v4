@@ -175,7 +175,7 @@ export default function LeadsPage() {
               background: 'var(--card)', padding: 12, minHeight: 200 }}>
               <h2 style={{ fontSize: 14, margin: '0 0 10px', display: 'flex', justifyContent: 'space-between' }}>
                 {st.label}
-                <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{items.length}</span>
+                <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>{loading ? '—' : items.length}</span>
               </h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {items.map((l) => {

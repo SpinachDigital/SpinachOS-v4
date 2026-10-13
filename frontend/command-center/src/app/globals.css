@@ -664,7 +664,7 @@ body {
 .t-body    { font-size: 14px; line-height: 1.5; }
 .t-meta    { font-size: 12px; line-height: 1.4; }
 .t-label   { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; }
-.t-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; }
+.t-mono    { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-variant-numeric: tabular-nums; }
 
 .card { background: var(--panel); border: 1px solid var(--border-soft); border-radius: var(--r-lg); }
 
