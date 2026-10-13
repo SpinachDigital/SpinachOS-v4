@@ -151,7 +151,7 @@ export default function PnlPage() {
                       <div style={{ flex: 1, minWidth: 140 }}>
                         <p className="t-meta" style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text)' }}>{c.name}</p>
                         <p className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)' }}>
-                          {inr(c.ai_cost_inr)} AI cost · {c.calls} calls
+                          {inr(c.ai_cost_inr)} AI cost · {c.calls} {c.calls === 1 ? 'call' : 'calls'}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
@@ -238,7 +238,7 @@ export default function PnlPage() {
                   {pnl!.models.map((m) => (
                     <div key={m.model} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span className="t-mono" style={{ flex: 1, fontSize: 11.5, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.model}</span>
-                      <span className="t-mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{m.tokens.toLocaleString('en-IN')} tok · {m.calls} calls</span>
+                      <span className="t-mono" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{m.tokens.toLocaleString('en-IN')} tok · {m.calls} {m.calls === 1 ? 'call' : 'calls'}</span>
                       <span className="t-mono" style={{ width: 80, textAlign: 'right', fontSize: 11.5, fontWeight: 600, color: 'var(--text)' }}>{inr(m.ai_cost_inr)}</span>
                     </div>
                   ))}

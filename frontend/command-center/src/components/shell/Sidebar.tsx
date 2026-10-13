@@ -32,6 +32,7 @@ const NAV: NavEntry[] = [
   { href: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: I.projects },
   { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },
   { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
+  { href: '/tasks', label: 'Tasks', sub: 'Job runs & outputs', icon: I.projects },
   { href: '/team', label: 'Team', sub: 'HR & human roster', icon: I.team },
   { href: '/clients', label: 'Clients', sub: 'Relationships', icon: I.clients },
   { href: '/assets', label: 'Assets', sub: 'CREATE — the library', icon: I.assets },

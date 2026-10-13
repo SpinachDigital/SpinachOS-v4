@@ -41,6 +41,10 @@ const entryDate = (iso: string | null | undefined): { text: string; raw: string 
   return { text: new Date(ms).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }), raw };
 };
 
+// R3: raw internal prefixes ("gateway:ceo", "dept_research") → human names.
+const humanAgent = (a: string): string =>
+  a.replace(/^gateway:/, '').replace(/^dept_/, '').replace(/\b\w/g, (c) => c.toUpperCase());
+
 export default function LedgerPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -143,7 +147,7 @@ export default function LedgerPage() {
           style={{ minHeight: 44, padding: '8px 12px', borderRadius: 10, fontSize: 12, border: '1px solid var(--border-hairline)', background: 'var(--card)', color: 'var(--text)' }}
         >
           <option value="">All agents</option>
-          {agents.map((a) => <option key={a} value={a}>{a}</option>)}
+          {agents.map((a) => <option key={a} value={a}>{humanAgent(a)}</option>)}
         </select>
       </div>
 
@@ -194,7 +198,7 @@ export default function LedgerPage() {
                       {title}
                     </p>
                     <p className="t-mono" style={{ fontSize: 10.5, color: 'var(--text-faint)' }} title={when.raw || undefined}>
-                      @{e.agent_profile} · {when.text}
+                      @{humanAgent(e.agent_profile)} · {when.text}
                     </p>
                   </div>
                   {e.expired && (
@@ -224,7 +228,7 @@ export default function LedgerPage() {
               <button onClick={() => setDetail(null)} className="t-mono" style={{ minHeight: 44, padding: '4px 10px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-faint)', fontSize: 16 }}>✕</button>
             </div>
             <p className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }} title={mWhen.raw || undefined}>
-              @{detail.agent_profile} · {detail.memory_type} · decided {mWhen.text}
+              @{humanAgent(detail.agent_profile)} · {detail.memory_type} · decided {mWhen.text}
               {detail.expires_at && ` · expires ${new Date(detail.expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`}
             </p>
             <pre className="t-mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', background: 'var(--bg-2, #fafaf7)', padding: 12, borderRadius: 10, border: '1px solid var(--border-soft)' }}>

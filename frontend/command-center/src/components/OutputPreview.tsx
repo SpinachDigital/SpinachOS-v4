@@ -55,6 +55,41 @@ function pick(payload: any): Shape {
     if (file) return { kind: 'file', name: file.split(/[\\/]/).pop() || file, url, note: text || undefined };
     if (url) return { kind: 'link', url };
     if (text) return { kind: 'text', body: text, platform };
+    // R1.1 lead_qualified: { kind, model, score, rationale, options } — show the
+    // score + the agent's rationale in words. Never "Details unavailable".
+    if (payload.kind === 'lead_qualified' || (payload.score != null && payload.rationale)) {
+      const bits: string[] = [];
+      if (payload.score != null) bits.push(`Score ${payload.score}/100`);
+      if (payload.model) bits.push(`scored by ${payload.model}`);
+      const opts = Array.isArray(payload.options) && payload.options.length
+        ? `\n\nNext-step options:\n${payload.options.map((o: any, i: number) => `${i + 1}. ${typeof o === 'string' ? o : (o.label || o.action || JSON.stringify(o))}`).join('\n')}`
+        : '';
+      const body = `${bits.join(' · ')}${payload.rationale ? `\n\n${payload.rationale}` : ''}${opts}`;
+      if (body.trim()) return { kind: 'text', body } as any;
+    }
+    // R1.1 stuck_stage / gate: what's stuck, how long, what unblocks it.
+    if (payload.stage || payload.pipeline_name) {
+      const idle = payload.idle_hours != null ? `${payload.idle_hours}h idle` : null;
+      const sla = payload.sla_hours != null ? `SLA ${payload.sla_hours}h` : null;
+      const head = [payload.client_name, payload.pipeline_name ? `"${payload.pipeline_name}"` : null].filter(Boolean).join(' · ');
+      const body = [head, payload.stage ? `Stuck at stage: ${payload.stage}` : null, [idle, sla].filter(Boolean).join(' · ')]
+        .filter(Boolean).join('\n');
+      return { kind: 'text', body } as any;
+    }
+    // R1.1 grow_draft / publish_failure: show the actual failure, not a dead end.
+    if (payload.error || payload.kind === 'grow_draft' || payload.kind === 'publish_failure') {
+      const body = typeof payload.error === 'string'
+        ? `Publish failed: ${payload.error}`
+        : 'Draft could not be published — open the item to retry.';
+      return { kind: 'text', body } as any;
+    }
+    // R1.1 last resort for object payloads: show the real fields, labeled —
+    // never a dead end, never a JSON dump.
+    const pairs = Object.entries(payload)
+      .filter(([, v]) => v != null && typeof v !== 'object')
+      .slice(0, 6)
+      .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${String(v).slice(0, 140)}`);
+    if (pairs.length) return { kind: 'text', body: pairs.join('\n') } as any;
     // object with data (e.g. step_outputs) we can't render — the caller
     // shows a human fallback, never a JSON dump.
     return { kind: 'unknown' };

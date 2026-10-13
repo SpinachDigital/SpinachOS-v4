@@ -74,9 +74,11 @@ app.get('/api/v1/overview', founderOnly, async (_req: Request, res: Response) =>
     const inboxTop = (inboxRaw?.data || [])
       .map((a: any) => ({
         id: a.id, title: a.title, type: a.type,
-        triage_score: (a.metadata?.triage_score ?? (a.type === 'gate' ? 90 : a.type === 'outreach' || a.type === 'lead_qualified' ? 70 : 50)),
+        // R1.3: no invented scores — only show a triage score that actually
+        // exists on the row (gate=90 is a real policy constant, not a guess).
+        triage_score: (a.metadata?.triage_score ?? (a.type === 'gate' ? 90 : null)),
       }))
-      .sort((x: any, y: any) => y.triage_score - x.triage_score)
+      .sort((x: any, y: any) => (y.triage_score ?? -1) - (x.triage_score ?? -1))
       .slice(0, 5);
 
     res.json({

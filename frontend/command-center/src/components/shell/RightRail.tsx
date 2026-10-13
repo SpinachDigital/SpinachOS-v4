@@ -103,7 +103,7 @@ export default function RightRail() {
 
       <section className="panel">
         <div className="panel-head">
-          <h3>AI Agents <span style={{ color: 'var(--green-bright)', fontSize: 11, fontWeight: 600 }}>{online ? `${online} online` : ''}</span></h3>
+          <h3>AI Agents <span style={{ color: 'var(--green-bright)', fontSize: 11, fontWeight: 600 }}>{agents.length ? `${online}/${agents.length} online` : ''}</span></h3>
           <button className="link" type="button" onClick={() => router.push('/agents')} aria-label="Open agents">›</button>
         </div>
         <div>

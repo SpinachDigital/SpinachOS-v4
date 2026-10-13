@@ -6,6 +6,21 @@
  */
 import { app, authMiddleware, supabase } from '../ctx';
 
+// GET /api/v1/tasks — recent task runs (bounded 100, newest first) — /tasks list page source
+app.get('/api/v1/tasks', authMiddleware, async (_req, res) => {
+  try {
+    const { data: tasks, error } = await supabase
+      .from('tasks')
+      .select('id, title, status, assigned_to, created_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    res.json({ tasks: tasks || [] });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/v1/tasks/:id — task + timeline + outputs
 app.get('/api/v1/tasks/:id', authMiddleware, async (req, res) => {
   try {

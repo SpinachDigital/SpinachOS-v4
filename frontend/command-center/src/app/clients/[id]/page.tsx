@@ -367,11 +367,20 @@ export default function Client360Page({ params }: Props) {
 
       <div className="page-body">
         {/* ---------- Sprint 9 §3: ONBOARDING (after deal won) ---------- */}
-        {!onboardResult && (
+        {/* R4: state-aware actions — a churned client cannot be onboarded */}
+        {client?.status === 'churned' && !onboardResult && (
+          <div style={{ padding: 14, marginBottom: 14, background: 'var(--card, #fff)', border: '1px solid var(--border-soft, #eee)', borderRadius: 10 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #111)', marginBottom: 4 }}>Client churned</div>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground, #666)' }}>
+              This client is marked churned — onboarding is disabled. Reactivate the client first if the deal is back on.
+            </div>
+          </div>
+        )}
+        {client?.status !== 'churned' && !onboardResult && (
           <div style={{ padding: 14, marginBottom: 14, background: 'var(--card, #fff)', border: '1px solid var(--border-soft, #eee)', borderRadius: 10 }}>
             <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #111)', marginBottom: 4 }}>Onboard this client</div>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground, #666)', marginBottom: 10 }}>
-              Deal won? Package select karo — pipeline auto-create + orchestrator kickoff (whole chain observable).
+              Deal won? Select a package — pipeline auto-create + orchestrator kickoff (whole chain observable).
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <select value={onboardPkg} onChange={(e) => setOnboardPkg(e.target.value)}

@@ -62,6 +62,11 @@ export default function ContentCalendarPage() {
   const { connected } = useWebSocket();
   const [items, setItems] = useState<ContentCalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
+  const flash = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
   const [view, setView] = useState<'week' | 'month'>('month');
   const [selectedDate, setSelectedDate] = useState<string>(() => toLocalDateInput(new Date()));
   const [filterTheme, setFilterTheme] = useState<string>('all');
@@ -87,9 +92,13 @@ export default function ContentCalendarPage() {
       if (res.ok) {
         const data = await res.json();
         setItems(data);
+      } else {
+        // R2.2: a failed refetch must say so — silent fail left "0 posts" on revisit
+        setToast(`Calendar load failed (HTTP ${res.status}) — retry`);
       }
     } catch (e) {
-      console.error('Failed to fetch calendar:', e);
+      // R2.2: network throw on revisit — honest message, keep old items visible
+      setToast('Connection interrupted — calendar may be stale. Retry in a moment.');
     } finally {
       setLoading(false);
     }
@@ -132,12 +141,6 @@ export default function ContentCalendarPage() {
   // Sprint 13 GOAL 2/3: the GROW actions — Generate (planned→review) and
   // Submit-for-approval (review→publish card in THE INBOX). One click each.
   const [actionBusy, setActionBusy] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const flash = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const generate = async (item: any) => {
     setActionBusy(item.id);

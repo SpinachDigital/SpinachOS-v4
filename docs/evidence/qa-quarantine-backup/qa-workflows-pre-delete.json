@@ -1,0 +1,481 @@
+[
+ {
+  "id": "90de5dc8-59c3-4e7d-bf18-7610974d8840",
+  "client_id": "2caa2633-d379-4ae5-bdab-c5c6dfa1d660",
+  "name": "client_pipeline",
+  "current_step": "content_creation",
+  "progress": 10,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "description": "Create growth strategy"
+   },
+   {
+    "name": "task_breakdown",
+    "agent": "cto",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:21:54.173Z",
+    "description": "Break strategy into tasks"
+   },
+   {
+    "name": "lead_generation",
+    "agent": "sales",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:38:05.631Z",
+    "description": "Generate qualified leads"
+   },
+   {
+    "name": "content_creation",
+    "agent": "content",
+    "status": "in_progress",
+    "started_at": "2026-09-23T15:01:24.414Z",
+    "description": "Create posts and scripts"
+   },
+   {
+    "name": "design_assets",
+    "agent": "design",
+    "status": "pending",
+    "description": "Create visual assets"
+   },
+   {
+    "name": "engineering_build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Build website/tech"
+   },
+   {
+    "name": "approval_review",
+    "agent": "orchestrator",
+    "status": "pending",
+    "description": "Director approval"
+   },
+   {
+    "name": "launch",
+    "agent": "ops",
+    "status": "pending",
+    "description": "Launch and monitor"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-22T22:41:36.736755+00:00",
+  "updated_at": "2026-09-23T15:01:24.319344+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "2b5c9aa1-d907-4649-8f8c-739e314967f6",
+  "client_id": null,
+  "name": "QA workflow test",
+  "current_step": null,
+  "progress": 0,
+  "status": "active",
+  "steps_json": [],
+  "metadata": {},
+  "created_at": "2026-09-23T09:37:17.905588+00:00",
+  "updated_at": "2026-09-23T09:37:17.905588+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "470b952d-0594-4d96-98d1-4c3511d6f744",
+  "client_id": "1a072421-2d31-4d11-8c7d-c1589e651b6d",
+  "name": "client_pipeline",
+  "current_step": "content_creation",
+  "progress": 10,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "description": "Create growth strategy"
+   },
+   {
+    "name": "task_breakdown",
+    "agent": "cto",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:21:54.374Z",
+    "description": "Break strategy into tasks"
+   },
+   {
+    "name": "lead_generation",
+    "agent": "sales",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:38:06.054Z",
+    "description": "Generate qualified leads"
+   },
+   {
+    "name": "content_creation",
+    "agent": "content",
+    "status": "in_progress",
+    "started_at": "2026-09-23T15:01:24.599Z",
+    "description": "Create posts and scripts"
+   },
+   {
+    "name": "design_assets",
+    "agent": "design",
+    "status": "pending",
+    "description": "Create visual assets"
+   },
+   {
+    "name": "engineering_build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Build website/tech"
+   },
+   {
+    "name": "approval_review",
+    "agent": "orchestrator",
+    "status": "pending",
+    "description": "Director approval"
+   },
+   {
+    "name": "launch",
+    "agent": "ops",
+    "status": "pending",
+    "description": "Launch and monitor"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-22T23:11:36.418686+00:00",
+  "updated_at": "2026-09-23T15:01:24.507325+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "25b8d474-3c15-4a04-bf2d-718a3556c78d",
+  "client_id": "29587aad-d9bc-48e1-abb8-651cacfdf837",
+  "name": "client_pipeline",
+  "current_step": "content_creation",
+  "progress": 10,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "description": "Create growth strategy"
+   },
+   {
+    "name": "task_breakdown",
+    "agent": "cto",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:21:54.452Z",
+    "description": "Break strategy into tasks"
+   },
+   {
+    "name": "lead_generation",
+    "agent": "sales",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:38:06.336Z",
+    "description": "Generate qualified leads"
+   },
+   {
+    "name": "content_creation",
+    "agent": "content",
+    "status": "in_progress",
+    "started_at": "2026-09-23T15:01:24.693Z",
+    "description": "Create posts and scripts"
+   },
+   {
+    "name": "design_assets",
+    "agent": "design",
+    "status": "pending",
+    "description": "Create visual assets"
+   },
+   {
+    "name": "engineering_build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Build website/tech"
+   },
+   {
+    "name": "approval_review",
+    "agent": "orchestrator",
+    "status": "pending",
+    "description": "Director approval"
+   },
+   {
+    "name": "launch",
+    "agent": "ops",
+    "status": "pending",
+    "description": "Launch and monitor"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-23T00:22:50.379669+00:00",
+  "updated_at": "2026-09-23T15:01:24.601846+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "7d9ea1c5-148b-46c0-a595-846ce9cb5757",
+  "client_id": null,
+  "name": "Final QA workflow",
+  "current_step": "strategy",
+  "progress": 0,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "started_at": "2026-09-23T11:46:19.293Z",
+    "description": "Growth strategy & positioning"
+   },
+   {
+    "name": "research",
+    "agent": "research",
+    "status": "pending",
+    "description": "Market & competitor research"
+   },
+   {
+    "name": "content",
+    "agent": "content",
+    "status": "pending",
+    "description": "Content plan & copy"
+   },
+   {
+    "name": "design",
+    "agent": "design",
+    "status": "pending",
+    "description": "Creative & design system"
+   },
+   {
+    "name": "build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Website & tech build"
+   },
+   {
+    "name": "campaign",
+    "agent": "social",
+    "status": "pending",
+    "description": "Ad campaigns & launch"
+   },
+   {
+    "name": "outreach",
+    "agent": "sales",
+    "status": "pending",
+    "description": "Sales outreach & leads"
+   },
+   {
+    "name": "review",
+    "agent": "ops",
+    "status": "pending",
+    "description": "QA review & handoff"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-23T11:46:19.168657+00:00",
+  "updated_at": "2026-09-23T11:46:19.168657+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "7224c013-a9f0-415c-bd55-c933685a3493",
+  "client_id": null,
+  "name": "QA fixed pipeline",
+  "current_step": null,
+  "progress": 100,
+  "status": "completed",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "completed",
+    "started_at": "2026-09-23T09:58:38.070Z",
+    "description": "Growth strategy & positioning",
+    "completed_at": "2026-09-23T09:58:38.404Z"
+   },
+   {
+    "name": "research",
+    "agent": "research",
+    "status": "completed",
+    "started_at": "2026-09-23T09:58:38.404Z",
+    "description": "Market & competitor research",
+    "completed_at": "2026-09-23T09:59:51.956Z"
+   },
+   {
+    "name": "content",
+    "agent": "content",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:51.956Z",
+    "description": "Content plan & copy",
+    "completed_at": "2026-09-23T09:59:52.182Z"
+   },
+   {
+    "name": "design",
+    "agent": "design",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:52.183Z",
+    "description": "Creative & design system",
+    "completed_at": "2026-09-23T09:59:52.379Z"
+   },
+   {
+    "name": "build",
+    "agent": "engineering",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:52.379Z",
+    "description": "Website & tech build",
+    "completed_at": "2026-09-23T09:59:52.525Z"
+   },
+   {
+    "name": "campaign",
+    "agent": "social",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:52.525Z",
+    "description": "Ad campaigns & launch",
+    "completed_at": "2026-09-23T09:59:52.626Z"
+   },
+   {
+    "name": "outreach",
+    "agent": "sales",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:52.626Z",
+    "description": "Sales outreach & leads",
+    "completed_at": "2026-09-23T09:59:52.738Z"
+   },
+   {
+    "name": "review",
+    "agent": "ops",
+    "status": "completed",
+    "started_at": "2026-09-23T09:59:52.738Z",
+    "description": "QA review & handoff",
+    "completed_at": "2026-09-23T09:59:52.863Z"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-23T09:58:38.04467+00:00",
+  "updated_at": "2026-09-23T09:59:52.671003+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "289f20c6-3cac-4c31-b232-e619fbe334b7",
+  "client_id": "970b10e7-10b7-4c71-9302-9ddac019820b",
+  "name": "client_pipeline",
+  "current_step": "content_creation",
+  "progress": 10,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "description": "Create growth strategy"
+   },
+   {
+    "name": "task_breakdown",
+    "agent": "cto",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:21:54.088Z",
+    "description": "Break strategy into tasks"
+   },
+   {
+    "name": "lead_generation",
+    "agent": "sales",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:38:05.433Z",
+    "description": "Generate qualified leads"
+   },
+   {
+    "name": "content_creation",
+    "agent": "content",
+    "status": "in_progress",
+    "started_at": "2026-09-23T15:01:24.326Z",
+    "description": "Create posts and scripts"
+   },
+   {
+    "name": "design_assets",
+    "agent": "design",
+    "status": "pending",
+    "description": "Create visual assets"
+   },
+   {
+    "name": "engineering_build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Build website/tech"
+   },
+   {
+    "name": "approval_review",
+    "agent": "orchestrator",
+    "status": "pending",
+    "description": "Director approval"
+   },
+   {
+    "name": "launch",
+    "agent": "ops",
+    "status": "pending",
+    "description": "Launch and monitor"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-22T22:34:42.352078+00:00",
+  "updated_at": "2026-09-23T15:01:24.224264+00:00",
+  "client_visible": false
+ },
+ {
+  "id": "e997805f-fa26-40dd-b973-5fd754c93d8f",
+  "client_id": "028c8398-35f4-42d8-9473-090a77fc1a81",
+  "name": "client_pipeline",
+  "current_step": "content_creation",
+  "progress": 10,
+  "status": "active",
+  "steps_json": [
+   {
+    "name": "strategy",
+    "agent": "ceo",
+    "status": "in_progress",
+    "description": "Create growth strategy"
+   },
+   {
+    "name": "task_breakdown",
+    "agent": "cto",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:21:54.264Z",
+    "description": "Break strategy into tasks"
+   },
+   {
+    "name": "lead_generation",
+    "agent": "sales",
+    "status": "in_progress",
+    "started_at": "2026-09-23T14:38:05.798Z",
+    "description": "Generate qualified leads"
+   },
+   {
+    "name": "content_creation",
+    "agent": "content",
+    "status": "in_progress",
+    "started_at": "2026-09-23T15:01:24.506Z",
+    "description": "Create posts and scripts"
+   },
+   {
+    "name": "design_assets",
+    "agent": "design",
+    "status": "pending",
+    "description": "Create visual assets"
+   },
+   {
+    "name": "engineering_build",
+    "agent": "engineering",
+    "status": "pending",
+    "description": "Build website/tech"
+   },
+   {
+    "name": "approval_review",
+    "agent": "orchestrator",
+    "status": "pending",
+    "description": "Director approval"
+   },
+   {
+    "name": "launch",
+    "agent": "ops",
+    "status": "pending",
+    "description": "Launch and monitor"
+   }
+  ],
+  "metadata": {},
+  "created_at": "2026-09-22T23:11:36.310265+00:00",
+  "updated_at": "2026-09-23T15:01:24.424488+00:00",
+  "client_visible": false
+ }
+]

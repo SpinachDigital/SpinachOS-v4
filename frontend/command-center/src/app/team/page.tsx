@@ -77,7 +77,7 @@ export default function TeamPage() {
         fetch('/api/v1/hr/stats/weekly'),
         fetch('/api/v1/hr/activity?limit=20'),
       ]);
-      if (!r.ok) { setOffline(true); setLastSync(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })); setLoading(false); return; }
+      if (!r.ok) { setOffline(true); setLastSync(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })); setLoading(false); return; } // keeps last roster rendered — banner says what's wrong, data stays visible
       const rj = await r.json();
       setRoster(rj.agents || []);
       if (f.ok) setFlags((await f.json()).flags || []);

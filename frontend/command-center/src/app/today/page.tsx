@@ -109,7 +109,7 @@ export default function TodayPage() {
                       <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: 'nowrap',
                         overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title}</div>
                       <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-                        {c.type} · score {c.triage_score}
+                        {c.type}{c.triage_score != null ? ` · score ${c.triage_score}` : ''}
                       </div>
                     </div>
                     <button style={btnSm} disabled={busy === c.id} onClick={() => approve(c.id)}>
@@ -150,9 +150,9 @@ export default function TodayPage() {
             <section style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 16, background: 'var(--card)' }}>
               <h2 style={{ fontSize: 16, margin: '0 0 10px' }}>WIN this week</h2>
               <div style={{ display: 'flex', gap: 20, fontSize: 14 }}>
-                <span><strong>{data.win_week.new_leads}</strong> new</span>
-                <span><strong>{data.win_week.qualified}</strong> qualified</span>
-                <span><strong>{data.win_week.onboarded}</strong> onboarded</span>
+                <span><strong>{data.win_week.new_leads}</strong> new (7d)</span>
+                <span><strong>{data.win_week.qualified}</strong> qualified (7d)</span>
+                <span><strong>{data.win_week.onboarded}</strong> onboarded (7d)</span>
               </div>
               <Link href="/leads" style={{ fontSize: 13, color: 'var(--accent)' }}>Leads pipeline →</Link>
             </section>
