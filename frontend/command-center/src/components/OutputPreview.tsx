@@ -77,9 +77,17 @@ function pick(payload: any): Shape {
       return { kind: 'text', body } as any;
     }
     // R1.1 grow_draft / publish_failure: show the actual failure, not a dead end.
+    // R3: strip raw HTML from error bodies (a Publora 404 once rendered a full
+    // <!DOCTYPE html> block inside a card — internals leak).
     if (payload.error || payload.kind === 'grow_draft' || payload.kind === 'publish_failure') {
+      const clean = (s: string) => s
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*Cannot POST \S*/, ' (endpoint not found)')
+        .trim()
+        .slice(0, 200);
       const body = typeof payload.error === 'string'
-        ? `Publish failed: ${payload.error}`
+        ? `Publish failed: ${clean(payload.error)}` || 'Publish failed — open the item to retry.'
         : 'Draft could not be published — open the item to retry.';
       return { kind: 'text', body } as any;
     }
