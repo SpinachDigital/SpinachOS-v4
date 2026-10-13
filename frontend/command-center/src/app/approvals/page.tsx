@@ -45,6 +45,9 @@ export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState<string | null>(null);
+  // Distinguish "loaded, genuinely empty" from "fetch failed, unknown":
+  // never claim "No approvals needed" when we couldn't reach the API.
+  const [loadError, setLoadError] = useState<string | null>(null);
   // Phase 6 GOAL 3: triage state — smart sort, filters, search, bulk
   const [workflow, setWorkflow] = useState<'all' | 'WIN' | 'DELIVER' | 'CREATE' | 'GROW'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -62,9 +65,13 @@ export default function ApprovalsPage() {
       if (res.ok) {
         const data = await res.json();
         setApprovals(data);
+        setLoadError(null);
+      } else {
+        setLoadError(`Couldn't load approvals (${res.status})`);
       }
     } catch (e) {
       console.error('Failed to fetch approvals:', e);
+      setLoadError("Couldn't reach the API");
     } finally {
       setLoading(false);
     }
@@ -136,22 +143,23 @@ export default function ApprovalsPage() {
       </div>
 
       {/* Stats — inline text row, not monument cards.
-          Counts show "—" until the first fetch lands: never a wrong 0. */}
+          Counts show "—" until the first fetch lands AND when it fails:
+          never a wrong 0, never "empty" when state is unknown. */}
       <div className="flex items-center gap-6 px-6 py-3" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{loading ? '—' : pending}</span>
+          <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{loading || loadError ? '—' : pending}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Pending</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{loading ? '—' : approved}</span>
+          <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700 }}>{loading || loadError ? '—' : approved}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Approved</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{loading ? '—' : rejected}</span>
+          <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{loading || loadError ? '—' : rejected}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Rejected</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--text)', fontWeight: 700 }}>{loading ? '—' : approvals.length}</span>
+          <span className="t-mono" style={{ color: 'var(--text)', fontWeight: 700 }}>{loading || loadError ? '—' : approvals.length}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Total</span>
         </span>
       </div>
@@ -161,6 +169,12 @@ export default function ApprovalsPage() {
         {loading ? (
           <div className="flex items-center justify-center h-64" style={{ color: 'var(--text-faint)' }}>
             <div className="t-mono">Loading approvals…</div>
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3" style={{ color: 'var(--text-faint)' }}>
+            <div className="t-mono" style={{ color: 'var(--red)' }}>{loadError}</div>
+            <div className="t-meta">Approval state is unknown — not empty. Check the API, then retry.</div>
+            <button onClick={fetchApprovals} className="btn btn-secondary btn-sm">Tap to retry</button>
           </div>
         ) : (
           <ApprovalQueue
