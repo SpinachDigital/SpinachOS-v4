@@ -33,7 +33,7 @@ WHERE title ILIKE '%probe%' OR title LIKE '\_\_%' ESCAPE '\';
 
 -- content_items: test posts
 UPDATE content_items SET is_test = true
-WHERE title ILIKE '%test%' OR content_text ILIKE '%probe%' OR title LIKE '\_\_%' ESCAPE '\';
+WHERE title ILIKE '%test%' OR body_text ILIKE '%probe%' OR title LIKE '\_\_%' ESCAPE '\';
 
 -- ─── step 3: DELETE probe/seed rows (keep founder's real data) ───
 -- approvals reference client_id — remove test-client approvals first.
