@@ -1,6 +1,6 @@
 # Spinach OS v4 — Stabilization + Revamp Report
 
-**Date:** 13 Oct 2026 · **Repo:** `SpinachDigital/SpinachOS-v4` · **HEAD:** `2998daf00728064a910e4751b14ddbb1e543075d` (origin/main, `git ls-remote` verified)
+**Date:** 13 Oct 2026 (updated: migration fix) · **Repo:** `SpinachDigital/SpinachOS-v4` · **HEAD:** `9bb05edcc51a49671f97f6d1c44458fcfb6d870d` (origin/main, `git ls-remote` verified)
 
 **2-line summary:** Infra fully operational (API/Laya/OmniRoute routing/tunnels), 5 UX patches + revamp phases R1–R4 applied and live-verified; one-number law holds (208 = 208 = 208), blind approvals eliminated, test-data dupes purged, P&L 100% priced. Remaining: engagement-page revisit fix, two stat pairs re-verify, `is_test` migration run (dashboard), full 25-page re-walk.
 
@@ -63,7 +63,7 @@
 ## 4. QA data closures
 
 1. **One-number law (badge = tile = queue):** `GET /approvals` now defaults `status=pending`; page fetch limit 200→500. Live through tunnel: **208 = 208 = 208**.
-2. **Test-data quarantine:** probe rows deleted via PostgREST (backups on disk). `supabase/migration-qa-quarantine.sql` (is_test columns + tagging, corrected to real table names `workflows`/`deliverables`) written but **NOT executed — needs Supabase dashboard SQL editor** (MCP/psql both unreachable from this box). Probe convention documented in `api/scripts/README.md`.
+2. **Test-data quarantine:** probe rows deleted via PostgREST (backups on disk). `supabase/migration-qa-quarantine.sql` (is_test columns + tagging, corrected to real table names `workflows`/`deliverables`) written for the dashboard SQL editor (MCP/psql both unreachable from this box). First dashboard run failed on a wrong column name (`content_text` — actual is **`body_text`**, my error, guessed instead of verifying schema); fixed in commit `9bb05ed`, all other columns live-verified against actual schema (`deliverables.title`, `approvals.client_id`, `leads.name/source`, `workflows.name`). Migration is idempotent — safe to re-run after the failed partial attempt. Probe convention documented in `api/scripts/README.md`.
 3. **P&L pricing:** 25 model rates seeded (`api/scripts/seed-model-rates.js`, idempotent, free-tier = honest $0), 266 legacy rows repriced → `unpriced_calls: 0`, total usage cost $0.3628.
 
 ## 5. Verification evidence
@@ -99,7 +99,7 @@ cloudflared tunnel --url http://localhost:3000
 
 | # | Item | Owner |
 |---|---|---|
-| 1 | Run `supabase/migration-qa-quarantine.sql` in dashboard SQL editor (MCP down) | Founder (2 min) |
+| 1 | Re-run `supabase/migration-qa-quarantine.sql` in dashboard SQL editor (column fixed in `9bb05ed`) | Founder (2 min) |
 | 2 | agentrouter credit top-up (~$175 budget gone) | Founder |
 | 3 | Engagement page revisit flakiness (R2.2 part 2) | Next dev pass |
 | 4 | Re-verify ProbeLab 88 vs 65 + "100% success + Blocked 1" pairs (R1.3 leftovers) | Next dev pass |
