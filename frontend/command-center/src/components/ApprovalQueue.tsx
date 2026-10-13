@@ -46,6 +46,15 @@ const decodeEntities = (s: string): string => {
   }
 };
 
+// MISS 2 fix (frontend guard): legacy rows may still carry raw provider HTML
+// in description. Strip tags + collapse whitespace before rendering. This is
+// defense in depth — the API now cleans at insert time (providers/publishing.cleanError).
+const cleanDesc = (s: string): string => {
+  if (!s) return s;
+  if (!s.includes('<')) return s;
+  return s.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) || s;
+};
+
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: string }> = {
   content: { icon: <FileText className="w-4 h-4" />, tint: 'rgba(99,102,241,0.14)', label: 'Content' },
   outreach: { icon: <MessageSquare className="w-4 h-4" />, tint: 'rgba(59,130,246,0.14)', label: 'Outreach' },
@@ -198,7 +207,7 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
 
                 {approval.description && (
                   <p className="t-meta" style={{ fontSize: 12.5, color: 'var(--text-dim)', marginBottom: 12, lineHeight: 1.5 }}>
-                    {approval.description}
+                    {cleanDesc(decodeEntities(approval.description))}
                   </p>
                 )}
 

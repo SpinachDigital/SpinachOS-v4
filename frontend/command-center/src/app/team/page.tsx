@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/auth';
 
 interface RosterAgent {
   id: string;
@@ -71,11 +72,14 @@ export default function TeamPage() {
 
   const fetchAll = useCallback(async () => {
     try {
+      // MISS 1 fix: apiFetch attaches the auth token — raw fetch() sent none,
+      // /hr/* is authMiddleware-protected, so every browser load 401'd and the
+      // page showed "Agents offline" forever. This was the root cause.
       const [r, f, w, a] = await Promise.all([
-        fetch('/api/v1/hr/roster?limit=100'),
-        fetch('/api/v1/hr/flags?limit=50'),
-        fetch('/api/v1/hr/stats/weekly'),
-        fetch('/api/v1/hr/activity?limit=20'),
+        apiFetch('/api/v1/hr/roster?limit=100'),
+        apiFetch('/api/v1/hr/flags?limit=50'),
+        apiFetch('/api/v1/hr/stats/weekly'),
+        apiFetch('/api/v1/hr/activity?limit=20'),
       ]);
       if (!r.ok) { setOffline(true); setLastSync(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })); setLoading(false); return; } // keeps last roster rendered — banner says what's wrong, data stays visible
       const rj = await r.json();
@@ -114,11 +118,11 @@ export default function TeamPage() {
     } finally { setBusy(false); }
   };
 
-  const pauseAgent = (a: RosterAgent, reason: string) => act(() => fetch(`/api/v1/hr/agents/${a.id}/pause`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }));
-  const resumeAgent = (a: RosterAgent) => act(() => fetch(`/api/v1/hr/agents/${a.id}/resume`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }));
-  const resolveFlag = (f: Flag) => act(() => fetch(`/api/v1/hr/flags/${f.id}/resolve`, { method: 'POST' }));
-  const stopTask = (taskId: string, reason: string) => act(() => fetch(`/api/v1/hr/tasks/${taskId}/stop`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }));
-  const reassignTask = (taskId: string, toAgent: string, note: string) => act(() => fetch(`/api/v1/hr/tasks/${taskId}/reassign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to_agent: toAgent, note }) }));
+  const pauseAgent = (a: RosterAgent, reason: string) => act(() => apiFetch(`/api/v1/hr/agents/${a.id}/pause`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }));
+  const resumeAgent = (a: RosterAgent) => act(() => apiFetch(`/api/v1/hr/agents/${a.id}/resume`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) }));
+  const resolveFlag = (f: Flag) => act(() => apiFetch(`/api/v1/hr/flags/${f.id}/resolve`, { method: 'POST' }));
+  const stopTask = (taskId: string, reason: string) => act(() => apiFetch(`/api/v1/hr/tasks/${taskId}/stop`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }));
+  const reassignTask = (taskId: string, toAgent: string, note: string) => act(() => apiFetch(`/api/v1/hr/tasks/${taskId}/reassign`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to_agent: toAgent, note }) }));
 
   if (loading) return <div className="p-6" style={{ color: 'var(--text-faint)' }}>Loading team...</div>;
 

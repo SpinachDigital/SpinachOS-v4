@@ -133,8 +133,18 @@ const publora: Publisher = {
 // ---------------------------------------------------------------------
 import { supabase } from '../ctx';
 
-export function maskKey(key: string): string {
-  if (!key) return '';
+// MISS 2 fix: never persist a provider's raw HTML error body into approvals
+// (a Publora 404 once rendered its full <!DOCTYPE html> inside a card).
+export function cleanError(raw: string): string {
+  return raw
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*Cannot POST \S*/, ' (endpoint not found)')
+    .trim()
+    .slice(0, 300) || 'publish failed (no detail returned)';
+}
+
+export function maskKey(key: string): string {  if (!key) return '';
   if (key.length <= 8) return '****';
   return key.slice(0, 4) + '…' + key.slice(-4);
 }

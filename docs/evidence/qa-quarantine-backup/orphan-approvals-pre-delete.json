@@ -1,0 +1,162 @@
+[
+ {
+  "id": "ab219e8d-36aa-4383-b463-796ca9ff9b41",
+  "title": "Lead qualified — ProbeLab Industries (score 80/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "deterministic-fallback",
+   "score": 80,
+   "lead_id": "09024a63-dd7a-4132-b5fb-7617024924f9",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "Rule-based score (agent call unavailable). Company present, source 'referral' is a strong signal, budget keywords found."
+  },
+  "client_id": null
+ },
+ {
+  "id": "e30dca88-b8b3-4aaf-93d6-f71fa1c6ea54",
+  "title": "Lead qualified — ProbeLab Industries (score 65/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "dots-studio/dots-3-note-preview:free",
+   "score": 65,
+   "lead_id": "035c8b19-9557-408a-8858-7aeb31584189",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "Budget approved and referral source are strong signals. Need is for social media ads retainer, which has moderate fit with AI automation services."
+  },
+  "client_id": null
+ },
+ {
+  "id": "fca19b73-099e-40ba-90bd-25b1742b0957",
+  "title": "Lead qualified — Day Co 3 (score 20/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "cohere/north-mini-code:free",
+   "score": 20,
+   "lead_id": "c3457fed-2e74-432f-a327-cc2ce21a2e5c",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "No intent or fit keywords in notes. Manual source not inbound."
+  },
+  "client_id": null
+ },
+ {
+  "id": "f8e6537a-8adc-4862-afaf-11a3b9b51516",
+  "title": "Lead qualified — Day Co 2 (score 15/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "gemini-3.8-flash-high",
+   "score": 15,
+   "lead_id": "6038bbad-3153-4740-9fec-7b2658311fe2",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "The lead contains 0 notes for budget, intent, or fit.\nThe manual source provides no qualification data."
+  },
+  "client_id": null
+ },
+ {
+  "id": "7de8da31-d770-4971-857f-f13a8c9fca49",
+  "title": "Lead qualified — Day Co 2 (score 10/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "gemini-3.8-flash-high",
+   "score": 10,
+   "lead_id": "b5ca429d-20a5-47af-872b-bc24257ff841",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "The lead contains 0 budget, intent, or fit keywords in notes.\nThe manual source and example email show 0 verified buying signals."
+  },
+  "client_id": null
+ },
+ {
+  "id": "cfc50fad-8062-4415-b30d-e813ff871095",
+  "title": "Lead qualified — Day Co 3 (score 10/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "gemini-3.8-flash-high",
+   "score": 10,
+   "lead_id": "5f14534b-54fb-4969-9765-ace98c69d9c5",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "The lead contains empty notes and 0 intent signals.\nThe manual source and placeholder domain show 0 verified budget."
+  },
+  "client_id": null
+ },
+ {
+  "id": "67048473-3ab5-4421-af3f-fed2bfbb7b3d",
+  "title": "Lead qualified — Day Co 2 (score 10/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "gemini-3.8-flash-high",
+   "score": 10,
+   "lead_id": "74cdd4c8-b39d-4627-8b92-31c2a3d4712a",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "The lead lacks notes, intent signals, and budget data.\nThe manual source and example domain provide zero qualification signals."
+  },
+  "client_id": null
+ },
+ {
+  "id": "1f4ffeac-1004-41f3-8707-5a6c0ab96a9a",
+  "title": "Lead qualified — Day Co 3 (score 10/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "gemini-3.8-flash-high",
+   "score": 10,
+   "lead_id": "3ebcffd4-38aa-4387-9fa2-280ecf1ae538",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "The lead contains 0 budget, intent, or fit signals in the notes.\nThe manual source and dummy email provide 0 qualification data."
+  },
+  "client_id": null
+ },
+ {
+  "id": "6aae4109-c02a-4c4d-8995-0236a32f04bf",
+  "title": "Lead qualified — Day Co 3 (score 45/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "deterministic-fallback",
+   "score": 45,
+   "lead_id": "3ebcffd4-38aa-4387-9fa2-280ecf1ae538",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "Rule-based score (agent call unavailable). Company present, source 'manual' is neutral, no budget keywords."
+  },
+  "client_id": null
+ },
+ {
+  "id": "700c7f4c-ffce-424e-bb22-4a044ccd29fc",
+  "title": "Lead qualified — Day Co 3 (score 12/100)",
+  "payload_json": {
+   "kind": "lead_qualified",
+   "model": "claude-opus-4-6-thinking",
+   "score": 12,
+   "lead_id": "3ebcffd4-38aa-4387-9fa2-280ecf1ae538",
+   "options": [
+    "approve",
+    "disqualify"
+   ],
+   "rationale": "No budget, intent, or fit signals in notes. Manual source with no company context gives minimal qualification basis."
+  },
+  "client_id": null
+ }
+]

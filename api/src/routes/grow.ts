@@ -28,7 +28,7 @@ import { runSpecialistTask } from '../bridge';
 import { enqueue, registerHandler } from '../job-queue';
 // Phase 5 GOAL 9: the publishing registry — grow.ts calls the INTERFACE,
 // never a provider directly (adding a provider = one module, zero core changes).
-import { getActivePublisher } from '../providers/publishing';
+import { getActivePublisher, cleanError } from '../providers/publishing';
 import { styleBlockFor } from '../agents/style-contract';
 
 // ---------------------------------------------------------------------
@@ -313,8 +313,8 @@ async function handlePublishJob(payload: { slot_id: string }) {
     await supabase.from('approvals').insert({
       client_id: slot.metadata?.client_id || null, type: 'publish',
       title: `PUBLISH FAILED — ${slot.platform} post ${slot.date} slot ${slot.slot_index}`,
-      description: result.error.slice(0, 400), platform: slot.platform, status: 'pending',
-      requested_by: 'grow', payload_json: { kind: 'publish_failure', slot_id: slot.id, error: result.error },
+      description: cleanError(result.error), platform: slot.platform, status: 'pending',
+      requested_by: 'grow', payload_json: { kind: 'publish_failure', slot_id: slot.id, error: cleanError(result.error) },
     });
     await logSlotEvent(supabase, slot.id, 'publish_failed', 'grow:scheduler', { error: result.error, mode });
     throw new Error(result.error); // → the queue retries with backoff

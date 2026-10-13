@@ -10,7 +10,7 @@
 // publishItem() — the same path.
 
 import { app, supabase, authMiddleware, emitFeed } from '../ctx';
-import { getActivePublisher } from '../providers/publishing';
+import { getActivePublisher, cleanError } from '../providers/publishing';
 import { recordMemory } from '../memory-ledger';
 
 const GROW_API = '/api/v1/grow';
@@ -68,10 +68,10 @@ export async function publishItem(id: string): Promise<PublishResult> {
       risk_tier: 'write',
       client_id: item.client_id,
       title: `PUBLISH FAILED — ${item.channel} "${item.title}"`,
-      description: result.error.slice(0, 400),
+      description: cleanError(result.error),
       status: 'pending',
       requested_by: 'grow',
-      payload_json: { kind: 'publish_failure', item_id: id, error: result.error },
+      payload_json: { kind: 'publish_failure', item_id: id, error: cleanError(result.error) },
     });
 
     emitFeed('grow', 'publish_failed', {
