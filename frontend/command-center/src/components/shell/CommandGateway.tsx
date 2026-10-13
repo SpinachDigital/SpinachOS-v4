@@ -159,7 +159,7 @@ export default function CommandGateway({ prefill, inline = false }: { prefill?: 
       }
       if (data.mode === 'brainstorm' || data.mode === 'delegated') setOpen(true);
     } catch {
-      setLog((l) => [...l, { role: 'office', text: 'Gateway error — command logged.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+      setLog((l) => [...l, { role: 'office', text: 'Connection interrupted — command may have dispatched (check /today).', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     } finally {
       setBusy(false);
     }

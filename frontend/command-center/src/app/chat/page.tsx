@@ -130,7 +130,10 @@ export default function ChatPage() {
       const remote: Msg = { id: `remote-${Date.now()}`, role: 'agent', content: reply, created_at: new Date().toISOString(), task_id: data.task_id || null };
       setMessages((m) => [...m, remote]);
     } catch {
-      setError('Gateway error — command logged.');
+      // Network-level failure only (fetch throw). The command MAY have dispatched
+      // before the connection dropped — never say "logged" (we can't know), and
+      // never auto-retry (commands have side effects).
+      setError('Connection interrupted — command may have dispatched. Check /today before resending.');
     } finally { setBusy(false); }
   };
 

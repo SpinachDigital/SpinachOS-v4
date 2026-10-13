@@ -29,8 +29,17 @@ export const app = express();
 export const httpServer = createServer(app);
 export const wss = new WebSocketServer({ noServer: true });
 
+// CORS: allow BOTH the local dev origin and the public QA tunnel (FRONTEND_URL).
+// The tunnel rotates between sessions — localhost:3000 must keep working, so
+// build an origin list instead of a single value. Mirror-of-request also OK
+// for any localhost origin (dev ports vary).
+const corsOrigins: (string | RegExp)[] = ['http://localhost:3000', 'http://127.0.0.1:3000', /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/];
+if (process.env.FRONTEND_URL) {
+  // comma-separated list supported; single value stays the common case
+  for (const o of process.env.FRONTEND_URL.split(',').map(s => s.trim()).filter(Boolean)) corsOrigins.push(o);
+}
 app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: corsOrigins, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 // Phase 5 GOAL 4: structured JSON request logs (one line per API call).
 app.use(requestLog);

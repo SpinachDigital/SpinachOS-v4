@@ -17,19 +17,24 @@ export const OMNIROUTE_URL = process.env.OMNIROUTE_URL || 'http://localhost:2012
 export const AGENT_TASK_TIMEOUT_MS = Number(process.env.AGENT_TASK_TIMEOUT_MS || 120000);
 
 export const AGENT_MODELS: Record<string, string> = {
-  ceo: 'auto/pro-reasoning',
-  cto: 'auto/pro-reasoning',
-  orchestrator: 'auto/pro-reasoning',
-  research: 'auto/best-reasoning',
-  social: 'auto/best-fast',
-  sales: 'auto/best-fast',
-  seo_specialist: 'auto/best-reasoning',
-  engineer: 'auto/pro-coding',
-  designer: 'auto/best-chat',
-  ops: 'auto/best-fast',
-  hr_director: 'auto/best-fast',
-  content: 'auto/best-fast',
-  hr: 'auto/best-chat',
+  // Phase 13 routing fix (2026-10-09): auto/* candidates resolved through an
+  // opencode connection with NO key ('noauth') — every auto call hung through
+  // dead providers (fastrouter 402, agy 429, agnes 503, gemini hedge-hang).
+  // combo/spinach-agents = priority chain tested 200 on this gateway
+  // (agentrouter claude 2s → gpt-5.6-sol → openrouter nemotron 5s → free).
+  ceo: 'combo/spinach-agents',
+  cto: 'combo/spinach-agents',
+  orchestrator: 'combo/spinach-agents',
+  research: 'combo/spinach-agents',
+  social: 'combo/spinach-agents',
+  sales: 'combo/spinach-agents',
+  seo_specialist: 'combo/spinach-agents',
+  engineer: 'combo/spinach-agents',
+  designer: 'combo/spinach-agents',
+  ops: 'combo/spinach-agents',
+  hr_director: 'combo/spinach-agents',
+  content: 'combo/spinach-agents',
+  hr: 'combo/spinach-agents',
 };
 
 export const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
@@ -49,7 +54,7 @@ export const AGENT_SYSTEM_PROMPTS: Record<string, string> = {
 /** Run a task through the OmniRoute gateway (Hermes model bridge). Returns the model's output text.
  *  P1 Task 4: routed through the same circuit breaker as bridge.ts gateway calls. */
 export async function runAgentTask(agent: string, task: string): Promise<{ output: string; model: string }> {
-  const model = AGENT_MODELS[agent] || 'auto/best-fast';
+  const model = AGENT_MODELS[agent] || 'combo/spinach-agents';
   const systemPrompt = AGENT_SYSTEM_PROMPTS[agent] || 'You are a helpful AI company agent. Be concise.';
 
   const controller = new AbortController();

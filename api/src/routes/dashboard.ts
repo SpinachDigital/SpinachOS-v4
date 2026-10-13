@@ -92,8 +92,8 @@ app.get('/api/system/health', async (_req, res) => {
       const r = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(20_000),
-        body: JSON.stringify({ model: 'auto/best-fast', messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
+        signal: AbortSignal.timeout(30_000),
+        body: JSON.stringify({ model: 'combo/spinach-agents', messages: [{ role: 'user', content: 'ping' }], max_tokens: 400 }),
       });
       gwState = r.ok ? 'ok' : 'warn';
       gwValue = r.ok ? 'OmniRoute' : `HTTP ${r.status}`;

@@ -76,7 +76,7 @@ export function TaskChat({ taskId, agent, taskTitle }: { taskId: string; agent?:
       const reply = data.reply || data.message || data.action || 'Agent is offline — message logged.';
       setMessages((m) => [...m, { id: `a-${Date.now()}`, role: 'agent', content: reply, created_at: new Date().toISOString(), task_id: data.task_id || null }]);
     } catch {
-      setError('Gateway error — message logged.');
+      setError('Connection interrupted — message may have been delivered. Check the task before resending.');
     } finally { setBusy(false); }
   };
 

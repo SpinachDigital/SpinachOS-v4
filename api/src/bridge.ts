@@ -128,7 +128,7 @@ export async function runProfileTask(
     console.error(`[bridge] profile spawn failed for ${profile}:`, e?.message);
     // P1 Task 5: record the fallback BEFORE attempting it — the fallback itself
     // may also fail (dead gateway), and the event must still be in the log.
-    recordFallback(`hermes/profile:${profile}`, `omni:${GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast'}`, `profile spawn failed: ${String(e?.message || 'unknown').slice(0, 120)}`);
+    recordFallback(`hermes/profile:${profile}`, `omni:${GATEWAY_MODEL_BY_PROFILE[profile] || 'combo/spinach-agents'}`, `profile spawn failed: ${String(e?.message || 'unknown').slice(0, 120)}`);
     const gw = await runGatewayTask(profile, task);
     return { ...gw, via: 'gateway-fallback' };
   } finally {
@@ -153,17 +153,27 @@ import { styleBlockFor, learnedPreferenceBlock } from './agents/style-contract';
 export { getBreakerStates, getFallbackLog, recordFallback };
 // Import AGENT_MODELS + prompts from the main module's values — re-declared here to
 // keep this module self-contained (the main file passes its own fallbacks anyway).
+//
+// Phase 13 routing fix (2026-10-09): the auto/* candidates resolved through an
+// opencode connection with NO key stored ('noauth') — every auto/best-fast
+// call hung until its fallback chain crawled through dead providers
+// (fastrouter 402 credit-limit, agy 429 quota, agnes 503, gemini dead-model
+// hedge-hangs). 'combo/spinach-agents' is a priority chain of models TESTED
+// 200 on this gateway: agentrouter/claude (2s) → agentrouter/gpt-5.6-sol →
+// openrouter nemotron lightning:free (5s) → openrouter/free. The per-dept
+// DB pick still overrides everything (the picker is the surface, this is
+// just a default that actually works).
 const GATEWAY_MODEL_BY_PROFILE: Record<string, string> = {
-  ceo: 'auto/pro-reasoning',
-  cto: 'auto/pro-reasoning',
-  orchestrator: 'auto/pro-reasoning',
-  engineer: 'auto/pro-coding',
-  designer: 'auto/best-chat',
-  social: 'auto/best-fast',
-  seo_specialist: 'auto/best-reasoning',
-  research: 'auto/best-reasoning',
-  sales: 'auto/best-fast',
-  ads_manager: 'auto/pro-reasoning',
+  ceo: 'combo/spinach-agents',
+  cto: 'combo/spinach-agents',
+  orchestrator: 'combo/spinach-agents',
+  engineer: 'combo/spinach-agents',
+  designer: 'combo/spinach-agents',
+  social: 'combo/spinach-agents',
+  seo_specialist: 'combo/spinach-agents',
+  research: 'combo/spinach-agents',
+  sales: 'combo/spinach-agents',
+  ads_manager: 'combo/spinach-agents',
 };
 
 export const PROFILE_SOULS: Record<string, string> = {
@@ -184,7 +194,7 @@ async function runGatewayTask(profile: string, task: string): Promise<{ output: 
   // the code default — the picker never hardcodes silently. Empty pick =
   // code default (documented in the report). Cache-bypass: one small DB
   // read per task is fine (the table is 10 rows).
-  let model = GATEWAY_MODEL_BY_PROFILE[profile] || 'auto/best-fast';
+  let model = GATEWAY_MODEL_BY_PROFILE[profile] || 'combo/spinach-agents';
   try {
     const { data: pick } = await supabase
       .from('department_model_picks')
@@ -261,7 +271,7 @@ export async function runSpecialistTask(
   // Phase 5 GOAL 8: the founder's per-department pick (DB) overrides the
   // bench code default — no hardcoded provider assumptions. department key:
   // the bench name maps to a department pick (capability='gateway').
-  let model = bench === 'engineering' || bench === 'paid_media' ? 'auto/pro-coding' : 'auto/best-fast';
+  let model = bench === 'engineering' || bench === 'paid_media' ? 'combo/spinach-agents' : 'combo/spinach-agents';
   try {
     const { data: pick } = await supabase
       .from('department_model_picks')
