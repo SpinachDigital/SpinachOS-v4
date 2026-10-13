@@ -23,7 +23,12 @@ app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(limit);
     if (client_id) query = query.eq('client_id', String(client_id));
-    if (status) query = query.eq('status', String(status));
+    // QA #1 fix (13 Oct): ONE source of truth for pending counts. Default
+    // status=pending unless the caller explicitly asks for all/another
+    // status (status=all / status=approved / …). The nav badge, /today tile
+    // and the /approvals queue all read pending from the same filter now.
+    const st = String(status || 'pending');
+    if (st !== 'all') query = query.eq('status', st);
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
     // Phase 6 GOAL 3: triage=1 → smart-priority sort (blocking first, score

@@ -61,7 +61,7 @@ export default function ApprovalsPage() {
       // Phase 6 GOAL 3: triage=1 → smart-priority sort server-side
       // (blocking first, score desc — scores recompute on every fetch:
       // new card, age crossing SLA, pipeline unblocked → fresh ranking).
-      const res = await apiFetch('/api/v1/approvals?triage=1&limit=200');
+      const res = await apiFetch('/api/v1/approvals?triage=1&limit=500');
       if (res.ok) {
         const data = await res.json();
         setApprovals(data);

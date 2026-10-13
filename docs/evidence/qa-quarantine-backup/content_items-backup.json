@@ -1,0 +1,149 @@
+[
+ {
+  "id": "d510e6b8-3a36-4363-a509-5c9c06489a06",
+  "title": "Brand Sprint — Logo Pack v1",
+  "body_text": "We shipped the content engine. Calendar → Generate → Approve → Publish. No manual steps. Here's how it works...",
+  "channel": "blog",
+  "scheduled_for": "2026-10-09T09:18:41.22+00:00",
+  "status": "failed",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": "Publora 404: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /v1/posts</pre>\n</body>\n</html>\n",
+  "created_by": "founder",
+  "client_id": "5c3ca086-05e8-4f67-9811-95573ee0f9ea",
+  "style_score": 10,
+  "created_at": "2026-10-08T22:24:08.394822+00:00",
+  "updated_at": "2026-10-09T09:18:54.456078+00:00",
+  "metadata": {
+   "note": "p12 probe reuse",
+   "source": "asset_reuse",
+   "reused_from_asset_id": "07b63365-c595-4912-b9c6-6960ec5334b3"
+  }
+ },
+ {
+  "id": "cc41cdf5-0a2e-42c2-9b4d-f981b57f9fe4",
+  "title": "Brand Guidelines v1 (sprint-11 upload test)",
+  "body_text": "We shipped the content engine. Calendar → Generate → Approve → Publish. No manual steps. Here's how it works...",
+  "channel": "blog",
+  "scheduled_for": "2026-10-09T09:35:46.767+00:00",
+  "status": "failed",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": "Publora 404: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /v1/posts</pre>\n</body>\n</html>\n",
+  "created_by": "founder",
+  "client_id": "37ef7e34-a48b-4499-9a9f-01487d682938",
+  "style_score": 10,
+  "created_at": "2026-10-09T07:35:46.726201+00:00",
+  "updated_at": "2026-10-09T09:35:54.739599+00:00",
+  "metadata": {
+   "note": null,
+   "source": "asset_reuse",
+   "reused_from_asset_id": "873fd8b5-10cc-47ec-afd7-ecab9c9e4332"
+  }
+ },
+ {
+  "id": "16a865fa-43ab-496a-9ac6-e93ccfef9dcb",
+  "title": "Brand Guidelines v1 (sprint-11 upload test)",
+  "body_text": "We shipped the content engine. Calendar → Generate → Approve → Publish. No manual steps. Here's how it works...",
+  "channel": "blog",
+  "scheduled_for": "2026-10-09T09:38:30.722+00:00",
+  "status": "failed",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": "Publora 404: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /v1/posts</pre>\n</body>\n</html>\n",
+  "created_by": "founder",
+  "client_id": "37ef7e34-a48b-4499-9a9f-01487d682938",
+  "style_score": 10,
+  "created_at": "2026-10-08T22:47:42.118158+00:00",
+  "updated_at": "2026-10-09T09:38:54.695598+00:00",
+  "metadata": {
+   "note": null,
+   "source": "asset_reuse",
+   "reused_from_asset_id": "873fd8b5-10cc-47ec-afd7-ecab9c9e4332"
+  }
+ },
+ {
+  "id": "709f0aed-6b4c-408c-a234-3689a01e008f",
+  "title": "LoopCo Brand Sprint Deck 1791498472917",
+  "body_text": "We shipped the content engine. Calendar → Generate → Approve → Publish. No manual steps. Here's how it works...",
+  "channel": "blog",
+  "scheduled_for": null,
+  "status": "failed",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": "Publora 404: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot POST /v1/posts</pre>\n</body>\n</html>\n",
+  "created_by": "founder",
+  "client_id": "dd3e3fc1-7c12-456a-b88f-a2c4cfa19feb",
+  "style_score": 10,
+  "created_at": "2026-10-08T22:28:55.706614+00:00",
+  "updated_at": "2026-10-08T22:28:57.360581+00:00",
+  "metadata": {
+   "note": "full-loop reuse",
+   "source": "asset_reuse",
+   "reused_from_asset_id": "4ff3b290-803e-4918-8ee7-58d88fd5036f"
+  }
+ },
+ {
+  "id": "bfb782e7-074a-4324-a574-97b6ce5e21e2",
+  "title": "LoopCo Brand Sprint Deck 1791498605984",
+  "body_text": "We shipped the content engine. Calendar → Generate → Approve → Publish. No manual steps. Here's how it works...",
+  "channel": "blog",
+  "scheduled_for": "2026-10-08T22:30:01.02+00:00",
+  "status": "published",
+  "provider_post_id": "mock-1791498661270",
+  "published_at": "2026-10-08T22:31:01.27+00:00",
+  "error": null,
+  "created_by": "founder",
+  "client_id": "59e785b7-f4ba-4391-bd47-be9281444930",
+  "style_score": 10,
+  "created_at": "2026-10-08T22:31:01.187706+00:00",
+  "updated_at": "2026-10-08T22:31:01.706548+00:00",
+  "metadata": {
+   "note": "full-loop reuse",
+   "source": "asset_reuse",
+   "reused_from_asset_id": "dd695e3a-a160-4276-ab67-8335bd22d562"
+  }
+ },
+ {
+  "id": "936db4fa-e1d3-45e4-9494-2ab7a7df15ce",
+  "title": "Brand Guidelines v1 (sprint-11 upload test)",
+  "body_text": "Spinach Digital brand guidelines � warm off-white #FAFAF7, teal #004B63, green #4CAF50. Typography: Manrope. Voice: quiet architect, Popeye subtle.",
+  "channel": "blog",
+  "scheduled_for": null,
+  "status": "draft",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": null,
+  "created_by": "founder",
+  "client_id": "37ef7e34-a48b-4499-9a9f-01487d682938",
+  "style_score": null,
+  "created_at": "2026-10-09T07:18:41.357565+00:00",
+  "updated_at": "2026-10-09T07:18:41.357565+00:00",
+  "metadata": {
+   "note": null,
+   "source": "asset_reuse",
+   "reused_from_asset_id": "873fd8b5-10cc-47ec-afd7-ecab9c9e4332"
+  }
+ },
+ {
+  "id": "2a9b4338-c7fe-4ff6-985f-0b428708f22a",
+  "title": "Brand Guidelines v1 (sprint-11 upload test)",
+  "body_text": "Spinach Digital brand guidelines � warm off-white #FAFAF7, teal #004B63, green #4CAF50. Typography: Manrope. Voice: quiet architect, Popeye subtle.",
+  "channel": "blog",
+  "scheduled_for": null,
+  "status": "draft",
+  "provider_post_id": null,
+  "published_at": null,
+  "error": null,
+  "created_by": "founder",
+  "client_id": "37ef7e34-a48b-4499-9a9f-01487d682938",
+  "style_score": null,
+  "created_at": "2026-10-09T07:38:30.68918+00:00",
+  "updated_at": "2026-10-09T07:38:30.68918+00:00",
+  "metadata": {
+   "note": null,
+   "source": "asset_reuse",
+   "reused_from_asset_id": "873fd8b5-10cc-47ec-afd7-ecab9c9e4332"
+  }
+ }
+]
