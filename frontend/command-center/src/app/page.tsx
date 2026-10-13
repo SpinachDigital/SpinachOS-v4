@@ -84,13 +84,16 @@ export default function CommandCenter() {
           ]);
         }
         // activity: raw array [{id, icon, title, sub, time}]
+        // Junk-filtered: raw task keys / probe pings never reach the feed.
         if (Array.isArray(a)) {
-          setFeed(a.map((x: any) => ({
-            agent: String(x.title || '').replace(/<[^>]+>/g, '').split(' — ')[0] || 'office',
-            action: String(x.title || '').replace(/<[^>]+>/g, '').split(' — ')[1] || '',
-            detail: x.sub || '',
-            when: x.time || 'now',
-          })));
+          setFeed(a
+            .filter((x: any) => !isJunkFeedTitle(String(x.title || '').replace(/<[^>]+>/g, '')))
+            .map((x: any) => ({
+              agent: String(x.title || '').replace(/<[^>]+>/g, '').split(' — ')[0] || 'office',
+              action: String(x.title || '').replace(/<[^>]+>/g, '').split(' — ')[1] || '',
+              detail: x.sub || '',
+              when: x.time || 'now',
+            })));
         }
         // jobs: raw array [{icon, title, sub, status, meta}]
         if (Array.isArray(j)) {
@@ -200,7 +203,7 @@ export default function CommandCenter() {
           )}
         </div>
         <div className="viewport-hud tl">
-          <div className="hud-chip"><span className={connected ? 'live-dot' : ''} /> {connected ? 'LIVE' : 'OFFLINE'}</div>
+          <div className="hud-chip"><span className={connected ? 'live-dot' : ''} /> {!loadedOnce ? 'CONNECTING' : connected ? 'LIVE' : 'OFFLINE'}</div>
           <div className="hud-chip">{workingCount} working</div>
         </div>
         <style jsx>{`
@@ -249,7 +252,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Recent Jobs</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
+          <div className="panel-head"><h3>Recent Jobs</h3><button className="link" type="button" onClick={() => router.push('/tasks')}>View All</button></div>
           <div>
             {!loadedOnce && jobs.length === 0 && (
               <>
@@ -286,23 +289,7 @@ export default function CommandCenter() {
         </div>
 
         <div className="panel">
-          <div className="panel-head"><h3>Projects</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
-          <div>
-            {projects.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No active projects.</div>}
-            {projects.map(p => (
-              <div className="proj" key={p.id}>
-                <div className="pr">
-                  <b>{p.name}</b>
-                  <span>{p.client} · {p.pct}%</span>
-                </div>
-                <div className="bar"><i style={{ width: `${p.pct}%` }} /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="panel">
-          <div className="panel-head"><h3>Assets</h3><button className="link" type="button" onClick={() => router.push('/settings')}>View All</button></div>
+          <div className="panel-head"><h3>Assets</h3></div>
           <div className="asset-tabs">
             <button className="asset-tab active" type="button">All</button>
             <button className="asset-tab" type="button">Logos</button>
@@ -412,6 +399,17 @@ function pillFor(status: string) {
   if (status === 'running') return 'running';
   if (status === 'failed' || status === 'blocked') return 'failed';
   return 'completed';
+}
+
+// Trust filter: never render debug junk as feed content — raw internal task
+// keys (ceoagent_message_task), probe "hi"/"test" pings, or empty titles.
+// The feed is the founder's view of the company; internals don't belong.
+function isJunkFeedTitle(t: string) {
+  const s = t.trim();
+  if (!s) return true;
+  if (/^(hi|hello|test|debug|ping)\b/i.test(s)) return true;
+  if (/^[a-z0-9_]+$/.test(s) && s.includes('_')) return true; // snake_case key, no spaces
+  return false;
 }
 
 function buildCalendar() {

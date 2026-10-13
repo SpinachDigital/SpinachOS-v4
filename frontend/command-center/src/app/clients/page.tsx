@@ -42,7 +42,7 @@ function fmtDate(iso?: string) {
 
 export default function ClientsPage() {
   const router = useRouter();
-  const { connected } = useWebSocket();
+  const { connected, everConnected } = useWebSocket();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,13 +89,13 @@ export default function ClientsPage() {
         <div>
           <h1>Clients</h1>
           <p className="sub">
-            {counts.total} total · {counts.active} active · {counts.paused} paused
+            {loading ? 'Loading clients…' : `${counts.total} total · ${counts.active} active · ${counts.paused} paused`}
           </p>
         </div>
         <div className="actions">
           <span className="live-badge">
-            <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-            {connected ? 'Live' : 'Offline'}
+            <span className={`dot ${connected ? 'dot-green dot-pulse' : everConnected ? 'dot-red' : 'dot-gray'}`} />
+            {connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}
           </span>
           <input
             className="input"

@@ -6,6 +6,7 @@ import { useWebSocketStore } from '@/lib/office/wsStore';
 
 export function useWebSocket() {
   const connected = useWebSocketStore((s) => s.connected);
+  const everConnected = useWebSocketStore((s) => s.everConnected);
   const agentStates = useWebSocketStore((s) => s.agentStates);
   const feed = useWebSocketStore((s) => s.feed);
   const connect = useWebSocketStore((s) => s.connect);
@@ -15,5 +16,5 @@ export function useWebSocket() {
     return cleanup;
   }, [connect]);
 
-  return { connected, agentStates, feed: [...feed] };
+  return { connected, everConnected, agentStates, feed: [...feed] };
 }

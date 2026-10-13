@@ -55,7 +55,8 @@ function pick(payload: any): Shape {
     if (file) return { kind: 'file', name: file.split(/[\\/]/).pop() || file, url, note: text || undefined };
     if (url) return { kind: 'link', url };
     if (text) return { kind: 'text', body: text, platform };
-    // object with data (e.g. step_outputs) — stringify is honest fallback
+    // object with data (e.g. step_outputs) we can't render — the caller
+    // shows a human fallback, never a JSON dump.
     return { kind: 'unknown' };
   }
   return { kind: 'unknown' };
@@ -73,6 +74,8 @@ export function OutputPreview({ payload, agent, kind, title }: { payload: any; a
   }, []);
 
   if (shape.kind === 'unknown') {
+    // Human fallback only — never a raw JSON dump, never the word
+    // "undefined". The founder sees a note, not internals.
     return (
       <div style={{
         padding: '10px 12px', borderRadius: 10,
@@ -80,14 +83,9 @@ export function OutputPreview({ payload, agent, kind, title }: { payload: any; a
       }}>
         <p className="t-meta" style={{ fontSize: 12, color: 'var(--text-faint)' }}>
           {payload == null
-            ? 'No preview payload attached to this approval.'
-            : `Preview not available for this payload shape (${typeof payload}${kind ? ` · ${kind}` : ''}).`}
+            ? 'No details attached to this approval.'
+            : 'Details unavailable for this approval type.'}
         </p>
-        {payload != null && (
-          <pre className="t-mono" style={{ fontSize: 10, marginTop: 6, whiteSpace: 'pre-wrap', color: 'var(--text-dim)', maxHeight: 96, overflow: 'auto' }}>
-            {JSON.stringify(payload, null, 2).slice(0, 600)}
-          </pre>
-        )}
       </div>
     );
   }

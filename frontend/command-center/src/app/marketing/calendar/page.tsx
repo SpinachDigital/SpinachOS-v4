@@ -46,12 +46,24 @@ const STATUS_COLORS: Record<string, string> = {
   failed: 'var(--danger)',
 };
 
+// Date <input> values are local-midnight; toISOString() is UTC — in IST
+// (UTC+5:30) that renders YESTERDAY before 05:30. Build/parse the
+// YYYY-MM-DD value from local parts everywhere on this page.
+const toLocalDateInput = (d: Date): string => {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+const parseLocalDateInput = (s: string): Date => {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y || 1970, (m || 1) - 1, d || 1);
+};
+
 export default function ContentCalendarPage() {
   const { connected } = useWebSocket();
   const [items, setItems] = useState<ContentCalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'week' | 'month'>('month');
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(() => toLocalDateInput(new Date()));
   const [filterTheme, setFilterTheme] = useState<string>('all');
   const [filterPlatform, setFilterPlatform] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -102,7 +114,7 @@ export default function ContentCalendarPage() {
   });
 
   const getWeekDates = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDateInput(dateStr);
     const day = date.getDay();
     const start = new Date(date);
     start.setDate(date.getDate() - day);
@@ -110,7 +122,7 @@ export default function ContentCalendarPage() {
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
-      dates.push(d.toISOString().split('T')[0]);
+      dates.push(toLocalDateInput(d));
     }
     return dates;
   };
@@ -216,7 +228,7 @@ export default function ContentCalendarPage() {
               return (
                 <div key={date} className="flex flex-col" style={{ background: glass.bg, border: `1px solid ${glass.border}`, borderRadius: 8, minHeight: isMobile ? 0 : 500 }}>
                   <div className="px-3 py-2 border-b" style={{ borderColor: glass.border }}>
-                    <div className="t-label" style={{ color: glass.text }}>{new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                    <div className="t-label" style={{ color: glass.text }}>{parseLocalDateInput(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
                     <div className="t-mono" style={{ color: glass.text2, fontSize: 11 }}>{dayItems.length} posts</div>
                   </div>
                   <div className="flex-1 p-2 space-y-2">
@@ -231,7 +243,7 @@ export default function ContentCalendarPage() {
                             {PLATFORM_ICONS[item.platform]}
                             <span className="t-mono text-xs" style={{ color: THEME_COLORS[item.theme] }}>{slotLabels[item.slot_index] || `Slot ${item.slot_index}`}</span>
                           </div>
-                          <div className="text-sm line-clamp-2" style={{ color: glass.text }}>{item.content_text || 'No content'}</div>
+                          <div className="text-sm line-clamp-2" style={{ color: glass.text, overflowWrap: 'break-word' }}>{item.content_text || 'No content'}</div>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ background: STATUS_COLORS[item.status] + '20', color: STATUS_COLORS[item.status] }}>{item.status}</span>
                             {item.scheduled_at && <span className="t-mono ml-auto text-[10px]" style={{ color: glass.text3 }}>{new Date(item.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
@@ -271,7 +283,7 @@ export default function ContentCalendarPage() {
         ) : (
           <div className="space-y-4">
             {(() => {
-              const start = new Date(selectedDate);
+              const start = parseLocalDateInput(selectedDate);
               start.setDate(1);
               const end = new Date(start);
               end.setMonth(end.getMonth() + 1);
@@ -294,8 +306,8 @@ export default function ContentCalendarPage() {
               return weeks.map((w, wi) => (
                 <div key={wi} className={isMobile ? 'flex flex-col gap-1' : 'grid gap-1'} style={isMobile ? undefined : { gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
                   {w.map((day, di) => {
-                    const dateStr = day.toISOString().split('T')[0];
-                    const isCurrentMonth = day.getMonth() === new Date(selectedDate).getMonth();
+                    const dateStr = toLocalDateInput(day);
+                    const isCurrentMonth = day.getMonth() === parseLocalDateInput(selectedDate).getMonth();
                     const dayItems = filteredItems.filter(i => i.date === dateStr);
                     const shown = isMobile ? dayItems.slice(0, 5) : dayItems.slice(0, 3);
                     return (
@@ -307,8 +319,8 @@ export default function ContentCalendarPage() {
                         <div className="flex-1 p-1 space-y-1">
                           {shown.map(item => (
                             <div key={item.id} className="p-1.5 rounded border" style={{ background: THEME_COLORS[item.theme] + '15', borderColor: THEME_COLORS[item.theme] + '40', fontSize: 11 }}>
-                              <div className="flex items-center gap-1 mb-0.5">{PLATFORM_ICONS[item.platform]}<span style={{ color: THEME_COLORS[item.theme] }}>{isMobile ? (slotLabels[item.slot_index] || `Slot ${item.slot_index}`) : slotLabels[item.slot_index]?.slice(0, 8)}</span></div>
-                              <div className="truncate" style={{ color: glass.text }}>{item.content_text?.slice(0, 40)}</div>
+                              <div className="flex items-center gap-1 mb-0.5" style={{ minWidth: 0 }}>{PLATFORM_ICONS[item.platform]}<span className="truncate" style={{ color: THEME_COLORS[item.theme], minWidth: 0 }}>{slotLabels[item.slot_index] || `Slot ${item.slot_index}`}</span></div>
+                              <div className="line-clamp-2" style={{ color: glass.text, overflowWrap: 'break-word' }}>{item.content_text?.slice(0, 40)}</div>
                               <span className="px-1 py-0 rounded text-[8px]" style={{ background: STATUS_COLORS[item.status] + '30', color: STATUS_COLORS[item.status] }}>{item.status.slice(0, 3)}</span>
                             </div>
                           ))}

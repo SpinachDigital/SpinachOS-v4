@@ -21,6 +21,26 @@ const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
   preference: { bg: 'rgba(245,158,11,0.16)', color: '#b45309' },
 };
 
+// Blank titles used to render as an empty line above "@agent · date".
+// Fall back to an honest label instead of a blank row.
+const entryTitle = (e: Entry): string => {
+  const t = e.value?.title ?? e.value?.what ?? e.key;
+  return typeof t === 'string' && t.trim() ? t : 'Untitled entry';
+};
+
+// Probe/test rows sometimes carry garbage timestamps. Anything more than
+// 24h in the future is a data error — say so, keep the raw value in the
+// title attribute for debugging.
+const FUTURE_SKEW_MS = 24 * 60 * 60 * 1000;
+const entryDate = (iso: string | null | undefined): { text: string; raw: string } => {
+  const raw = iso ?? '';
+  const ms = new Date(raw).getTime();
+  if (!raw || Number.isNaN(ms) || ms - Date.now() > FUTURE_SKEW_MS) {
+    return { text: 'Date unavailable', raw };
+  }
+  return { text: new Date(ms).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }), raw };
+};
+
 export default function LedgerPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -148,6 +168,8 @@ export default function LedgerPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {entries.map((e) => {
               const ts = TYPE_STYLE[e.memory_type] || TYPE_STYLE.pattern;
+              const title = entryTitle(e);
+              const when = entryDate(e.created_at);
               return (
                 <article
                   key={e.id}
@@ -169,10 +191,10 @@ export default function LedgerPage() {
                   </span>
                   <div style={{ flex: 1, minWidth: 160 }}>
                     <p className="t-meta" style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)', wordBreak: 'break-word' }}>
-                      {e.value?.title || e.value?.what || e.key}
+                      {title}
                     </p>
-                    <p className="t-mono" style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>
-                      @{e.agent_profile} · {new Date(e.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                    <p className="t-mono" style={{ fontSize: 10.5, color: 'var(--text-faint)' }} title={when.raw || undefined}>
+                      @{e.agent_profile} · {when.text}
                     </p>
                   </div>
                   {e.expired && (
@@ -188,18 +210,21 @@ export default function LedgerPage() {
       </div>
 
       {/* Detail modal — full context: what, by whom, the payload at the time */}
-      {detail && (
+      {detail && (() => {
+        const mTitle = entryTitle(detail);
+        const mWhen = entryDate(detail.created_at);
+        return (
         <div onClick={() => setDetail(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,10,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: 'var(--card, #fff)', borderRadius: 16, padding: 20, maxWidth: 560, width: '100%', maxHeight: '80vh', overflowY: 'auto', border: '1px solid var(--border-hairline)' }}>
             <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
               <h3 className="t-meta" style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>
-                {detail.value?.title || detail.value?.what || detail.key}
+                {mTitle}
                 {detail.expired && <span className="t-mono" style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: 'var(--bg-2)', color: 'var(--text-faint)' }}>EXPIRED</span>}
               </h3>
               <button onClick={() => setDetail(null)} className="t-mono" style={{ minHeight: 44, padding: '4px 10px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-faint)', fontSize: 16 }}>✕</button>
             </div>
-            <p className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }}>
-              @{detail.agent_profile} · {detail.memory_type} · decided {new Date(detail.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+            <p className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 12 }} title={mWhen.raw || undefined}>
+              @{detail.agent_profile} · {detail.memory_type} · decided {mWhen.text}
               {detail.expires_at && ` · expires ${new Date(detail.expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`}
             </p>
             <pre className="t-mono" style={{ fontSize: 12, whiteSpace: 'pre-wrap', background: 'var(--bg-2, #fafaf7)', padding: 12, borderRadius: 10, border: '1px solid var(--border-soft)' }}>
@@ -207,7 +232,8 @@ export default function LedgerPage() {
             </pre>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

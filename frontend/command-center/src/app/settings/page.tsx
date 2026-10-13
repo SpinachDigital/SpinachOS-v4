@@ -42,6 +42,16 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function SettingsPage() {
   const { connected } = useWebSocket();
+  // The WS store boots `connected: false` before the first handshake —
+  // rendering "Offline" from that initial value is a lie. Only claim
+  // Offline after the connection has had a real chance to settle;
+  // before that, show a neutral connecting state.
+  const [wsSettled, setWsSettled] = useState(false);
+  useEffect(() => {
+    if (connected) { setWsSettled(true); return; }
+    const t = setTimeout(() => setWsSettled(true), 8000);
+    return () => clearTimeout(t);
+  }, [connected]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('integrations');
@@ -103,8 +113,8 @@ export default function SettingsPage() {
         </div>
         <div className="actions">
           <span className="live-badge">
-            <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-            {connected ? 'Live' : 'Offline'}
+            <span className={`dot ${!wsSettled ? 'dot-amber dot-pulse' : connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
+            {!wsSettled ? 'Connecting…' : connected ? 'Live' : 'Offline'}
           </span>
         </div>
       </div>

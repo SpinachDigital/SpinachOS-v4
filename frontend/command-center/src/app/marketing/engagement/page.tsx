@@ -68,26 +68,29 @@ const TIME_RANGES: TimeRange[] = [
 ];
 
 export default function EngagementAnalyticsPage() {
-  const { connected } = useWebSocket();
+  const { connected, everConnected } = useWebSocket();
   const [metrics, setMetrics] = useState<EngagementMetric[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>(TIME_RANGES[1]);
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [view, setView] = useState<'overview' | 'posts' | 'trends'>('overview');
 
   const fetchMetrics = useCallback(async () => {
+    setLoadError(null);
     try {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - timeRange.days);
       const params = new URLSearchParams({ recorded_at: `gte.${cutoff.toISOString()}` });
       if (selectedPlatform !== 'all') params.set('platform', selectedPlatform);
       const res = await apiFetch(`/api/v1/marketing/engagement?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMetrics(data);
-      }
-    } catch (e) {
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      setMetrics(data);
+    } catch (e: any) {
+      // Loud, honest error — never a fake-empty dashboard.
       console.error('Failed to fetch engagement:', e);
+      setLoadError(e?.message || 'Request failed');
     } finally {
       setLoading(false);
     }
@@ -140,8 +143,8 @@ export default function EngagementAnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-          <span className="t-mono" style={{ color: glass.text2, fontSize: 12 }}>{connected ? 'Live' : 'Offline'}</span>
+          <span className={`dot ${connected ? 'dot-green dot-pulse' : everConnected ? 'dot-red' : 'dot-gray'}`} />
+          <span className="t-mono" style={{ color: glass.text2, fontSize: 12 }}>{connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}</span>
           <button onClick={fetchMetrics} disabled={loading} className="px-3 py-1.5 text-sm rounded-lg border transition-colors" style={{ background: glass.bg, borderColor: glass.border, color: glass.text, cursor: loading ? 'not-allowed' : 'pointer' }}>{loading ? 'Refreshing…' : 'Refresh'}</button>
         </div>
       </div>
@@ -170,6 +173,12 @@ export default function EngagementAnalyticsPage() {
       <div className="flex-1 overflow-y-auto p-5">
         {loading ? (
           <div className="flex items-center justify-center h-64" style={{ color: glass.text2 }}><div className="t-mono">Loading analytics…</div></div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center justify-center h-64" style={{ color: glass.text2 }}>
+            <div className="t-meta mb-2" style={{ color: glass.text }}>Couldn't load engagement data</div>
+            <div className="t-meta mb-4" style={{ fontSize: 12 }}>{loadError}</div>
+            <button onClick={() => { setLoading(true); void fetchMetrics(); }} className="px-4 py-2 text-sm rounded-lg border" style={{ background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', cursor: 'pointer', minHeight: 44 }}>Tap to retry</button>
+          </div>
         ) : metrics.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64" style={{ color: glass.text2 }}>
             <div className="t-meta mb-2">No engagement data yet</div>
@@ -290,7 +299,7 @@ export default function EngagementAnalyticsPage() {
                           const rate = impressions > 0 ? ((total / impressions) * 100).toFixed(2) : '0.00';
                           return (
                             <tr key={`${post.platform}-${post.platform_post_id}`} style={{ borderBottom: `1px solid ${glass.border}` }}>
-                              <td className="p-3 t-meta truncate max-w-[200px]" style={{ color: glass.text }}>Post {post.platform_post_id.slice(0, 8)}</td>
+                              <td className="p-3 t-meta truncate max-w-[200px]" style={{ color: glass.text }}>{post.platform_post_id ? `Post ${post.platform_post_id.slice(0, 8)}` : 'Untitled post'}</td>
                               <td className="p-3">
                                 <div className="flex items-center gap-2">
                                   {PLATFORM_ICONS[post.platform]}

@@ -21,7 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 interface GrowItem {
   id: string;
-  title: string;
+  title: string | null;
   body_text: string | null;
   channel: string;
   status: string;
@@ -32,9 +32,13 @@ interface GrowItem {
   error: string | null;
 }
 
+// Never render a raw null/undefined title — every item gets a human name.
+const titleOf = (t: string | null | undefined) => (t && t.trim()) || 'Untitled post';
+
 export default function GrowPage() {
   const [items, setItems] = useState<GrowItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<GrowItem | null>(null);
   const [showNewIdea, setShowNewIdea] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -44,11 +48,15 @@ export default function GrowPage() {
   const [notice, setNotice] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
+    setLoadError(null);
     try {
       const res = await apiFetch('/api/v1/grow/calendar');
-      if (res.ok) setItems(await res.json());
-    } catch (e) {
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      setItems(await res.json());
+    } catch (e: any) {
+      // Loud, honest error — never a fake-empty calendar.
       console.error('Failed to fetch GROW calendar:', e);
+      setLoadError(e?.message || 'Request failed');
     } finally {
       setLoading(false);
     }
@@ -124,6 +132,17 @@ export default function GrowPage() {
 
       {loading ? (
         <p style={{ color: 'var(--muted-foreground)', fontSize: 13 }}>Loading calendar…</p>
+      ) : loadError ? (
+        <div style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12 }}>
+          <p style={{ fontSize: 14, fontWeight: 600, margin: '0 0 6px' }}>Couldn't load the calendar</p>
+          <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '0 0 14px' }}>{loadError}</p>
+          <button
+            onClick={() => { setLoading(true); void fetchData(); }}
+            style={{ minHeight: 44, padding: '0 18px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--accent)', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+          >
+            Tap to retry
+          </button>
+        </div>
       ) : items.length === 0 ? (
         <div style={{ padding: '40px 0', textAlign: 'left' }}>
           <p style={{ fontSize: 14, color: 'var(--muted-foreground)' }}>
@@ -150,7 +169,7 @@ export default function GrowPage() {
                       onClick={() => setSelected(item)}
                       style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', marginBottom: 6, borderRadius: 6, border: '1px solid var(--border-soft)', background: 'transparent', color: 'var(--foreground)', cursor: 'pointer', minHeight: 44 }}
                     >
-                      <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                      <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titleOf(item.title)}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
                         {item.channel}{item.style_score != null ? ` · style ${item.style_score}/10` : ''}{item.scheduled_for ? ` · ${new Date(item.scheduled_for).toLocaleString()}` : ''}
                       </div>
@@ -168,7 +187,7 @@ export default function GrowPage() {
               {queue.map(item => (
                 <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', marginBottom: 6, borderRadius: 8, background: 'var(--card)', border: '1px solid var(--border)' }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500 }}>{item.title} <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>({item.channel} · {item.status})</span></div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{titleOf(item.title)} <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>({item.channel} · {item.status})</span></div>
                     {item.scheduled_for && <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>due {new Date(item.scheduled_for).toLocaleString()}</div>}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -189,12 +208,15 @@ export default function GrowPage() {
               {history.map(item => (
                 <div key={item.id} style={{ padding: '10px 14px', marginBottom: 6, borderRadius: 8, background: 'var(--card)', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>
-                    <span style={{ color: STATUS_COLORS[item.status] }}>●</span> {item.title} <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>({item.channel})</span>
+                    <span style={{ color: STATUS_COLORS[item.status] }}>●</span> {titleOf(item.title)} <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>({item.channel})</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
                     {item.status === 'published'
-                      ? `${item.published_at ? new Date(item.published_at).toLocaleString() : ''} · post ${item.provider_post_id?.startsWith('dryrun-') ? 'dry-run (no provider connected)' : item.provider_post_id}`
-                      : `failed: ${item.error || 'unknown error'}`}
+                      ? (item.published_at ? new Date(item.published_at).toLocaleString() : '') +
+                        (item.provider_post_id
+                          ? ' · post ' + (item.provider_post_id.startsWith('dryrun-') ? 'dry-run (no provider connected)' : item.provider_post_id)
+                          : ' · no post id recorded')
+                      : 'failed: ' + (item.error || 'no reason was recorded')}
                   </div>
                 </div>
               ))}
@@ -208,7 +230,7 @@ export default function GrowPage() {
         <div onClick={() => setSelected(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'flex-end', zIndex: 50 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: 420, maxWidth: '92vw', background: 'var(--card)', borderLeft: '1px solid var(--border)', padding: 20, overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{selected.title}</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{titleOf(selected.title)}</h3>
               <button onClick={() => setSelected(null)} style={{ minHeight: 32, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--foreground)', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12 }}>

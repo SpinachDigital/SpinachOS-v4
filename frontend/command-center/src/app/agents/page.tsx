@@ -15,7 +15,7 @@ const HierarchyTree = dynamic(() => import('@/components/HierarchyTree'), {
 });
 
 export default function AgentsPage() {
-  const { connected, agentStates, feed } = useWebSocket();
+  const { connected, everConnected, agentStates, feed } = useWebSocket();
   const [agents, setAgents] = useState<Record<string, any>>({});
   const [workflows, setWorkflows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,12 +67,12 @@ export default function AgentsPage() {
       <div className="page-head">
         <div>
           <h1>Agent Fleet</h1>
-          <p className="sub">{Object.keys(agents).length} AI agents · {workflows.length} live workflows</p>
+          <p className="sub">{loading ? 'Loading agents…' : `${Object.keys(agents).length} AI agents · ${workflows.length} live workflows`}</p>
         </div>
         <div className="actions">
           <span className="live-badge">
-            <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-            {connected ? 'Live' : 'Offline'}
+            <span className={`dot ${connected ? 'dot-green dot-pulse' : everConnected ? 'dot-red' : 'dot-gray'}`} />
+            {connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}
           </span>
           <button className="btn btn-secondary btn-sm" onClick={fetchAgents} disabled={loading}>
             {loading ? 'Refreshing…' : 'Refresh'}

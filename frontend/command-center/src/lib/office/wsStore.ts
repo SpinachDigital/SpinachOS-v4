@@ -16,6 +16,9 @@ export interface FeedEntry {
 
 interface WSStore {
   connected: boolean;
+  // True once the socket has connected at least once this session.
+  // Lets UI show "Connecting…" instead of a wrong "Offline" on first paint.
+  everConnected: boolean;
   agentStates: Record<string, AgentStateEntry>;
   feed: FeedEntry[];
   pipelineVersion: number;
@@ -28,6 +31,7 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useWebSocketStore = create<WSStore>((set, get) => ({
   connected: false,
+  everConnected: false,
   agentStates: {},
   feed: [],
   pipelineVersion: 0,
@@ -62,7 +66,7 @@ export const useWebSocketStore = create<WSStore>((set, get) => ({
       const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
       const url = (apiBase.replace(/^http/, 'ws') + '/ws').trim();
       socket = new WebSocket(url);
-      socket.onopen = () => set({ connected: true });
+      socket.onopen = () => set({ connected: true, everConnected: true });
       socket.onmessage = (event) => {
         try {
           get().applyMessage(JSON.parse(event.data));
