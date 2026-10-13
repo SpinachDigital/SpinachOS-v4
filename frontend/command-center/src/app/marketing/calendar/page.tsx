@@ -320,7 +320,7 @@ export default function ContentCalendarPage() {
                           {shown.map(item => (
                             <div key={item.id} className="p-1.5 rounded border" style={{ background: THEME_COLORS[item.theme] + '15', borderColor: THEME_COLORS[item.theme] + '40', fontSize: 11 }}>
                               <div className="flex items-center gap-1 mb-0.5" style={{ minWidth: 0 }}>{PLATFORM_ICONS[item.platform]}<span className="truncate" style={{ color: THEME_COLORS[item.theme], minWidth: 0 }}>{slotLabels[item.slot_index] || `Slot ${item.slot_index}`}</span></div>
-                              <div className="line-clamp-2" style={{ color: glass.text, overflowWrap: 'break-word' }}>{item.content_text?.slice(0, 40)}</div>
+                              <div className="line-clamp-2" style={{ color: glass.text, overflowWrap: 'break-word' }}>{item.content_text}</div>
                               <span className="px-1 py-0 rounded text-[8px]" style={{ background: STATUS_COLORS[item.status] + '30', color: STATUS_COLORS[item.status] }}>{item.status.slice(0, 3)}</span>
                             </div>
                           ))}

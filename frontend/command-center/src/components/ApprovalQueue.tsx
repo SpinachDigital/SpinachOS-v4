@@ -27,12 +27,24 @@ interface ApprovalItem {
   created_at?: string;
   reviewed_at?: string;
   // Phase 6 GOAL 3 — triage fields (from /api/v1/approvals?triage=1)
-  risk_tier?: string;
-  metadata?: any;
+  risk_tier?: string;  metadata?: any;
   triage_score?: number;
   triage_reasons?: string[];
   blocking?: boolean;
 }
+
+// Backend sometimes double-escapes titles ("&#x2F;" instead of "/").
+// Decode entities once so cards never show raw "&#x2F;" text.
+const decodeEntities = (s: string): string => {
+  if (!s || !s.includes('&')) return s;
+  try {
+    const el = document.createElement('textarea');
+    el.innerHTML = s;
+    return el.value;
+  } catch {
+    return s;
+  }
+};
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: string }> = {
   content: { icon: <FileText className="w-4 h-4" />, tint: 'rgba(99,102,241,0.14)', label: 'Content' },
@@ -131,7 +143,7 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="flex items-center gap-2" style={{ flexWrap: 'wrap', marginBottom: 2 }}>
                       <h4 className="t-meta" style={{ fontWeight: 600, color: 'var(--text)', fontSize: 14, wordBreak: 'break-word' }}>
-                        {approval.title}
+                        {decodeEntities(approval.title)}
                       </h4>
                       <span className="t-mono" style={{
                         padding: '1px 8px', borderRadius: 99, fontSize: 10.5, fontWeight: 600,
