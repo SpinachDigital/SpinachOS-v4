@@ -44,7 +44,10 @@ export default function RightRail() {
         setLoadedOnce(true);
       } catch {
         // Phase 2 Task 3: API unreachable → loud error banner (not silent)
-        if (alive) setApiError('API :4000 unreachable — check scripts/start-all.ps1 or run the watchdog.');
+        if (alive) {
+          setApiError('API :4000 unreachable — check scripts/start-all.ps1 or run the watchdog.');
+          setLoadedOnce(true); // settle the pill: "Checking…" must never stick forever
+        }
       }
     };
     load();
