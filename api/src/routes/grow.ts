@@ -3,8 +3,13 @@
  * Planned → drafting (generate) → review → approved (inbox publish gate) →
  * scheduled → published/dry-run → failed(+attention card).
  *
+ * N3 §0 (this revision): the LAST legacy seam is closed. Every read and
+ * write here now runs on content_items — the ONE canonical calendar
+ * (N2 unification). marketing_content_calendar is never touched. The
+ * legacy slot shape survives only as a VIEW via slot-adapter.ts.
+ *
  * Reuses, never reinvents:
- *   - marketing_content_calendar (the real calendar surface, statuses live)
+ *   - content_items via slot-adapter (the canonical calendar surface)
  *   - the assets library (Sprint 11) — visuals pulled via reuse, not regenerated
  *   - the agent/gateway path (Sprint 11 instrumentation logs the cost)
  *   - the approval machinery (approvals rows type='publish' — THE pattern)
@@ -30,6 +35,8 @@ import { enqueue, registerHandler } from '../job-queue';
 // never a provider directly (adding a provider = one module, zero core changes).
 import { getActivePublisher, cleanError } from '../providers/publishing';
 import { styleBlockFor } from '../agents/style-contract';
+// N3 §0: the canonical-calendar adapter (legacy VIEW + canonical write-patch).
+import { getSlot, ciUpdate } from '../slot-adapter';
 
 // ---------------------------------------------------------------------
 // Provider selection — REMOVED (Phase 5 GOAL 9): the hardcoded Publora env
@@ -44,20 +51,21 @@ const publishMode = async () => ((await getActivePublisher()) ? 'live' : 'dry-ru
  * GROW event log — pipeline_events.workflow_id is NOT NULL (calendar slots
  * have no workflow), so GROW transitions log into the SLOT's metadata.history
  * (always visible via /grow/status + the calendar page). Never silent.
+ * N3 §0: reads/writes content_items (canonical) — never the legacy table.
  */
 export async function logSlotEvent(supabase: any, slotId: string, event: string, actor: string, detail: Record<string, unknown>) {
   try {
     const { data: slot } = await supabase
-      .from('marketing_content_calendar')
+      .from('content_items')
       .select('metadata')
       .eq('id', slotId)
       .single();
-    const history = [...((slot?.metadata as any)?.history || []), { event, actor, detail, at: new Date().toISOString() }].slice(-50);
-    await supabase.from('marketing_content_calendar').update({ metadata: { ...(slot?.metadata || {}), history } }).eq('id', slotId);
+    const history = [...(((slot?.metadata as any)?.history) || []), { event, actor, detail, at: new Date().toISOString() }].slice(-50);
+    await supabase.from('content_items').update({ metadata: { ...((slot?.metadata as any) || {}), history } }).eq('id', slotId);
     // When the slot belongs to a workflow (rare), mirror into pipeline_events.
-    if (slot?.metadata?.workflow_id) {
+    if ((slot?.metadata as any)?.workflow_id) {
       await supabase.from('pipeline_events').insert({
-        workflow_id: slot.metadata.workflow_id, client_id: slot.metadata?.client_id || null,
+        workflow_id: (slot!.metadata as any).workflow_id, client_id: (slot!.metadata as any)?.client_id || null,
         event, actor, detail,
       });
     }
@@ -71,18 +79,14 @@ export async function logSlotEvent(supabase: any, slotId: string, event: string,
 // ---------------------------------------------------------------------
 app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
   try {
-    const { data: slot, error: slotErr } = await supabase
-      .from('marketing_content_calendar')
-      .select('*')
-      .eq('id', req.params.slotId)
-      .single();
-    if (slotErr || !slot) return res.status(404).json({ error: 'slot not found' });
+    const slot = await getSlot(supabase, req.params.slotId);
+    if (!slot) return res.status(404).json({ error: 'slot not found' });
     if (slot.status !== 'planned' && slot.status !== 'drafting') {
       return res.status(409).json({ error: `slot is ${slot.status} — only planned/drafting slots generate` });
     }
 
-    // Drafting (visible, not silent).
-    await supabase.from('marketing_content_calendar').update({ status: 'drafting', updated_at: new Date().toISOString() }).eq('id', slot.id);
+    // Drafting (visible, not silent). N3 §0: canonical write via ciUpdate.
+    await supabase.from('content_items').update(ciUpdate({ status: 'drafting' })).eq('id', slot.id);
 
     // Text via the gateway path (Sprint 11 instrumentation logs the cost).
     const brief = slot.topic || slot.theme || 'the scheduled topic';
@@ -101,14 +105,14 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
       .order('created_at', { ascending: false })
       .limit(10);
     const reusable = (libraryHits || []).find((a: any) =>
-      String(a.title).toLowerCase().includes(String(slot.theme || '').toLowerCase()) || a.metadata?.client_id === slot.metadata?.client_id);
+      String(a.title).toLowerCase().includes(String(slot.theme || '').toLowerCase()) || a.metadata?.client_id === (slot.metadata as any)?.client_id);
     let assetRef: string | null = null;
     if (reusable) {
       // Reuse (visible, not silent — logged in the slot's history).
       const { data: hit } = await supabase.from('deliverables').select('id, title, client_id, content, file_url, kind').eq('id', reusable.id).single();
-      if (hit && slot.metadata?.workflow_id) {
+      if (hit && (slot.metadata as any)?.workflow_id) {
         await supabase.from('deliverables').insert({
-          client_id: hit.client_id, workflow_id: slot.metadata.workflow_id,
+          client_id: hit.client_id, workflow_id: (slot.metadata as any).workflow_id,
           title: `${hit.title} (reused)`, kind: hit.kind, content: hit.content, file_url: hit.file_url, version: 1,
           metadata: { reused_from: hit.id, note: `GROW generate for slot ${slot.id}` },
         });
@@ -119,14 +123,13 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
 
     // Full preview + review status. Draft without a usage row is incomplete —
     // runGatewayTask already logged the usage row (Sprint 11 instrumentation).
-    // Sprint 13: the calendar has no asset_ref column — the visual reference
-    // lives in metadata.asset_ref (schema-honest, no migration needed).
+    // N3 §0: canonical fields body_text + metadata.review/asset_ref.
+    const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slot.id).single();
     const { data: updated, error: upErr } = await supabase
-      .from('marketing_content_calendar')
+      .from('content_items')
       .update({
-        status: 'review',
-        content_text: text,
-        metadata: { ...(slot.metadata || {}), generated_at: new Date().toISOString(), generated_for: brief, asset_ref: assetRef },
+        ...ciUpdate({ status: 'review', content_text: text }),
+        metadata: { ...((cur?.metadata as any) || {}), review: true, generated_at: new Date().toISOString(), generated_for: brief, asset_ref: assetRef },
       })
       .eq('id', slot.id)
       .select()
@@ -139,8 +142,8 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
     // the slot is wedged — reset to planned so the founder can retry.
     if (/aborted|timeout/i.test(e.message || '')) {
       try {
-        await supabase.from('marketing_content_calendar')
-          .update({ status: 'planned', updated_at: new Date().toISOString() })
+        await supabase.from('content_items')
+          .update(ciUpdate({ status: 'planned' }))
           .eq('id', req.params.slotId);
       } catch { /* best-effort reset */ }
     }
@@ -153,17 +156,13 @@ app.post('/api/v1/grow/generate/:slotId', authMiddleware, async (req, res) => {
 // ---------------------------------------------------------------------
 app.post('/api/v1/grow/submit/:slotId', authMiddleware, async (req, res) => {
   try {
-    const { data: slot, error: slotErr } = await supabase
-      .from('marketing_content_calendar')
-      .select('*')
-      .eq('id', req.params.slotId)
-      .single();
-    if (slotErr || !slot) return res.status(404).json({ error: 'slot not found' });
+    const slot = await getSlot(supabase, req.params.slotId);
+    if (!slot) return res.status(404).json({ error: 'slot not found' });
     if (slot.status !== 'review') return res.status(409).json({ error: `slot is ${slot.status} — only review slots submit` });
 
     // The publish approval (THE pattern — same object, same mutation).
     const { data: approval, error } = await supabase.from('approvals').insert({
-      client_id: slot.metadata?.client_id || null,
+      client_id: (slot.metadata as any)?.client_id || null,
       type: 'publish',
       title: `Publish ${slot.platform} post — ${slot.date} slot ${slot.slot_index}`,
       description: String(slot.content_text || '').slice(0, 500),
@@ -174,12 +173,16 @@ app.post('/api/v1/grow/submit/:slotId', authMiddleware, async (req, res) => {
         kind: 'publish', slot_id: slot.id, platform: slot.platform,
         scheduled_at: slot.scheduled_at || `${slot.date}T09:00:00+05:30`,
         preview_text: String(slot.content_text || '').slice(0, 800),
-        preview_media: slot.asset_ref || null,
+        preview_media: slot.asset_ref,
       },
     }).select().single();
     if (error) throw error;
 
-    await supabase.from('marketing_content_calendar').update({ updated_at: new Date().toISOString(), metadata: { ...(slot.metadata || {}), approval_id: approval.id } }).eq('id', slot.id);
+    const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slot.id).single();
+    await supabase.from('content_items').update({
+      updated_at: new Date().toISOString(),
+      metadata: { ...((cur?.metadata as any) || {}), approval_id: approval.id },
+    }).eq('id', slot.id);
     emitApproval({ ...approval, action: 'created' });
     res.status(201).json({ ok: true, approval });
   } catch (e: any) {
@@ -196,22 +199,25 @@ app.post('/api/v1/grow/decision/:approvalId', authMiddleware, async (req, res) =
     if (approval.type !== 'publish') return res.status(400).json({ error: 'not a publish approval' });
     const slotId = approval.payload_json?.slot_id;
     if (!slotId) return res.status(400).json({ error: 'approval has no slot link' });
-    const { data: slot0 } = await supabase.from('marketing_content_calendar').select('*').eq('id', slotId).single();
+    const slot0 = await getSlot(supabase, slotId);
 
     if (approved) {
       // Approve → approved + scheduled (the scheduler dispatches at time).
-      // Sprint 13: the calendar has no approval_id column — the link lives in
-      // metadata.approval_id (schema-honest).
+      // Sprint 13: approval_id lives in metadata (schema-honest).
       await supabase.from('approvals').update({ status: 'approved', approved_by: 'founder', reviewed_at: new Date().toISOString() }).eq('id', approval.id);
       const scheduledAt = approval.payload_json?.scheduled_at || new Date().toISOString();
+      const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slotId).single();
       const { data: slot, error: sErr } = await supabase
-        .from('marketing_content_calendar')
-        .update({ status: 'scheduled', scheduled_at: scheduledAt, updated_at: new Date().toISOString(), metadata: { ...(slot0?.metadata || {}), approval_id: approval.id } })
+        .from('content_items')
+        .update({
+          ...ciUpdate({ status: 'scheduled', scheduled_at: scheduledAt }),
+          metadata: { ...((cur?.metadata as any) || {}), approval_id: approval.id },
+        })
         .eq('id', slotId)
         .select()
         .single();
       if (sErr) throw sErr;
-      await logSlotEvent(supabase, slotId, 'publish_approved', 'founder', { approval_id: approval.id, scheduled_at: scheduledAt, platform: slot.platform });
+      await logSlotEvent(supabase, slotId, 'publish_approved', 'founder', { approval_id: approval.id, scheduled_at: scheduledAt, platform: (slot as any)?.channel });
       res.json({ ok: true, slot });
     } else {
       // Reject → reason REQUIRED (Sprint 10 nit-4 rule), slot back to drafting.
@@ -219,9 +225,13 @@ app.post('/api/v1/grow/decision/:approvalId', authMiddleware, async (req, res) =
         return res.status(400).json({ error: 'reason required — a rejection without a reason is not a decision' });
       }
       await supabase.from('approvals').update({ status: 'rejected', approved_by: 'founder', reviewed_at: new Date().toISOString() }).eq('id', approval.id);
+      const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slotId).single();
       const { data: slot, error: sErr } = await supabase
-        .from('marketing_content_calendar')
-        .update({ status: 'drafting', updated_at: new Date().toISOString(), metadata: { rejection_reason: String(reason).trim() } })
+        .from('content_items')
+        .update({
+          ...ciUpdate({ status: 'drafting' }),
+          metadata: { ...((cur?.metadata as any) || {}), rejection_reason: String(reason).trim(), review: false },
+        })
         .eq('id', slotId)
         .select()
         .single();
@@ -240,27 +250,28 @@ app.post('/api/v1/grow/decision/:approvalId', authMiddleware, async (req, res) =
 // dead-letter visible. GOAL 9: publishing via getActivePublisher() (registry
 // interface call — no direct provider import). Nothing dispatches without an
 // approved approval row — the approval IS the publish button.
+// N3 §0: the due-slot scan reads content_items (canonical) directly.
 // ---------------------------------------------------------------------
 const dispatchDueSlots = async () => {
   try {
     const now = new Date().toISOString();
     const { data: due, error } = await supabase
-      .from('marketing_content_calendar')
+      .from('content_items')
       .select('*')
       .eq('status', 'scheduled')
-      .lte('scheduled_at', now)
+      .lte('scheduled_for', now)
       .limit(10);
     if (error) throw error;
     for (const slot of due || []) {
       // Safety law: no approved approval → no dispatch (deny-by-default).
       // Sprint 13: approval_id lives in metadata (schema-honest).
-      if (!slot.metadata?.approval_id) {
+      if (!(slot.metadata as any)?.approval_id) {
         console.warn(`[grow] slot ${slot.id} scheduled WITHOUT approval — skipping (deny-by-default)`);
         continue;
       }
-      const { data: appr } = await supabase.from('approvals').select('id, status').eq('id', slot.metadata.approval_id).single();
+      const { data: appr } = await supabase.from('approvals').select('id, status').eq('id', (slot.metadata as any).approval_id).single();
       if (!appr || appr.status !== 'approved') {
-        console.warn(`[grow] slot ${slot.id} approval ${slot.metadata.approval_id} not approved — skipping`);
+        console.warn(`[grow] slot ${slot.id} approval ${(slot.metadata as any).approval_id} not approved — skipping`);
         continue;
       }
       // Phase 5 GOAL 1: enqueue the publish job (retry with backoff on
@@ -281,13 +292,15 @@ const dispatchDueSlots = async () => {
 
 // The publish job handler — the actual scheduling-API call (queued; the
 // queue retries with backoff, dead-letters visibly).
+// N3 §0: reads the canonical row; writes canonical fields (body_text,
+// provider_post_id, published_at, error) + metadata merges.
 async function handlePublishJob(payload: { slot_id: string }) {
-  const { data: slot } = await supabase.from('marketing_content_calendar').select('*').eq('id', payload.slot_id).single();
+  const { data: slot } = await supabase.from('content_items').select('*').eq('id', payload.slot_id).single();
   if (!slot) return; // slot deleted — job done, nothing to publish
   if (slot.status !== 'scheduled') return; // already published/failed — idempotent
   // Safety law re-checked at execution time (deny-by-default).
-  if (!slot.metadata?.approval_id) throw new Error('slot has no approval — deny-by-default');
-  const { data: appr } = await supabase.from('approvals').select('id, status').eq('id', slot.metadata.approval_id).single();
+  if (!(slot.metadata as any)?.approval_id) throw new Error('slot has no approval — deny-by-default');
+  const { data: appr } = await supabase.from('approvals').select('id, status').eq('id', (slot.metadata as any).approval_id).single();
   if (!appr || appr.status !== 'approved') throw new Error('approval not approved — deny-by-default');
 
   // GOAL 9: the registry interface call — never a direct provider import.
@@ -295,10 +308,10 @@ async function handlePublishJob(payload: { slot_id: string }) {
   const mode = publisher ? 'live' : 'dry-run';
   const result = publisher
     ? await publisher.schedule({
-        platform: slot.platform,
-        text: String(slot.content_text || ''),
-        mediaUrls: slot.asset_ref ? [slot.asset_ref] : [],
-        scheduledAt: slot.scheduled_at,
+        platform: slot.channel,
+        text: String(slot.body_text || ''),
+        mediaUrls: (slot.metadata as any)?.asset_ref ? [(slot.metadata as any).asset_ref] : [],
+        scheduledAt: slot.scheduled_for,
       })
     : { mode: 'dry-run' as const, scheduledId: `dryrun-${Date.now()}` };
 
@@ -306,26 +319,32 @@ async function handlePublishJob(payload: { slot_id: string }) {
   if (result.error) {
     // failed + the error stored + an attention card in THE INBOX (the queue
     // ALSO retries this job with backoff until max attempts — both paths).
-    await supabase.from('marketing_content_calendar').update({
-      status: 'failed', updated_at: new Date().toISOString(),
-      metadata: { ...(slot.metadata || {}), publish_error: result.error, publish_mode: mode },
+    const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slot.id).single();
+    await supabase.from('content_items').update({
+      status: 'failed',
+      error: String(result.error).slice(0, 1000),
+      updated_at: new Date().toISOString(),
+      metadata: { ...((cur?.metadata as any) || {}), publish_error: result.error, publish_mode: mode },
     }).eq('id', slot.id);
     await supabase.from('approvals').insert({
-      client_id: slot.metadata?.client_id || null, type: 'publish',
-      title: `PUBLISH FAILED — ${slot.platform} post ${slot.date} slot ${slot.slot_index}`,
-      description: cleanError(result.error), platform: slot.platform, status: 'pending',
+      client_id: (slot.metadata as any)?.client_id || null, type: 'publish',
+      title: `PUBLISH FAILED — ${slot.channel} post ${(slot.scheduled_for || '').slice(0, 10)} slot ${(slot.metadata as any)?.slot_index ?? 0}`,
+      description: cleanError(result.error), platform: slot.channel, status: 'pending',
       requested_by: 'grow', payload_json: { kind: 'publish_failure', slot_id: slot.id, error: cleanError(result.error) },
     });
     await logSlotEvent(supabase, slot.id, 'publish_failed', 'grow:scheduler', { error: result.error, mode });
     throw new Error(result.error); // → the queue retries with backoff
   }
-  await supabase.from('marketing_content_calendar').update({
-    status: 'published', published_at: new Date().toISOString(), post_id: postId,
+  const { data: cur2 } = await supabase.from('content_items').select('metadata').eq('id', slot.id).single();
+  await supabase.from('content_items').update({
+    status: 'published',
+    provider_post_id: postId,
+    published_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    metadata: { ...(slot.metadata || {}), publish_mode: mode, publisher: publisher?.name || 'dry-run' },
+    metadata: { ...((cur2?.metadata as any) || {}), publish_mode: mode, publisher: publisher?.name || 'dry-run' },
   }).eq('id', slot.id);
-  await logSlotEvent(supabase, slot.id, 'published', 'grow:scheduler', { post_id: postId, mode, platform: slot.platform, publisher: publisher?.name || 'dry-run' });
-  console.log(`[grow] ${mode}: slot ${slot.id.slice(0, 8)} published to ${slot.platform} (${postId}) via ${publisher?.name || 'dry-run'}`);
+  await logSlotEvent(supabase, slot.id, 'published', 'grow:scheduler', { post_id: postId, mode, platform: slot.channel, publisher: publisher?.name || 'dry-run' });
+  console.log(`[grow] ${mode}: slot ${slot.id.slice(0, 8)} published to ${slot.channel} (${postId}) via ${publisher?.name || 'dry-run'}`);
 }
 
 // The scheduler — every 60s (due slots only; the workflow-watcher pattern).
@@ -334,7 +353,7 @@ export const startGrowScheduler = () => {
   if (_growSchedulerStarted) return;
   _growSchedulerStarted = true;
   setInterval(() => { void dispatchDueSlots(); }, 60_000);
-  console.log(`[grow-scheduler] armed: */60s — scheduled slots queue publish jobs at time`);
+  console.log(`[grow-scheduler] armed: */60s — scheduled slots queue publish jobs at time (content_items)`);
 };
 
 // Phase 5 GOAL 1: the publish job handler registration (called from index.ts
@@ -348,8 +367,8 @@ export function registerPublishJobHandler() {
 // ---------------------------------------------------------------------
 app.get('/api/v1/grow/status/:slotId', authMiddleware, async (req, res) => {
   try {
-    const { data: slot, error } = await supabase.from('marketing_content_calendar').select('*').eq('id', req.params.slotId).single();
-    if (error || !slot) return res.status(404).json({ error: 'slot not found' });
+    const slot = await getSlot(supabase, req.params.slotId);
+    if (!slot) return res.status(404).json({ error: 'slot not found' });
     // Status history: the slot's metadata.history (GROW transitions — visible,
     // not silent; pipeline_events has NOT NULL workflow_id and slots don't
     // belong to workflows).

@@ -45,6 +45,7 @@ import './routes/pipeline';
 import './routes/gates';
 import './routes/pipeline-index';
 import './routes/nudges';      // N2 §4: proactive nudges — propose, never auto-act
+import './routes/events';      // N3 §1: typed agent event stream read side
 import './routes/deliverables';
 import './routes/pnl';
 import './routes/assets';

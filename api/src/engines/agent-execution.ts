@@ -7,6 +7,8 @@
 import {
   supabase, emitAgentState, emitTaskLifecycle, emitPipelineEvent,
 } from '../ctx';
+// N3 §1: typed agent event stream (shape contract: { type, at, actor, summary, ref? })
+import { emitAgentEvent, flushAgentEvents } from '../agent-events';
 import { resolvePath, runProfileTask, runSpecialistTask, runGatewayTask } from '../bridge';
 import { recordGatewayFailure, recordGatewaySuccess, gatewayBreakerAllows } from '../breaker-telemetry';
 import { extractDeliverable } from '../deliverable-extract';
@@ -165,11 +167,15 @@ export async function executeAgentTask(agent: string, task: string, source: stri
 
   // 3. Mark agent working + emit (single lifecycle emitter — identical WS for all paths)
   emitTaskLifecycle(taskRow.id, agent, 'running', `Executing: ${task.slice(0, 60)}`, { source, path: rule.path, task_kind: inferredKind, title: (taskRow.title || task).slice(0, 120), current_step: `Executing: ${task.slice(0, 50)}` });
+  // N3 §1: typed stream — the run has started (first event in the sequence).
+  void emitAgentEvent('progress', agent, `Started: ${task.slice(0, 80)}`, { taskId: taskRow.id, ref: { source, path: rule.path, task_kind: inferredKind } });
 
   // 3. Run the LLM in the background — completion updates DB + emits events
   void (async () => {
     try {
       let output: string, model: string, via: string;
+      // N3 §1: the dispatch itself is a tool_call event (which path served it).
+      void emitAgentEvent('tool_call', agent, `Dispatch via ${rule.path === 'profile' ? `profile:${rule.profile}` : rule.path === 'specialist' ? `specialist:${rule.bench}` : 'gateway'}`, { taskId: taskRow.id, ref: { path: rule.path } });
       if (rule.path === 'profile' && rule.profile) {
         const r = await runProfileTask(rule.profile, task);
         output = r.output; model = r.model; via = r.via;
@@ -198,9 +204,14 @@ export async function executeAgentTask(agent: string, task: string, source: stri
         .update({
           status: 'done',
           progress: 100,
-          // preserve the linkage map (nit 7) — the completion update must not
-          // wipe workflow_id/step_name/client_id from the insert metadata
-          metadata: { ...(taskRow.metadata || {}), source, model, output, via, completed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
+          // N3 §1: taskRow.metadata is the INSERT-time snapshot; the event ring
+          // (emitAgentEvent) writes metadata.events DURING the run, so a naive
+          // spread here erases them. Flush in-flight emits, read fresh, merge.
+          metadata: await (async () => {
+            await flushAgentEvents();
+            const { data: fresh } = await supabase.from('tasks').select('metadata').eq('id', taskRow.id).single();
+            return { ...((fresh?.metadata as any) || taskRow.metadata || {}), source, model, output, via, completed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path };
+          })(),
         })
         .eq('id', taskRow.id)
         .select()
@@ -221,6 +232,8 @@ export async function executeAgentTask(agent: string, task: string, source: stri
       } catch { /* non-fatal */ }
       emitAgentState(agent, 'idle', `Completed: ${task.slice(0, 50)}`);
       emitTaskLifecycle(taskRow.id, agent, 'done', `Completed: ${task.slice(0, 50)}`, { task_id: taskRow.id, model, via });
+      // N3 §1: typed stream — the terminal event.
+      void emitAgentEvent('done', agent, `Completed via ${via}${model ? ` (${model})` : ''}`, { taskId: taskRow.id, ref: { model, via } });
       // Sprint 12 §2: ledger write path — task completions with notable
       // outcomes are recorded (a decision nobody recorded is a decision
       // nobody can replay).
@@ -305,12 +318,18 @@ export async function executeAgentTask(agent: string, task: string, source: stri
         .from('tasks')
         .update({
           status: 'blocked',
-          // preserve the linkage map (nit 7) on failure too
-          metadata: { ...(taskRow.metadata || {}), source, via: viaAtFailure, error: String(e?.message || 'unknown').slice(0, 500), failed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path },
+          // N3 §1: same snapshot hazard as the done path — flush, fresh-read, merge.
+          metadata: await (async () => {
+            await flushAgentEvents();
+            const { data: freshFailMeta } = await supabase.from('tasks').select('metadata').eq('id', taskRow.id).single();
+            return { ...((freshFailMeta?.metadata as any) || taskRow.metadata || {}), source, via: viaAtFailure, error: String(e?.message || 'unknown').slice(0, 500), failed_at: new Date().toISOString(), task_kind: inferredKind, path: rule.path };
+          })(),
         })
         .eq('id', taskRow.id);
       emitAgentState(agent, 'blocked', `Failed: ${String(e?.message || '').slice(0, 50)}`);
       emitTaskLifecycle(taskRow.id, agent, 'blocked', `Failed: ${String(e?.message || '').slice(0, 60)}`, { task_id: taskRow.id, error: String(e?.message || '').slice(0, 200) });
+      // N3 §1: typed stream — the error event.
+      void emitAgentEvent('error', agent, `Failed: ${String(e?.message || 'unknown').slice(0, 120)}`, { taskId: taskRow.id, ref: { via: viaAtFailure } });
     }
   })();
 

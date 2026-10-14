@@ -10,9 +10,13 @@ import { app, authMiddleware, supabase, emitApproval } from '../ctx';
 // Sprint 13: logSlotEvent — GROW slot transitions (publish approvals from
 // THE INBOX page ride the same machinery).
 import { logSlotEvent } from './grow';
+// N3 §0: canonical-calendar adapter for the publish gate.
+import { getSlot, ciUpdate } from '../slot-adapter';
 import { recordApprovalDecision, recordFounderCorrection } from '../memory-ledger';
 import { scoreCards } from '../inbox-triage';
 import { closeTicketInboxCard } from '../ticket-inbox';
+// N3 §1: gate decisions ride the typed event stream too.
+import { emitAgentEvent } from '../agent-events';
 app.get('/api/v1/approvals', authMiddleware, async (req, res) => {
   try {
     const { client_id, status, triage } = req.query;
@@ -145,19 +149,23 @@ app.post('/api/v1/approvals/:id/approve', authMiddleware, async (req, res) => {
     // Sprint 13: publish cards ride the SAME machinery — approving a
     // type=publish card schedules the linked calendar slot (the approval IS
     // the publish button, same object THE INBOX shows).
+    // N3 §0: slot lives in content_items (canonical) via slot-adapter.
     if ((data as any)?.payload_json?.kind === 'publish' && (data as any)?.payload_json?.slot_id) {
       const slotId = (data as any).payload_json.slot_id;
-      const { data: slot0 } = await supabase.from('marketing_content_calendar').select('*').eq('id', slotId).single();
-      if (slot0 && slot0.status === 'review') {
-        const scheduledAt = (data as any).payload_json?.scheduled_at || slot0.scheduled_at || new Date().toISOString();
-        await supabase.from('marketing_content_calendar').update({
-          status: 'scheduled', scheduled_at: scheduledAt, updated_at: new Date().toISOString(),
-          metadata: { ...(slot0.metadata || {}), approval_id: data.id },
+      const slot = await getSlot(supabase, slotId);
+      if (slot && slot.status === 'review') {
+        const scheduledAt = (data as any).payload_json?.scheduled_at || slot.scheduled_at || new Date().toISOString();
+        const { data: cur } = await supabase.from('content_items').select('metadata').eq('id', slotId).single();
+        await supabase.from('content_items').update({
+          ...ciUpdate({ status: 'scheduled', scheduled_at: scheduledAt }),
+          metadata: { ...((cur?.metadata as any) || {}), approval_id: data.id },
         }).eq('id', slotId);
-        await logSlotEvent(supabase, slotId, 'publish_approved', 'founder', { approval_id: data.id, scheduled_at: scheduledAt, platform: slot0.platform, via: 'approvals-page' });
+        await logSlotEvent(supabase, slotId, 'publish_approved', 'founder', { approval_id: data.id, scheduled_at: scheduledAt, platform: slot.platform, via: 'approvals-page' });
       }
     }
     emitApproval({ ...data, action: 'approved' });
+    // N3 §1: the decision is a typed event on the stream.
+    void emitAgentEvent('approval_decided', 'founder', `Approved: ${String(data.title || 'card').slice(0, 80)}`, { ref: { approval_id: data.id, kind: (data as any).payload_json?.kind || null } });
     // Sprint 12 §2: ledger write path — approval decisions are recorded
     // (a decision nobody recorded is a decision nobody can replay).
     void recordApprovalDecision(supabase, {
@@ -216,6 +224,8 @@ app.post('/api/v1/approvals/:id/reject', authMiddleware, async (req, res) => {
       }).eq('id', (data as any).payload_json.draft_id);
     }
     emitApproval({ ...data, action: 'rejected', rejection_reason: reason || null });
+    // N3 §1: the decision is a typed event on the stream.
+    void emitAgentEvent('approval_decided', 'founder', `Rejected: ${String(data.title || 'card').slice(0, 80)}`, { ref: { approval_id: data.id, kind: (data as any).payload_json?.kind || null, reason: reason || null } });
     // Sprint 12 §2: ledger write paths — the decision AND the founder
     // correction (a rejection IS a correction: the lesson is recorded).
     void recordApprovalDecision(supabase, {
@@ -250,6 +260,105 @@ app.post('/api/v1/approvals', authMiddleware, async (req, res) => {
     if (error) throw error;
     emitApproval({ ...data, action: 'created' });
     res.status(201).json(data);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// N3 §2 — fresh gate facts at confirm time. The card's copy goes stale
+// between queue render and the founder's click; this endpoint computes
+// what the action will do RIGHT NOW (live reads, never cached on the row)
+// + `facts_at`. Shape: { fresh_facts: { headline, details[], cost_estimate? },
+//                        facts_at, stale: boolean }
+// ---------------------------------------------------------------------
+app.get('/api/v1/approvals/:id/facts', authMiddleware, async (req, res) => {
+  try {
+    const { data: a, error } = await supabase.from('approvals').select('*').eq('id', req.params.id).single();
+    if (error || !a) return res.status(404).json({ error: 'approval not found' });
+    const p = (a as any).payload_json || {};
+    const details: string[] = [];
+    let headline = a.title || 'This action';
+    let costEstimate: string | null = null;
+
+    if ((a as any).type === 'publish' && p.slot_id) {
+      const { data: slot } = await supabase.from('content_items').select('body_text, channel, scheduled_for, status').eq('id', p.slot_id).single();
+      if (slot) {
+        headline = `Publish to ${slot.channel}`;
+        details.push(`Text now: "${String(slot.body_text || '(empty)').slice(0, 200)}"`);
+        details.push(`Scheduled for: ${slot.scheduled_for || 'not set'}`);
+        if (String(slot.body_text || '') !== String(p.preview_text || '')) {
+          details.push('⚠ Draft changed since this card was created — this is the CURRENT text.');
+        }
+      } else {
+        details.push('⚠ The linked calendar item no longer exists.');
+      }
+    } else if (p.kind === 'outreach' && p.draft_id) {
+      const { data: d } = await supabase.from('outreach_drafts').select('subject, body, updated_at').eq('id', p.draft_id).single();
+      if (d) {
+        headline = 'Send outreach email';
+        details.push(`Subject now: "${String(d.subject || '(none)').slice(0, 120)}"`);
+        details.push(`Body now: "${String(d.body || '(empty)').slice(0, 200)}"`);
+      } else {
+        details.push('⚠ The linked draft no longer exists.');
+      }
+    } else if (p.kind === 'lead_qualified' && p.lead_id) {
+      const { data: l } = await supabase.from('leads').select('name, email, company, score, status').eq('id', p.lead_id).single();
+      if (l) {
+        headline = `Qualify lead — ${l.name || 'unnamed'}`;
+        details.push(`Company: ${l.company || '—'} · Email: ${l.email || '—'} · Score now: ${l.score ?? '—'}`);
+        details.push(`Approve marks it QUALIFIED; reject disqualifies with your reason.`);
+      } else {
+        details.push('⚠ The linked lead no longer exists.');
+      }
+    } else {
+      // unknown shape: show the raw payload fields labeled, never a dead end
+      details.push(`Card type: ${(a as any).type || 'unknown'}`);
+      for (const [k, v] of Object.entries(p).slice(0, 6)) {
+        const s = typeof v === 'string' ? v : JSON.stringify(v);
+        details.push(`${k}: ${String(s || '').slice(0, 140)}`);
+      }
+    }
+
+    res.json({
+      fresh_facts: { headline, details, cost_estimate: costEstimate },
+      facts_at: new Date().toISOString(),
+      stale: false, // this response IS the fresh computation
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---------------------------------------------------------------------
+// N3 §3 — fast decisions + N3 §4 snooze. Decisions persist synchronously;
+// side effects are queued (non-blocking) — see approve/reject above for the
+// full mutation set. Snooze needs the migration (migration-n3-snooze.sql);
+// while the column is absent, a snooze still returns ok:false with the
+// SQL to run — the frontend shows Watching from its own state meanwhile.
+// ---------------------------------------------------------------------
+app.post('/api/v1/approvals/:id/snooze', authMiddleware, async (req, res) => {
+  try {
+    const until = req.body?.until || new Date(Date.now() + 24 * 3600 * 1000).toISOString(); // default: tomorrow this time
+    const { data, error } = await supabase
+      .from('approvals')
+      .update({ snoozed_until: until, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (error) {
+      // column not migrated yet — honest response, never a fake ok
+      if (/column .* does not exist|snoozed_until/i.test(error.message || '')) {
+        return res.status(501).json({
+          error: 'snoozed_until column not migrated yet',
+          run: 'supabase/migration-n3-snooze.sql',
+          until,
+        });
+      }
+      throw error;
+    }
+    emitApproval({ ...data, action: 'snoozed' });
+    res.json({ ok: true, approval: data, snoozed_until: until });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

@@ -134,17 +134,28 @@ app.post('/api/v1/marketing/calendar/generate-week', authMiddleware, async (req,
         const scheduled = new Date(date);
         scheduled.setHours(h, m, 0, 0);
 
+        // N3 §0: writes go to content_items (canonical). The natural key
+        // (date, slot_index, platform) is enforced in metadata via a
+        // deterministic title; dedupe checked before insert (no unique
+        // index exists on metadata, so upsert semantics are done manually).
+        const mark = `weekgen:${dateStr}:${slot}:x`;
+        const { data: existing } = await supabase
+          .from('content_items')
+          .select('id')
+          .contains('metadata', { weekgen_key: mark })
+          .limit(1);
+        if (existing && existing.length) continue;
         const { data, error } = await supabase
-          .from('marketing_content_calendar')
-          .upsert({
-            date: dateStr,
-            slot_index: slot,
-            theme,
-            platform: 'x',
-            status: 'planned',
-            scheduled_at: scheduled.toISOString(),
-            metadata: { auto_generated: true },
-          }, { onConflict: 'date,slot_index,platform' })
+          .from('content_items')
+          .insert({
+            title: `${theme} post — ${dateStr}`,
+            channel: 'x',
+            body_text: null,
+            scheduled_for: scheduled.toISOString(),
+            status: 'idea',
+            created_by: 'founder',
+            metadata: { auto_generated: true, weekgen_key: mark, date: dateStr, slot_index: slot, theme },
+          })
           .select()
           .single();
         if (!error && data) created.push(data);

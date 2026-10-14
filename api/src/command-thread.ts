@@ -118,15 +118,16 @@ async function fastAnswer(command: string): Promise<string | null> {
   const t = command.toLowerCase().trim();
 
   // "have we posted / did we publish ..." → calendar lookup
+  // N3 §0: canonical calendar = content_items (never the legacy table).
   if (/\b(have we|did we|kya humne)\b/.test(t) && /\b(post(ed)?|publish(ed)?)\b/.test(t)) {
     const { data: cal } = await supabase
-      .from('marketing_content_calendar')
-      .select('date, platform, status, content_text')
-      .order('date', { ascending: false }).limit(5);
+      .from('content_items')
+      .select('scheduled_for, channel, status, body_text')
+      .order('scheduled_for', { ascending: false }).limit(5);
     if (cal && cal.length) {
       const last = cal[0];
-      const published = cal.filter(c => c.status === 'published').length;
-      return `Haan — calendar me ${cal.length} recent slots hain, ${published} published. Latest: ${last.date} ${last.platform} (${last.status})${last.content_text ? ' — "' + last.content_text.slice(0, 60) + '"' : ''}. Aage ka plan bataun?`;
+      const published = cal.filter((c: any) => c.status === 'published').length;
+      return `Haan — calendar me ${cal.length} recent slots hain, ${published} published. Latest: ${(last.scheduled_for || '').slice(0, 10)} ${last.channel} (${last.status})${last.body_text ? ' — "' + String(last.body_text).slice(0, 60) + '"' : ''}. Aage ka plan bataun?`;
     }
     return 'Calendar abhi khali hai — koi post scheduled/published nahi. Pehla post banau?';
   }
