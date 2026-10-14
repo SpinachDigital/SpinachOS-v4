@@ -31,7 +31,7 @@ const NAV: NavEntry[] = [
   { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
   { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
-  {/* N1.3: /projects retired → /pipeline (redirect in next.config.js). */}
+  // N1.3: /projects retired → /pipeline (redirect in next.config.js).
   { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },
   { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
   { href: '/tasks', label: 'Tasks', sub: 'Job runs & outputs', icon: I.projects },

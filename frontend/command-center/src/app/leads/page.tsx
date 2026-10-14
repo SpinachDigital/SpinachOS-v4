@@ -13,6 +13,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/auth';
+// N1.4: honest-state primitives — named states, never ad-hoc <p> tags.
+import { LoadingState, ErrorState, EmptyState } from '@/components/states/AsyncState';
 
 type Status = 'new' | 'qualified' | 'disqualified' | 'outreached' | 'responded' | 'onboarded' | 'dead';
 
@@ -155,16 +157,14 @@ export default function LeadsPage() {
         </section>
       )}
 
-      {loading && <p style={{ color: 'var(--muted-foreground)' }}>Loading leads…</p>}
-      {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {loading && <LoadingState label="Loading leads…" rows={5} />}
+      {error && <ErrorState message={error} onRetry={load} />}
 
       {!loading && !error && leads.length === 0 && (
-        <section style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 32, textAlign: 'center' }}>
-          <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 6px' }}>No leads yet</p>
-          <p style={{ color: 'var(--muted-foreground)', fontSize: 14, margin: 0 }}>
-            Add one above or import a list — then qualify, outreach, onboard.
-          </p>
-        </section>
+        <EmptyState
+          title="No leads yet"
+          hint="Add one above or import a list — then qualify, outreach, onboard."
+        />
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
