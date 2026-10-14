@@ -44,3 +44,6 @@ Thumbs.db
 # local workspace noise
 kanban-workspaces/
 docs/QA-ACCESS.md
+
+# N1 screenshots (contain lead contact data — never commit)
+docs/evidence/n1/
