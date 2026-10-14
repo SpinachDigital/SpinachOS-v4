@@ -163,8 +163,8 @@ export default function CommandCenter() {
     <>
       {/* ============ STATS ============ */}
       {apiError && (
-        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239, 68, 68, 0.06)', padding: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--red)', fontWeight: 600 }}>
+        <div className="panel" style={{ borderColor: 'var(--danger)', background: 'rgba(239, 68, 68, 0.06)', padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: 'var(--danger)', fontWeight: 600 }}>
             <span className="d down" /> {apiError}
           </div>
         </div>

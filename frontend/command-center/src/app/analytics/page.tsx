@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
               <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Working now</span>
             </span>
             <span className="flex items-center gap-2">
-              <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700, fontSize: 20 }}>{blocked}</span>
+              <span className="t-mono" style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 20 }}>{blocked}</span>
               <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Blocked</span>
             </span>
             <span className="flex items-center gap-2">

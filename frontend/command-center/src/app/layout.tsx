@@ -25,6 +25,11 @@ export default function RootLayout({
           href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900,1,2&display=swap"
           rel="stylesheet"
         />
+        {/* N1.6: JetBrains Mono was referenced by .t-mono but never loaded — fell back to system mono. */}
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=jetbrains-mono@400,500,700&display=swap"
+          rel="stylesheet"
+        />
       </head>
       <body>
         <GlobalErrorBoundary>

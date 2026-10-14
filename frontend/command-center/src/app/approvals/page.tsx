@@ -147,7 +147,7 @@ export default function ApprovalsPage() {
           never a wrong 0, never "empty" when state is unknown. */}
       <div className="flex items-center gap-6 px-6 py-3" style={{ borderBottom: '1px solid var(--border-hairline)' }}>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--amber)', fontWeight: 700 }}>{loading || loadError ? '—' : pending}</span>
+          <span className="t-mono" style={{ color: 'var(--warn)', fontWeight: 700 }}>{loading || loadError ? '—' : pending}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Pending</span>
         </span>
         <span className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function ApprovalsPage() {
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Approved</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="t-mono" style={{ color: 'var(--red)', fontWeight: 700 }}>{loading || loadError ? '—' : rejected}</span>
+          <span className="t-mono" style={{ color: 'var(--danger)', fontWeight: 700 }}>{loading || loadError ? '—' : rejected}</span>
           <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Rejected</span>
         </span>
         <span className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export default function ApprovalsPage() {
           </div>
         ) : loadError ? (
           <div className="flex flex-col items-center justify-center h-64 gap-3" style={{ color: 'var(--text-faint)' }}>
-            <div className="t-mono" style={{ color: 'var(--red)' }}>{loadError}</div>
+            <div className="t-mono" style={{ color: 'var(--danger)' }}>{loadError}</div>
             <div className="t-meta">Approval state is unknown — not empty. Check the API, then retry.</div>
             <button onClick={fetchApprovals} className="btn btn-secondary btn-sm">Tap to retry</button>
           </div>

@@ -188,7 +188,7 @@ export default function TeamPage() {
                 <div key={f.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, flexShrink: 0 }}>{SEV_DOT[f.severity]} {FLAG_ICON[f.type]}</span>
                   <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, color: 'var(--text)', fontWeight: 600 }}>
+                    <div style={{ fontSize: 12, color: 'var(--text)', fontWeight: 600 }}>
                       {f.hr_agents?.name || f.agent_id} <span style={{ color: SEV_COLOR[f.severity], fontSize: 10, fontWeight: 700 }}>{f.severity.toUpperCase()} {f.type.replace('_', ' ')}</span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{f.message}</div>
@@ -227,7 +227,7 @@ export default function TeamPage() {
                       background: 'var(--accent-soft, rgba(0,75,99,0.12))', color: 'var(--accent)', fontSize: 12, fontWeight: 700,
                     }}>{initials(a.name)}</div>
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: 13.5, color: 'var(--text)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>
+                      <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-faint)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.role || a.department} · {a.department}</div>
                     </div>
                     <span style={{ fontSize: 12, flexShrink: 0 }} title={a.status}>{chip.dot}</span>
@@ -266,7 +266,7 @@ export default function TeamPage() {
                     <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--border-soft)', overflow: 'hidden' }}>
                       <div style={{ width: `${(p.completed / max) * 100}%`, height: '100%', background: 'var(--accent)' }} />
                     </div>
-                    <span className="t-mono" style={{ fontSize: 10.5, color: 'var(--text-faint)', flexShrink: 0, width: 74, textAlign: 'right' }}>
+                    <span className="t-mono" style={{ fontSize: 11, color: 'var(--text-faint)', flexShrink: 0, width: 74, textAlign: 'right' }}>
                       {p.completed} · {p.avg_duration_min}m
                     </span>
                   </div>
@@ -311,13 +311,13 @@ export default function TeamPage() {
                 }}>{initials(drawer.name)}</div>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{drawer.name}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{drawer.role} · {drawer.department}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>{drawer.role} · {drawer.department}</div>
                 </div>
               </div>
               <button onClick={() => setDrawer(null)} className="btn btn-sm btn-secondary">✕</button>
             </div>
 
-            <div style={{ fontSize: 12.5, color: 'var(--text-dim)' }}>{drawer.specialization || '—'}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>{drawer.specialization || '—'}</div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {(drawer.skills || []).map(s => (
                 <span key={s} className="t-mono" style={{ fontSize: 10, padding: '3px 8px', borderRadius: 999, border: '1px solid var(--border-soft)', color: 'var(--text-dim)' }}>{s}</span>
@@ -336,7 +336,7 @@ export default function TeamPage() {
                 <div className="t-mono" style={{ marginTop: 4, fontSize: 10, color: 'var(--text-faint)' }}>{drawer.current_task.progress}% — view task →</div>
               </Link>
             ) : (
-              <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>No current task — idle.</div>
+              <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No current task — idle.</div>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

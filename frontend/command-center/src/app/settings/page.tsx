@@ -182,7 +182,7 @@ export default function SettingsPage() {
               {profilesLoading ? (
                 <div className="skeleton" style={{ height: 120 }} />
               ) : profilesError ? (
-                <div className="t-meta" style={{ color: 'var(--red)' }}>
+                <div className="t-meta" style={{ color: 'var(--danger)' }}>
                   Couldn't load profiles: {profilesError}
                 </div>
               ) : profiles.length === 0 ? (
@@ -694,7 +694,7 @@ function KnowledgePanel() {
           <button onClick={() => void ingest()} disabled={ingesting || !ingText.trim()} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>
             {ingesting ? 'Ingesting…' : 'Ingest'}
           </button>
-          {ingResult && <span className="t-meta" style={{ color: ingResult.includes('✓') ? 'var(--green-bright)' : 'var(--red)' }}>{ingResult}</span>}
+          {ingResult && <span className="t-meta" style={{ color: ingResult.includes('✓') ? 'var(--green-bright)' : 'var(--danger)' }}>{ingResult}</span>}
         </div>
       </div>
 

@@ -155,7 +155,7 @@ export default function EvolutionsPage() {
                         </>
                       )}
                       {p.status === 'applied' && <span className="t-meta" style={{ color: 'var(--green)' }}>Applied</span>}
-                      {p.status === 'rejected' && <span className="t-meta" style={{ color: 'var(--red)' }}>Denied</span>}
+                      {p.status === 'rejected' && <span className="t-meta" style={{ color: 'var(--danger)' }}>Denied</span>}
                     </div>
                   </div>
                   <details className="t-meta" style={{ color: 'var(--text-faint)', marginTop: 8 }}>

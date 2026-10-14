@@ -59,11 +59,11 @@ export default function RightRail() {
   // never hardcoded. (QA #1: "ALL OPERATIONAL" next to "API unreachable".)
   const healthPill = () => {
     if (!loadedOnce) return <span className="pill">Checking…</span>;
-    if (apiError) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Degraded</span>;
-    if (health.length === 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Offline</span>;
+    if (apiError) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--danger)' }}>Degraded</span>;
+    if (health.length === 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--danger)' }}>Offline</span>;
     const down = health.filter(h => h.status === 'down').length;
     const warn = health.filter(h => h.status === 'warn').length;
-    if (down > 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--red)' }}>Degraded</span>;
+    if (down > 0) return <span className="pill" style={{ background: 'rgba(239,68,68,.12)', color: 'var(--danger)' }}>Degraded</span>;
     if (warn > 0) return <span className="pill" style={{ background: 'rgba(245,158,11,.12)', color: 'var(--amber, #f59e0b)' }}>Degraded</span>;
     return <span className="pill completed">All Operational</span>;
   };
@@ -71,8 +71,8 @@ export default function RightRail() {
   return (
     <>
       {apiError && (
-        <div className="panel" style={{ borderColor: 'var(--red)', background: 'rgba(239, 68, 68, 0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--red)', fontWeight: 600 }}>
+        <div className="panel" style={{ borderColor: 'var(--danger)', background: 'rgba(239, 68, 68, 0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--danger)', fontWeight: 600 }}>
             <span className="d down" /> {apiError}
           </div>
         </div>
