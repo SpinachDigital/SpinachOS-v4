@@ -1,0 +1,1474 @@
+[
+ {
+  "id": "4ea3b957-c444-4c49-bb7a-2cd91ba70b5a",
+  "date": "2026-09-21",
+  "slot_index": 1,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.524135+00:00",
+  "updated_at": "2026-09-22T15:53:11.251683+00:00"
+ },
+ {
+  "id": "abab8d4c-b39b-450d-98a4-451ebec4fb34",
+  "date": "2026-09-21",
+  "slot_index": 2,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.572571+00:00",
+  "updated_at": "2026-09-22T15:53:11.292596+00:00"
+ },
+ {
+  "id": "11eab3dd-386d-4984-8a3e-7582bfe69519",
+  "date": "2026-09-21",
+  "slot_index": 3,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.634012+00:00",
+  "updated_at": "2026-09-22T15:53:11.35503+00:00"
+ },
+ {
+  "id": "bc02806f-9ffb-4b61-880a-26e128d7be8b",
+  "date": "2026-09-21",
+  "slot_index": 4,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.685039+00:00",
+  "updated_at": "2026-09-22T15:53:11.408676+00:00"
+ },
+ {
+  "id": "bc55cdf3-6e54-4acb-9cda-bf5a508db21c",
+  "date": "2026-09-21",
+  "slot_index": 5,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.729432+00:00",
+  "updated_at": "2026-09-22T15:53:11.439028+00:00"
+ },
+ {
+  "id": "ca79af70-a3f8-40d1-b9ca-312e59cc89fd",
+  "date": "2026-09-21",
+  "slot_index": 6,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.799652+00:00",
+  "updated_at": "2026-09-22T15:53:11.483818+00:00"
+ },
+ {
+  "id": "3aef4563-71ac-49a5-97c4-fbd1a8f3221a",
+  "date": "2026-09-21",
+  "slot_index": 7,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.852188+00:00",
+  "updated_at": "2026-09-22T15:53:11.524266+00:00"
+ },
+ {
+  "id": "beb72673-0bb0-44ba-9f77-c3f5db614f62",
+  "date": "2026-09-21",
+  "slot_index": 9,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.96049+00:00",
+  "updated_at": "2026-09-22T15:53:11.616311+00:00"
+ },
+ {
+  "id": "3a7e8fa5-ae44-401b-8aec-88b63c4db94d",
+  "date": "2026-09-22",
+  "slot_index": 0,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.020561+00:00",
+  "updated_at": "2026-09-22T15:53:11.647836+00:00"
+ },
+ {
+  "id": "986157e6-61da-43f4-a4b4-a38d95acd8d8",
+  "date": "2026-09-22",
+  "slot_index": 1,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.068739+00:00",
+  "updated_at": "2026-09-22T15:53:11.680405+00:00"
+ },
+ {
+  "id": "f4f27a21-5d29-4b13-92ef-1b8b0954278b",
+  "date": "2026-09-22",
+  "slot_index": 2,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.114619+00:00",
+  "updated_at": "2026-09-22T15:53:11.710721+00:00"
+ },
+ {
+  "id": "84286035-6eb4-4f6c-a7da-9b67b7c15261",
+  "date": "2026-09-22",
+  "slot_index": 3,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.163533+00:00",
+  "updated_at": "2026-09-22T15:53:11.741105+00:00"
+ },
+ {
+  "id": "1ed83d8d-04a7-4737-af0b-8c5d8b2b0bc5",
+  "date": "2026-09-22",
+  "slot_index": 4,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.217832+00:00",
+  "updated_at": "2026-09-22T15:53:11.778179+00:00"
+ },
+ {
+  "id": "1ae51cce-014c-4493-aad6-608298753c09",
+  "date": "2026-09-22",
+  "slot_index": 5,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.255897+00:00",
+  "updated_at": "2026-09-22T15:53:11.821823+00:00"
+ },
+ {
+  "id": "32fad805-a404-417e-af92-0e69faa4759c",
+  "date": "2026-09-22",
+  "slot_index": 6,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.303595+00:00",
+  "updated_at": "2026-09-22T15:53:11.868767+00:00"
+ },
+ {
+  "id": "d33b45e8-e6b0-4fbe-80df-cc0bb2ef7587",
+  "date": "2026-09-22",
+  "slot_index": 7,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.341467+00:00",
+  "updated_at": "2026-09-22T15:53:11.915262+00:00"
+ },
+ {
+  "id": "48adfe32-fce5-4ccd-aa3f-10a8f9471eb5",
+  "date": "2026-09-22",
+  "slot_index": 8,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.381599+00:00",
+  "updated_at": "2026-09-22T15:53:11.946371+00:00"
+ },
+ {
+  "id": "360747ed-cddb-441e-9fc8-650d428a7dd4",
+  "date": "2026-09-22",
+  "slot_index": 9,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-23T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.428493+00:00",
+  "updated_at": "2026-09-22T15:53:11.978867+00:00"
+ },
+ {
+  "id": "f6668fd8-d205-40a7-bdff-7b635573106d",
+  "date": "2026-09-23",
+  "slot_index": 0,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.474644+00:00",
+  "updated_at": "2026-09-22T15:53:12.008657+00:00"
+ },
+ {
+  "id": "be5423af-9b0e-4024-a872-0e93f6f4fb80",
+  "date": "2026-09-23",
+  "slot_index": 1,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.523261+00:00",
+  "updated_at": "2026-09-22T15:53:12.037239+00:00"
+ },
+ {
+  "id": "652195f0-10a8-4787-b8ef-2f143437c81c",
+  "date": "2026-09-23",
+  "slot_index": 2,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.573216+00:00",
+  "updated_at": "2026-09-22T15:53:12.072425+00:00"
+ },
+ {
+  "id": "011dba9b-c1e8-41ed-8a44-59246ae8cd58",
+  "date": "2026-09-23",
+  "slot_index": 3,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.617563+00:00",
+  "updated_at": "2026-09-22T15:53:12.115558+00:00"
+ },
+ {
+  "id": "6ec95b08-c6c1-4422-8dc4-b99d9f1e8518",
+  "date": "2026-09-23",
+  "slot_index": 4,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.665139+00:00",
+  "updated_at": "2026-09-22T15:53:12.147794+00:00"
+ },
+ {
+  "id": "131c77ba-276a-43a9-b857-a471de99cc1a",
+  "date": "2026-09-23",
+  "slot_index": 5,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.710657+00:00",
+  "updated_at": "2026-09-22T15:53:12.180316+00:00"
+ },
+ {
+  "id": "f30912a8-1226-4b0b-b232-671066763af6",
+  "date": "2026-09-23",
+  "slot_index": 6,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.7515+00:00",
+  "updated_at": "2026-09-22T15:53:12.226273+00:00"
+ },
+ {
+  "id": "7069eb5b-01f9-467a-8e7b-2f6efdf063ea",
+  "date": "2026-09-23",
+  "slot_index": 7,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.80602+00:00",
+  "updated_at": "2026-09-22T15:53:12.270482+00:00"
+ },
+ {
+  "id": "cc1b1b66-026a-466d-823b-045fdfd80e2f",
+  "date": "2026-09-23",
+  "slot_index": 8,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.856896+00:00",
+  "updated_at": "2026-09-22T15:53:12.300998+00:00"
+ },
+ {
+  "id": "4bfccf28-0960-48c1-ad05-81e735655f81",
+  "date": "2026-09-23",
+  "slot_index": 9,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-24T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.91224+00:00",
+  "updated_at": "2026-09-22T15:53:12.332023+00:00"
+ },
+ {
+  "id": "22ed3c71-781c-44d9-a312-eb649be6dcf0",
+  "date": "2026-09-24",
+  "slot_index": 0,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:03.9592+00:00",
+  "updated_at": "2026-09-22T15:53:12.363801+00:00"
+ },
+ {
+  "id": "1b6e60c8-591f-4676-84b5-89478aace8a4",
+  "date": "2026-09-24",
+  "slot_index": 1,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.006735+00:00",
+  "updated_at": "2026-09-22T15:53:12.394456+00:00"
+ },
+ {
+  "id": "56dea488-3b3c-48b6-929c-dc3b8c70a2cc",
+  "date": "2026-09-24",
+  "slot_index": 2,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.054791+00:00",
+  "updated_at": "2026-09-22T15:53:12.428012+00:00"
+ },
+ {
+  "id": "1f4afa7c-3036-4a3a-aef8-c52fc20a355f",
+  "date": "2026-09-24",
+  "slot_index": 3,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.102273+00:00",
+  "updated_at": "2026-09-22T15:53:12.476832+00:00"
+ },
+ {
+  "id": "15ac6e34-1f31-41a1-a0d6-62e109808990",
+  "date": "2026-09-24",
+  "slot_index": 4,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.147304+00:00",
+  "updated_at": "2026-09-22T15:53:12.506239+00:00"
+ },
+ {
+  "id": "3d0575cc-1656-4934-9c4a-05f4b1556a1e",
+  "date": "2026-09-24",
+  "slot_index": 5,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.19941+00:00",
+  "updated_at": "2026-09-22T15:53:12.541234+00:00"
+ },
+ {
+  "id": "01344f53-5a2a-4617-9e06-4cce3323bbe8",
+  "date": "2026-09-24",
+  "slot_index": 6,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.245432+00:00",
+  "updated_at": "2026-09-22T15:53:12.582784+00:00"
+ },
+ {
+  "id": "e82fdd11-517a-4574-bdf1-78da2ace0449",
+  "date": "2026-09-24",
+  "slot_index": 7,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.28342+00:00",
+  "updated_at": "2026-09-22T15:53:12.61659+00:00"
+ },
+ {
+  "id": "237da49c-31ea-427d-a5ca-399c3e9b0035",
+  "date": "2026-09-24",
+  "slot_index": 8,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.339635+00:00",
+  "updated_at": "2026-09-22T15:53:12.667856+00:00"
+ },
+ {
+  "id": "bd108ac2-f2d1-4171-aa14-88bb19c162cb",
+  "date": "2026-09-24",
+  "slot_index": 9,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-25T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.383566+00:00",
+  "updated_at": "2026-09-22T15:53:12.710422+00:00"
+ },
+ {
+  "id": "3ce11548-0f23-4322-b9be-d41e809ea3bc",
+  "date": "2026-09-25",
+  "slot_index": 0,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.433977+00:00",
+  "updated_at": "2026-09-22T15:53:12.743667+00:00"
+ },
+ {
+  "id": "5959f055-d3de-4747-959e-c8528f7c3f83",
+  "date": "2026-09-25",
+  "slot_index": 1,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.472483+00:00",
+  "updated_at": "2026-09-22T15:53:12.788163+00:00"
+ },
+ {
+  "id": "849e824b-1665-40e7-9463-1d39d2fb35ed",
+  "date": "2026-09-25",
+  "slot_index": 2,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.54264+00:00",
+  "updated_at": "2026-09-22T15:53:12.820338+00:00"
+ },
+ {
+  "id": "af7f3cd1-c95b-4f49-86d1-1ce049e63356",
+  "date": "2026-09-25",
+  "slot_index": 3,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.588741+00:00",
+  "updated_at": "2026-09-22T15:53:12.849802+00:00"
+ },
+ {
+  "id": "fb3a03ec-f749-4548-a52a-a99dfe3397ac",
+  "date": "2026-09-25",
+  "slot_index": 4,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.637888+00:00",
+  "updated_at": "2026-09-22T15:53:12.881862+00:00"
+ },
+ {
+  "id": "f664d88b-4b24-4348-9f81-cab6c1875bb0",
+  "date": "2026-09-25",
+  "slot_index": 6,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.727886+00:00",
+  "updated_at": "2026-09-22T15:53:12.978999+00:00"
+ },
+ {
+  "id": "4732c8b3-116b-4823-b307-f97b2f57b2c6",
+  "date": "2026-09-25",
+  "slot_index": 7,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.773156+00:00",
+  "updated_at": "2026-09-22T15:53:13.022452+00:00"
+ },
+ {
+  "id": "6a54a98f-2090-4eef-a32f-31d5bce7765a",
+  "date": "2026-09-25",
+  "slot_index": 8,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.810981+00:00",
+  "updated_at": "2026-09-22T15:53:13.071253+00:00"
+ },
+ {
+  "id": "7e52eae7-75c7-4049-8176-2406e26dccbc",
+  "date": "2026-09-25",
+  "slot_index": 9,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.853998+00:00",
+  "updated_at": "2026-09-22T15:53:13.116771+00:00"
+ },
+ {
+  "id": "032b5ca6-4ae4-4664-a2f9-da13ff6e207f",
+  "date": "2026-09-26",
+  "slot_index": 0,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.900183+00:00",
+  "updated_at": "2026-09-22T15:53:13.14744+00:00"
+ },
+ {
+  "id": "cb784902-fd38-4e5e-81df-c79f9abfde6c",
+  "date": "2026-09-26",
+  "slot_index": 1,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.956668+00:00",
+  "updated_at": "2026-09-22T15:53:13.177858+00:00"
+ },
+ {
+  "id": "78d5b177-a823-4b18-8d5d-4a0bd4be0efa",
+  "date": "2026-09-26",
+  "slot_index": 2,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.001103+00:00",
+  "updated_at": "2026-09-22T15:53:13.209372+00:00"
+ },
+ {
+  "id": "527f0ddb-add5-4a53-8c13-042940345739",
+  "date": "2026-09-26",
+  "slot_index": 3,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.045578+00:00",
+  "updated_at": "2026-09-22T15:53:13.243649+00:00"
+ },
+ {
+  "id": "3cbf9df6-a917-4e63-8639-70e853102312",
+  "date": "2026-09-26",
+  "slot_index": 4,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.092213+00:00",
+  "updated_at": "2026-09-22T15:53:13.288179+00:00"
+ },
+ {
+  "id": "8978424e-08c9-42c3-aec8-63249bb7b608",
+  "date": "2026-09-21",
+  "slot_index": 0,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.398422+00:00",
+  "updated_at": "2026-09-22T15:53:11.196047+00:00"
+ },
+ {
+  "id": "412d0465-8dc7-4424-bd35-9bc284cd7053",
+  "date": "2026-09-21",
+  "slot_index": 8,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-22T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:02.907806+00:00",
+  "updated_at": "2026-09-22T15:53:11.584699+00:00"
+ },
+ {
+  "id": "3ed983c8-d1b1-47d6-9b3e-a1060841c32c",
+  "date": "2026-09-25",
+  "slot_index": 5,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-26T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:04.683764+00:00",
+  "updated_at": "2026-09-22T15:53:12.938538+00:00"
+ },
+ {
+  "id": "d0564cae-717f-4a32-9271-de7415596ae3",
+  "date": "2026-09-26",
+  "slot_index": 5,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.140798+00:00",
+  "updated_at": "2026-09-22T15:53:13.324675+00:00"
+ },
+ {
+  "id": "aeace9fa-5c07-4283-9800-97fbbcb87c98",
+  "date": "2026-09-26",
+  "slot_index": 6,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.193578+00:00",
+  "updated_at": "2026-09-22T15:53:13.367199+00:00"
+ },
+ {
+  "id": "4ca7086f-d65c-4887-a908-2fcd9e0410a2",
+  "date": "2026-09-26",
+  "slot_index": 7,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.246183+00:00",
+  "updated_at": "2026-09-22T15:53:13.399311+00:00"
+ },
+ {
+  "id": "7fc3a3a6-fe3e-4c5b-900a-6059e0682534",
+  "date": "2026-09-26",
+  "slot_index": 8,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.29028+00:00",
+  "updated_at": "2026-09-22T15:53:13.446426+00:00"
+ },
+ {
+  "id": "66412db9-58b3-4fe0-8829-0a22079d332e",
+  "date": "2026-09-26",
+  "slot_index": 9,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-27T16:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.340943+00:00",
+  "updated_at": "2026-09-22T15:53:13.481186+00:00"
+ },
+ {
+  "id": "14fe3bcd-be5a-48e7-9ea4-f5d7285dfe62",
+  "date": "2026-09-27",
+  "slot_index": 0,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.387773+00:00",
+  "updated_at": "2026-09-22T15:53:13.527374+00:00"
+ },
+ {
+  "id": "2ed4103b-9662-4c41-9eba-a5fc48a12faa",
+  "date": "2026-09-27",
+  "slot_index": 1,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T05:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.437571+00:00",
+  "updated_at": "2026-09-22T15:53:13.570496+00:00"
+ },
+ {
+  "id": "cc670bc6-b028-48b8-ad40-7248a41ec04d",
+  "date": "2026-09-27",
+  "slot_index": 2,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T06:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.482607+00:00",
+  "updated_at": "2026-09-22T15:53:13.603076+00:00"
+ },
+ {
+  "id": "b55eae39-2daa-4316-aa11-d98f058ae77a",
+  "date": "2026-09-27",
+  "slot_index": 3,
+  "theme": "github",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T08:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.521112+00:00",
+  "updated_at": "2026-09-22T15:53:13.632019+00:00"
+ },
+ {
+  "id": "bcd2081a-99cf-48c0-9624-b294980fba03",
+  "date": "2026-09-27",
+  "slot_index": 4,
+  "theme": "quote",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T09:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.562089+00:00",
+  "updated_at": "2026-09-22T15:53:13.671633+00:00"
+ },
+ {
+  "id": "6eefea14-b60b-4ffb-957b-9f8524b98d51",
+  "date": "2026-09-27",
+  "slot_index": 5,
+  "theme": "gita",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T10:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.61216+00:00",
+  "updated_at": "2026-09-22T15:53:13.713367+00:00"
+ },
+ {
+  "id": "9457c12b-d081-4cd2-99ad-0cb5c8ef666a",
+  "date": "2026-09-27",
+  "slot_index": 6,
+  "theme": "politics",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T12:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.687103+00:00",
+  "updated_at": "2026-09-22T15:53:13.744248+00:00"
+ },
+ {
+  "id": "8f55e1bc-10b2-4dbb-ba59-0ab98ed3eea9",
+  "date": "2026-09-27",
+  "slot_index": 7,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T13:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.737667+00:00",
+  "updated_at": "2026-09-22T15:53:13.791332+00:00"
+ },
+ {
+  "id": "224514a7-0fb4-47b0-add8-536f0bfc7e96",
+  "date": "2026-09-27",
+  "slot_index": 8,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T15:00:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.780638+00:00",
+  "updated_at": "2026-09-22T15:53:13.836789+00:00"
+ },
+ {
+  "id": "bb287e2c-034b-43fe-94ce-85955405e921",
+  "date": "2026-09-27",
+  "slot_index": 9,
+  "theme": "github",
+  "platform": "x",
+  "status": "published",
+  "content_text": "GitHub is the engine room of modern SEO. ⚙️\n\nAt Spinach Digital, we leverage open-source scripts to automate audits and scale data analysis. If you aren’t using GitHub to power your technical search strategy, you’re falling behind.\n\n#SEO #GitHub #DigitalMarketing #SpinachDigital",
+  "media_urls": [],
+  "scheduled_at": "2026-09-28T16:00:00+00:00",
+  "published_at": "2026-10-04T05:29:36.956+00:00",
+  "post_id": "dryrun-1791091776956",
+  "engagement": {},
+  "metadata": {
+   "history": [
+    {
+     "at": "2026-10-04T05:28:49.150Z",
+     "actor": "founder",
+     "event": "publish_approved",
+     "detail": {
+      "via": "approvals-page",
+      "platform": "x",
+      "approval_id": "f1debe80-fa6d-4100-9af9-2eeb5771876c",
+      "scheduled_at": "2026-09-28T16:00:00+00:00"
+     }
+    },
+    {
+     "at": "2026-10-04T05:29:37.009Z",
+     "actor": "grow:scheduler",
+     "event": "published",
+     "detail": {
+      "mode": "dry-run",
+      "post_id": "dryrun-1791091776956",
+      "platform": "x"
+     }
+    }
+   ],
+   "asset_ref": "client-assets/37ef7e34-a48b-4499-9a9f-01487d682938/1791018661448-logo-mark-test.png",
+   "approval_id": "f1debe80-fa6d-4100-9af9-2eeb5771876c",
+   "generated_at": "2026-10-03T23:27:56.505Z",
+   "publish_mode": "dry-run",
+   "generated_for": "github",
+   "auto_generated": true
+  },
+  "created_at": "2026-09-22T11:27:05.825839+00:00",
+  "updated_at": "2026-10-04T05:29:37.618746+00:00"
+ },
+ {
+  "id": "8c00d673-0ab6-460d-afa9-eb58c5059009",
+  "date": "2026-10-04",
+  "slot_index": 9,
+  "theme": "ai",
+  "platform": "x",
+  "status": "published",
+  "content_text": "Spinach Digital powers smarter growth with AI-driven insights. From data to decisions, we help brands thrive in the digital age. #AI #SpinachDigital #TechInnovation",
+  "media_urls": [],
+  "scheduled_at": "2026-10-03T21:23:01.251+00:00",
+  "published_at": "2026-10-03T21:23:33.019+00:00",
+  "post_id": "dryrun-1791062613019",
+  "engagement": {},
+  "metadata": {
+   "asset_ref": "client-assets/37ef7e34-a48b-4499-9a9f-01487d682938/1791018661448-logo-mark-test.png",
+   "approval_id": "7f1b1527-2e00-4561-b09e-e8d8f5b18d65",
+   "generated_at": "2026-10-03T20:51:05.115Z",
+   "publish_mode": "dry-run",
+   "generated_for": "ai"
+  },
+  "created_at": "2026-10-03T20:18:06.707829+00:00",
+  "updated_at": "2026-10-03T21:23:33.489529+00:00"
+ },
+ {
+  "id": "698af98c-17d3-46f7-8a03-a064c701ae48",
+  "date": "2026-10-04",
+  "slot_index": 8,
+  "theme": "gita",
+  "platform": "x",
+  "status": "published",
+  "content_text": "Gita isn't just music—it's a masterclass in storytelling. At Spinach Digital, we help brands like yours narrate their story with precision. #SEO #SpinachDigital\n\n(168 characters)",
+  "media_urls": [],
+  "scheduled_at": "2026-10-03T21:59:47.149+00:00",
+  "published_at": "2026-10-03T21:59:53.123+00:00",
+  "post_id": "dryrun-1791064793123",
+  "engagement": {},
+  "metadata": {
+   "history": [
+    {
+     "at": "2026-10-03T21:59:49.931Z",
+     "actor": "founder",
+     "event": "publish_approved",
+     "detail": {
+      "platform": "x",
+      "approval_id": "31d02383-c1e1-436d-a8e2-f7de0559ab5a",
+      "scheduled_at": "2026-10-04T03:30:00+00:00"
+     }
+    },
+    {
+     "at": "2026-10-03T21:59:53.188Z",
+     "actor": "grow:scheduler",
+     "event": "published",
+     "detail": {
+      "mode": "dry-run",
+      "post_id": "dryrun-1791064793123",
+      "platform": "x"
+     }
+    }
+   ],
+   "asset_ref": "client-assets/37ef7e34-a48b-4499-9a9f-01487d682938/1791018661448-logo-mark-test.png",
+   "approval_id": "31d02383-c1e1-436d-a8e2-f7de0559ab5a",
+   "generated_at": "2026-10-03T21:56:45.352Z",
+   "publish_mode": "dry-run",
+   "generated_for": "gita"
+  },
+  "created_at": "2026-10-03T21:49:01.060661+00:00",
+  "updated_at": "2026-10-03T21:59:53.671282+00:00"
+ },
+ {
+  "id": "68a64983-5eef-4d52-91ab-d33c91c0a236",
+  "date": "2026-10-04",
+  "slot_index": 7,
+  "theme": "cricket",
+  "platform": "x",
+  "status": "drafting",
+  "content_text": "What’s the core message or tone you’d like the cricket-themed X post to convey (e.g., playful, professional, sports-focused, metaphorical), and any required hashtags or CTA?",
+  "media_urls": [],
+  "scheduled_at": "2026-10-04T04:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {
+   "history": [
+    {
+     "at": "2026-10-03T22:10:34.515Z",
+     "actor": "founder",
+     "event": "publish_rejected",
+     "detail": {
+      "reason": "Too salesy � needs a story hook first"
+     }
+    }
+   ],
+   "rejection_reason": "Too salesy � needs a story hook first"
+  },
+  "created_at": "2026-10-03T22:08:59.058391+00:00",
+  "updated_at": "2026-10-03T22:10:35.002316+00:00"
+ },
+ {
+  "id": "206e07ee-bda2-4e21-a437-2cef5c1f3194",
+  "date": "2026-10-04",
+  "slot_index": 5,
+  "theme": "ai",
+  "platform": "x",
+  "status": "planned",
+  "content_text": null,
+  "media_urls": [],
+  "scheduled_at": "2026-10-04T03:30:00+00:00",
+  "published_at": null,
+  "post_id": null,
+  "engagement": {},
+  "metadata": {},
+  "created_at": "2026-10-04T17:14:30.607975+00:00",
+  "updated_at": "2026-10-04T19:34:23.327585+00:00"
+ }
+]

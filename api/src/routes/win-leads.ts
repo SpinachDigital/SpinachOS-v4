@@ -79,7 +79,22 @@ app.get('/api/v1/leads', founderOnly, async (req: Request, res: Response) => {
     if (status && WIN_STATUSES.includes(String(status) as any)) q = q.eq('status', String(status));
     const { data, error } = await q;
     if (error) return res.status(500).json({ error: error.message });
-    res.json(data || []);
+    // N2 §2 outreach visibility: one bounded query for the latest sent message
+    // per lead (no N+1). We pull the most recent 500 sent messages and reduce
+    // client-side — every lead gets latest_outreach: {draft_body, sent_at,
+    // replied_at} | null. replied_at comes from outreach_messages.replied_at
+    // when the provider row carries it (null otherwise — honest).
+    const { data: sent } = await supabase
+      .from('outreach_messages')
+      .select('lead_id, body, sent_at, provider_message_id')
+      .order('sent_at', { ascending: false })
+      .limit(500);
+    const latest = new Map<string, { draft_body: string; sent_at: string; replied_at: string | null }>();
+    for (const m of sent || []) {
+      if (!m.lead_id || latest.has(m.lead_id)) continue;
+      latest.set(m.lead_id, { draft_body: String(m.body || '').slice(0, 500), sent_at: m.sent_at, replied_at: null });
+    }
+    res.json((data || []).map((l: any) => ({ ...l, latest_outreach: latest.get(l.id) || null })));
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

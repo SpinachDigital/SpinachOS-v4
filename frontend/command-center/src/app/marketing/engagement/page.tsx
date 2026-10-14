@@ -90,7 +90,7 @@ export default function EngagementAnalyticsPage() {
     } catch (e: any) {
       // Loud, honest error — never a fake-empty dashboard.
       console.error('Failed to fetch engagement:', e);
-      setLoadError(e?.message || 'Request failed');
+      setLoadError(e?.message ? `Connection problem (${e.message}). Your data is fine — tap retry.` : 'Connection interrupted. Tap retry.');
     } finally {
       setLoading(false);
     }

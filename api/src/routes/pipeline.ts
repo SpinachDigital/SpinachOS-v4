@@ -117,6 +117,10 @@ import { emitAgentState as _emitA, emitWorkflow as _emitW, emitFeed as _emitF } 
 app.get('/api/v1/pipelines/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    // N2 §5: a malformed id is a 404, not a 500 (invalid-uuid syntax errors
+    // used to explode here and the frontend could spin on it).
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(String(id))) return res.status(404).json({ error: 'pipeline not found' });
     // §4: history paginated — default 20, max 100, offset
     const limit = Math.min(parseInt(String(req.query.limit)) || 20, 100);
     const offset = Math.max(parseInt(String(req.query.offset)) || 0, 0);

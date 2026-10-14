@@ -102,11 +102,11 @@ export default function AnalyticsPage() {
             </span>
             <span className="flex items-center gap-2">
               <span className="t-mono" style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 20 }}>{blocked}</span>
-              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Blocked</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Blocked now</span>
             </span>
             <span className="flex items-center gap-2">
               <span className="t-mono" style={{ color: 'var(--green)', fontWeight: 700, fontSize: 20 }}>{successRate}%</span>
-              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Success rate</span>
+              <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Success rate (actions)</span>
             </span>
           </div>
 

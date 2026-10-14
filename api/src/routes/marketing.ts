@@ -14,17 +14,39 @@ app.get('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
     // their window explicitly; default stays bounded)
     const limit = Math.min(parseInt(String(qLimit)) || 20, 100);
     const offset = Math.max(parseInt(String(qOffset)) || 0, 0);
-    let query = supabase.from('marketing_content_calendar').select('*');
-    if (date) query = query.eq('date', date);
-    if (platform) query = query.eq('platform', platform);
-    if (status) query = query.eq('status', status);
-    if (theme) query = query.eq('theme', theme);
+    // N2 §1 calendar unification: content_items is the ONE canonical calendar.
+    // /marketing keeps its response shape (legacy fields) so its UI doesn't break:
+    // rows are read from content_items, projected back into the legacy shape.
+    const GROW_TO_LEGACY: Record<string, string> = { idea: 'planned', draft: 'drafting', review: 'drafting', scheduled: 'planned', approved: 'planned', published: 'published', failed: 'planned' };
+    let query = supabase.from('content_items')
+      .select('id, title, body_text, channel, status, scheduled_for, provider_post_id, published_at, metadata, created_at, updated_at');
+    if (date) query = query.gte('scheduled_for', `${date}T00:00:00`).lte('scheduled_for', `${date}T23:59:59`);
+    if (platform) query = query.eq('channel', platform);
+    if (theme) query = query.contains('metadata', { theme });
     const { data, error } = await query
-      .order('date', { ascending: true })
-      .order('slot_index', { ascending: true })
+      .order('scheduled_for', { ascending: true })
       .range(offset, offset + limit - 1);
     if (error) throw error;
-    res.json(data || []);
+    // legacy filter on mapped status (post-read filter — bounded to `limit` rows)
+    const rows = (data || [])
+      .map((c: any) => ({
+        id: c.id,
+        date: (c.scheduled_for || c.created_at || '').slice(0, 10),
+        slot_index: c.metadata?.slot_index ?? 0,
+        theme: c.metadata?.theme || null,
+        platform: c.channel,
+        status: GROW_TO_LEGACY[c.status] || 'planned',
+        content_text: c.body_text,
+        media_urls: c.metadata?.media_urls || [],
+        scheduled_at: c.scheduled_for,
+        published_at: c.published_at || null,
+        post_id: c.provider_post_id || null,
+        engagement: c.metadata?.engagement || null,
+        metadata: c.metadata || {},
+        created_at: c.created_at,
+        updated_at: c.updated_at,
+      }));
+    res.json(status ? rows.filter((r: any) => r.status === status) : rows);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -33,22 +55,25 @@ app.get('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
 app.post('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
   try {
     const { date, slot_index, theme, platform, content_text, media_urls, scheduled_at } = req.body;
-    if (!date || slot_index === undefined || !theme || !platform) {
-      return res.status(400).json({ error: 'Missing date, slot_index, theme, or platform' });
+    if (!date || !theme || !platform) {
+      return res.status(400).json({ error: 'Missing date, theme, or platform' });
     }
+    // N2 §1: writes go to the canonical content_items table.
     const { data, error } = await supabase
-      .from('marketing_content_calendar')
-      .upsert({
-        date, slot_index, theme, platform,
-        content_text: content_text || null,
-        media_urls: media_urls || [],
-        scheduled_at: scheduled_at || null,
-        status: req.body.status || 'planned',
-      }, { onConflict: 'date,slot_index,platform' })
+      .from('content_items')
+      .insert({
+        title: content_text?.trim().slice(0, 60) || `${theme} post — ${date}`,
+        channel: platform,
+        body_text: content_text || null,
+        scheduled_for: scheduled_at || `${date}T09:00:00`,
+        status: 'idea',
+        created_by: 'founder',
+        metadata: { source_table: 'marketing_ui', theme, date, slot_index: slot_index ?? 0, media_urls: media_urls || [] },
+      })
       .select()
       .single();
     if (error) throw error;
-    emitFeed('social', 'Content scheduled', { date, slot: slot_index, platform });
+    emitFeed('social', 'Content scheduled', { date, slot: slot_index ?? 0, platform });
     res.status(201).json(data);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -57,9 +82,16 @@ app.post('/api/v1/marketing/calendar', authMiddleware, async (req, res) => {
 
 app.patch('/api/v1/marketing/calendar/:id', authMiddleware, async (req, res) => {
   try {
+    // N2 §1: patch the canonical row; map legacy field names back.
+    const { content_text, status, scheduled_at, ...rest } = req.body || {};
+    const update: Record<string, unknown> = { ...rest, updated_at: new Date().toISOString() };
+    if (content_text !== undefined) update.body_text = content_text;
+    if (scheduled_at !== undefined) update.scheduled_for = scheduled_at;
+    const LEGACY_TO_GROW: Record<string, string> = { planned: 'idea', drafting: 'draft', published: 'published' };
+    if (status !== undefined) update.status = LEGACY_TO_GROW[status] || status;
     const { data, error } = await supabase
-      .from('marketing_content_calendar')
-      .update(req.body)
+      .from('content_items')
+      .update(update)
       .eq('id', req.params.id)
       .select()
       .single();
@@ -72,7 +104,7 @@ app.patch('/api/v1/marketing/calendar/:id', authMiddleware, async (req, res) => 
 
 app.delete('/api/v1/marketing/calendar/:id', authMiddleware, async (req, res) => {
   try {
-    const { error } = await supabase.from('marketing_content_calendar').delete().eq('id', req.params.id);
+    const { error } = await supabase.from('content_items').delete().eq('id', req.params.id);
     if (error) throw error;
     res.json({ success: true });
   } catch (e: any) {

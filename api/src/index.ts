@@ -44,6 +44,7 @@ import './routes/standup';
 import './routes/pipeline';
 import './routes/gates';
 import './routes/pipeline-index';
+import './routes/nudges';      // N2 §4: proactive nudges — propose, never auto-act
 import './routes/deliverables';
 import './routes/pnl';
 import './routes/assets';

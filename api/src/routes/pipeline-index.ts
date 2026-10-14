@@ -12,7 +12,7 @@ app.get('/api/v1/pipelines-index', authMiddleware, async (req, res) => {
     const limit = Math.min(parseInt(String(req.query.limit || '100'), 10) || 100, 500);
     let query = supabase
       .from('workflows')
-      .select('id, name, client_id, status, progress, current_step, steps_json, created_at')
+      .select('id, name, client_id, status, progress, current_step, steps_json, created_at, updated_at')
       .order('created_at', { ascending: false })
       .limit(limit);
     if (status) query = query.eq('status', String(status));
@@ -28,6 +28,14 @@ app.get('/api/v1/pipelines-index', authMiddleware, async (req, res) => {
 
     const pipelines = (rows || []).map((r: any) => {
       const steps = r.steps_json || [];
+      // N2 §3 deal-rotting: idle_hours = hours since the current step's last
+      // activity (row updated_at as the activity clock). stuck = idle 72h+ or
+      // the explicit blocked status. Honest null when the row carries no clock.
+      const updatedMs = r.updated_at ? new Date(r.updated_at).getTime() : NaN;
+      const idle_hours = Number.isFinite(updatedMs)
+        ? Math.round(((Date.now() - updatedMs) / 3_600_000) * 10) / 10
+        : null;
+      const stuck = (idle_hours != null && idle_hours >= 72) || r.status === 'blocked';
       return {
         id: r.id,
         name: r.name,
@@ -39,6 +47,8 @@ app.get('/api/v1/pipelines-index', authMiddleware, async (req, res) => {
         total_steps: steps.length,
         completed_steps: steps.filter((s: any) => s.status === 'completed').length,
         created_at: r.created_at,
+        idle_hours,
+        stuck,
       };
     });
     res.json({ pipelines, count: pipelines.length });

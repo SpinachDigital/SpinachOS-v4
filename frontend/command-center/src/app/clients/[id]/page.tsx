@@ -76,7 +76,7 @@ const KIND_DOT: Record<TimelineEvent['kind'], string> = {
 
 export default function Client360Page({ params }: Props) {
   const { id } = params;
-  const { connected } = useWebSocket();
+  const { connected, everConnected } = useWebSocket();
   const [ctx, setCtx] = useState<any>(null);
   const [dna, setDna] = useState<any>(null);
   const [aiCost, setAiCost] = useState<{ cost: number | null; calls: number } | null>(null);
@@ -353,7 +353,7 @@ export default function Client360Page({ params }: Props) {
         <div className="actions">
           <span className="live-badge">
             <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-            {connected ? 'Live' : 'Offline'}
+            {connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}
           </span>
           <Link href="/clients" className="btn btn-secondary btn-sm" style={{ textDecoration: 'none' }}>
             ← All clients

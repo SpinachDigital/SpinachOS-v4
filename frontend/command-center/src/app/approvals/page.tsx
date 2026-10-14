@@ -41,7 +41,7 @@ const WORKFLOW_FILTERS = [
 ] as const;
 
 export default function ApprovalsPage() {
-  const { connected, feed } = useWebSocket();
+  const { connected, everConnected, feed } = useWebSocket();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionPending, setActionPending] = useState<string | null>(null);
@@ -134,7 +134,7 @@ export default function ApprovalsPage() {
         <div className="flex items-center gap-3">
           <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
           <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 12 }}>
-            {connected ? 'Live' : 'Offline'}
+            {connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}
           </span>
           <button onClick={fetchApprovals} disabled={loading} className="btn btn-secondary btn-sm">
             {loading ? 'Refreshing…' : 'Refresh'}

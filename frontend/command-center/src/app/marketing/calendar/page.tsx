@@ -61,7 +61,7 @@ const parseLocalDateInput = (s: string): Date => {
 };
 
 export default function ContentCalendarPage() {
-  const { connected } = useWebSocket();
+  const { connected, everConnected } = useWebSocket();
   const [items, setItems] = useState<ContentCalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
@@ -194,7 +194,7 @@ export default function ContentCalendarPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className={`dot ${connected ? 'dot-green dot-pulse' : 'dot-red'}`} />
-          <span className="t-mono" style={{ color: glass.text2, fontSize: 12 }}>{connected ? 'Live' : 'Offline'}</span>
+          <span className="t-mono" style={{ color: glass.text2, fontSize: 12 }}>{connected ? 'Live' : everConnected ? 'Offline' : 'Connecting…'}</span>
           <button onClick={fetchItems} disabled={loading} className="px-3 py-1.5 text-sm rounded-lg border transition-colors" style={{ background: glass.bg, borderColor: glass.border, color: glass.text, cursor: loading ? 'not-allowed' : 'pointer' }}>{loading ? 'Refreshing…' : 'Refresh'}</button>
         </div>
       </div>
