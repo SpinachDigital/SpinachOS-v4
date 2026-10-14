@@ -314,7 +314,7 @@ export default function CommandCenter() {
       {/* ============ BOTTOM STRIP ============ */}
       <section className="bottom-strip">
         <div className="panel">
-          <div className="panel-head"><h3>Project Progress</h3><button className="link" type="button" onClick={() => router.push('/projects')}>View All</button></div>
+          <div className="panel-head"><h3>Project Progress</h3><button className="link" type="button" onClick={() => router.push('/pipeline')}>View All</button></div>
           <div>
             {projects.map(p => (
               <div className="proj" key={p.id}>
