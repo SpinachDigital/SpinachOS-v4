@@ -42,7 +42,7 @@ export default function PipelineIndexPage() {
     try {
       setError(null);
       const res = await apiFetch('/api/v1/pipelines-index');
-      if (!res.ok) throw new Error(`pipelines-index ${res.status}`);
+      if (!res.ok) throw new Error('Could not load pipelines. Check your connection and retry.');
       const data = await res.json();
       setRows(data.pipelines || []);
     } catch (e: any) {
@@ -112,7 +112,7 @@ export default function PipelineIndexPage() {
 
       {error && (
         <div className="state-error" role="alert">
-          Pipelines load failed: {error} — retry kar raha hoon…{' '}
+          Couldn't load pipelines — {error}{' '}
           <button className="btn btn-sm" onClick={() => void load()}>Retry</button>
         </div>
       )}

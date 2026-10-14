@@ -182,7 +182,7 @@ export default function EngagementAnalyticsPage() {
         ) : metrics.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64" style={{ color: glass.text2 }}>
             <div className="t-meta mb-2">No engagement data yet</div>
-            <div className="t-meta" style={{ fontSize: 12 }}>Post content and check back — metrics populate via webhook/polling</div>
+            <div className="t-meta" style={{ fontSize: 12 }}>Post content and check back — metrics appear here after your first publish</div>
           </div>
         ) : view === 'overview' ? (
           <div className="space-y-6">

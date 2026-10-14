@@ -216,7 +216,7 @@ export default function LeadsPage() {
                         {l.status === 'responded' && (
                           <>
                             <input style={{ ...input, minHeight: 36, fontSize: 13 }} value={packSlug}
-                              onChange={(e) => setPackSlug(e.target.value)} placeholder="playbook pack slug"
+                              onChange={(e) => setPackSlug(e.target.value)} placeholder="Search playbooks…"
                               title="Playbook pack to install on onboard" />
                             <button style={btnSm} disabled={busy === k}
                               onClick={() => doAction(k, () => post(`/api/v1/leads/${l.id}/onboard`, { playbook_pack_slug: packSlug }),

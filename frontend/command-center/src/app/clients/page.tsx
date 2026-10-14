@@ -120,8 +120,10 @@ export default function ClientsPage() {
         ) : error ? (
           <div className="empty-state">
             <h3>Couldn't load clients</h3>
-            <p>{error}. Is the API running on :4000?</p>
-            <span className="tag">GET /api/v1/clients</span>
+            <p>{error} Check your connection and try again.</p>
+            <button type="button" className="btn" style={{ minHeight: 44, marginTop: 12 }} onClick={() => void fetchClients()}>
+              Retry
+            </button>
           </div>
         ) : visible.length === 0 ? (
           <div className="empty-state">

@@ -208,7 +208,7 @@ export default function ChatPage() {
         <div className="flex items-center justify-between" style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-hairline, #eee)' }}>
           <div>
             <h1 className="t-title" style={{ fontSize: 16, color: 'var(--text)', margin: 0 }}>
-              {threadTitle || (threadId ? `Thread ${threadId.slice(0, 8)}` : 'Office chat')}
+              {threadTitle || 'Untitled thread'}
             </h1>
             <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)', margin: 0 }}>
               {threadId ? 'Context: this thread only · persists on reload' : 'Everything happens here — command the office'}
