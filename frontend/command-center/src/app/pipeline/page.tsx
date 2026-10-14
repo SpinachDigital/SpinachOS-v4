@@ -10,6 +10,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
 import { useWebSocketStore } from '@/lib/office/wsStore';
+// N2.9: narrative header — happening/happened/next/who-acts.
+import WorkflowHeader from '@/components/workflow/WorkflowHeader';
 
 type PipelineRow = {
   id: string;
@@ -21,7 +23,14 @@ type PipelineRow = {
   total_steps: number;
   completed_steps: number;
   created_at: string;
+  // N2.11 (progressive enhancement): populated by the backend when available
+  // (Hermes: N2.11-backend). Renders deal-rotting alerts; absent = current behavior.
+  idle_hours?: number | null;
+  stuck?: boolean | null;
 };
+
+// Stage SLA: past this many idle hours a card is "rotting".
+const STAGE_SLA_HOURS = 72;
 
 const statusPill = (s: string) => {
   const map: Record<string, string> = {
@@ -82,6 +91,21 @@ export default function PipelineIndexPage() {
         </div>
       </header>
 
+      {/* N2.9: narrative header — computed from the page's own data. */}
+      {!error && rows !== null && rows.length > 0 && (() => {
+        const active = rows.filter((r) => r.status === 'active').length;
+        const blocked = rows.filter((r) => r.status === 'blocked').length;
+        const done = rows.filter((r) => r.status === 'completed').length;
+        return (
+          <WorkflowHeader
+            happening={`${active} active pipeline${active === 1 ? '' : 's'}${blocked > 0 ? ` — ${blocked} blocked` : ''}`}
+            happened={`${done} completed`}
+            next={blocked > 0 ? `${blocked} blocked — unblock or approve the gate` : 'No blockers — agents keep advancing'}
+            actor="Agents advance — you approve the gates"
+          />
+        );
+      })()}
+
       <div className="filter-row" role="search">
         <input
           className="filter-input"
@@ -128,11 +152,19 @@ export default function PipelineIndexPage() {
       )}
 
       <div className="card-list">
-        {filtered.map((r) => (
-          <Link key={r.id} href={`/pipeline/${r.id}`} className="card pipeline-card">
+        {filtered.map((r) => {
+          // N2.11: deal-rotting — idle past the stage SLA turns the card red.
+          // Renders only when the backend ships idle_hours/stuck.
+          const rotting = r.stuck === true || (r.idle_hours != null && r.idle_hours >= STAGE_SLA_HOURS);
+          return (
+          <Link key={r.id} href={`/pipeline/${r.id}`} className="card pipeline-card"
+            style={rotting ? { borderColor: 'var(--danger)' } : undefined}>
             <div className="card-head">
               <b>{r.name}</b>
-              <span className={`pill ${statusPill(r.status)}`}>{r.status}</span>
+              <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {rotting && <span className="pill" style={{ background: 'var(--danger-soft)', color: 'var(--danger)', fontWeight: 700 }}>STUCK</span>}
+                <span className={`pill ${statusPill(r.status)}`}>{r.status}</span>
+              </span>
             </div>
             <div className="card-meta">
               <span>{r.client_name || '—'}</span>
@@ -147,10 +179,17 @@ export default function PipelineIndexPage() {
             </div>
             <div className="card-foot">
               <span>{r.progress}%</span>
+              {/* N2.11: idle time becomes a visual property of the card. */}
+              {r.idle_hours != null && r.status === 'active' && (
+                <span style={{ color: rotting ? 'var(--danger)' : 'inherit', fontWeight: rotting ? 700 : 400 }}>
+                  · idle {r.idle_hours >= 48 ? `${Math.round(r.idle_hours / 24)}d` : `${Math.round(r.idle_hours)}h`}
+                </span>
+              )}
               <span>{new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
             </div>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

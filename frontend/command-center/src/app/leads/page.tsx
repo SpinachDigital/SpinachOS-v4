@@ -15,6 +15,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/auth';
 // N1.4: honest-state primitives — named states, never ad-hoc <p> tags.
 import { LoadingState, ErrorState, EmptyState } from '@/components/states/AsyncState';
+// N2.9: narrative header — every workflow page answers happening/happened/next/who-acts.
+import WorkflowHeader from '@/components/workflow/WorkflowHeader';
 
 type Status = 'new' | 'qualified' | 'disqualified' | 'outreached' | 'responded' | 'onboarded' | 'dead';
 
@@ -28,6 +30,9 @@ interface Lead {
   score?: number | null;
   client_id?: string | null;
   updated_at: string;
+  // N2.10 (progressive enhancement): populated by the backend when available
+  // (Hermes: N2.10-backend). Renders outreach visibility inline; absent = current behavior.
+  latest_outreach?: { draft_body?: string | null; sent_at?: string | null; replied_at?: string | null } | null;
 }
 
 const STAGES: { key: Status; label: string }[] = [
@@ -121,6 +126,20 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      {/* N2.9: narrative header — computed from the page's own data, no new endpoints. */}
+      {!loading && !error && leads.length > 0 && (() => {
+        const stale = leads.filter((l) => daysInStage(l.updated_at) >= STALE_DAYS && l.status !== 'onboarded').length;
+        const n = (s: Status) => byStatus(s).length;
+        return (
+          <WorkflowHeader
+            happening={`${leads.length} leads in the funnel${stale > 0 ? ` — ${stale} stale over ${STALE_DAYS}d` : ''}`}
+            happened={`${n('qualified')} qualified · ${n('outreached')} outreached · ${n('responded')} responded`}
+            next={n('new') > 0 ? `${n('new')} new ${n('new') === 1 ? 'needs' : 'need'} qualifying` : 'Funnel is clear — add or import leads'}
+            actor="You approve — agents draft the outreach"
+          />
+        );
+      })()}
+
       {notice && (
         <p style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px',
           background: 'var(--card)', fontSize: 14, margin: '0 0 16px' }}>{notice}</p>
@@ -198,6 +217,25 @@ export default function LeadsPage() {
                           {' '}· {daysInStage(l.updated_at)}d here{stale ? ' — stale' : ''}
                         </span>
                       </div>
+                      {/* N2.10: outreach visibility — renders when the backend ships
+                          latest_outreach; the funnel shows conversations, not just stages. */}
+                      {l.latest_outreach && (l.latest_outreach.sent_at || l.latest_outreach.draft_body) && (
+                        <div style={{ fontSize: 12, margin: '0 0 8px', padding: '8px 10px', borderRadius: 6,
+                          background: 'var(--panel)', border: '1px solid var(--border-soft)' }}>
+                          <span style={{ fontWeight: 600 }}>
+                            {l.latest_outreach.replied_at ? 'Replied ✓' : l.latest_outreach.sent_at ? 'Sent — no reply yet' : 'Draft ready'}
+                          </span>
+                          {l.latest_outreach.sent_at && (
+                            <span style={{ color: 'var(--muted-foreground)' }}> · {new Date(l.latest_outreach.sent_at).toLocaleDateString()}</span>
+                          )}
+                          {l.latest_outreach.draft_body && (
+                            <div style={{ color: 'var(--muted-foreground)', marginTop: 4, display: '-webkit-box',
+                              WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              “{l.latest_outreach.draft_body.slice(0, 120)}{l.latest_outreach.draft_body.length > 120 ? '…' : ''}”
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {l.status === 'new' && (
                           <button style={btnSm} disabled={busy === k}

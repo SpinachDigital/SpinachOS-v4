@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { apiFetch } from '@/lib/auth';
+// N2.9: narrative header — happening/happened/next/who-acts.
+import WorkflowHeader from '@/components/workflow/WorkflowHeader';
 
 interface ContentCalendarItem {
   id: string;
@@ -198,6 +200,23 @@ export default function ContentCalendarPage() {
       </div>
 
       {/* Filters */}
+      {/* N2.9: narrative header — computed from the page's own data. */}
+      {!loading && items.length > 0 && (
+        <div className="px-5 pt-3">
+          <WorkflowHeader
+            happening={`${items.length} posts on the calendar — ${items.filter(i => i.status === 'scheduled').length} scheduled`}
+            happened={`${items.filter(i => i.status === 'published').length} published`}
+            next={(() => {
+              const failed = items.filter(i => i.status === 'failed').length;
+              const review = items.filter(i => i.status === 'review').length;
+              if (failed > 0) return `${failed} failed — check and retry`;
+              if (review > 0) return `${review} in review — approve to schedule`;
+              return 'Calendar is healthy';
+            })()}
+            actor="You approve — the scheduler publishes when due"
+          />
+        </div>
+      )}
       <div className="flex flex-wrap gap-3 px-5 py-3 border-b" style={{ borderColor: glass.border }}>
         <div className="flex gap-2">
           <button onClick={() => setView('week')} className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${view === 'week' ? 'font-medium' : ''}`} style={{ background: view === 'week' ? 'rgba(22, 163, 74, 0.2)' : glass.bg, borderColor: view === 'week' ? 'var(--green)' : glass.border, color: glass.text, border: '1px solid' }}>Week</button>

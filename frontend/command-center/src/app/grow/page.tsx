@@ -8,6 +8,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/auth';
+// N2.9: narrative header — happening/happened/next/who-acts.
+import WorkflowHeader from '@/components/workflow/WorkflowHeader';
 
 const STATUS_COLORS: Record<string, string> = {
   idea: 'var(--muted-foreground)',
@@ -103,6 +105,40 @@ export default function GrowPage() {
     } finally { setBusy(false); }
   };
 
+  // N2.8: schedule-a-time picker. Backend POST /api/v1/grow/items/:id/schedule
+  // exists (grow-publish.ts) — the frontend never called it until now.
+  // Default: tomorrow 09:00 local (datetime-local needs YYYY-MM-DDTHH:MM).
+  const defaultScheduleAt = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(9, 0, 0, 0);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  const [scheduleAt, setScheduleAt] = useState<string>(defaultScheduleAt);
+
+  const scheduleItem = async (id: string) => {
+    if (!scheduleAt) { setNotice('Pick a date and time first.'); return; }
+    setBusy(true);
+    setNotice(null);
+    try {
+      const iso = new Date(scheduleAt).toISOString();
+      const res = await apiFetch(`/api/v1/grow/items/${id}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scheduled_for: iso }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setNotice(data?.error || `Couldn't schedule (${res.status})`);
+      else {
+        setNotice(`Scheduled for ${new Date(iso).toLocaleString()}.`);
+        await refresh();
+      }
+    } catch (e: any) {
+      setNotice(e?.message || 'Scheduling failed. Check your connection and retry.');
+    } finally { setBusy(false); }
+  };
+
   const queue = items.filter(i => i.status === 'approved' || i.status === 'scheduled');
   const history = items.filter(i => i.status === 'published' || i.status === 'failed');
   const byStatus = (s: string) => items.filter(i => i.status === s);
@@ -129,6 +165,21 @@ export default function GrowPage() {
           {notice}
         </div>
       )}
+
+      {/* N2.9: narrative header — computed from the page's own data. */}
+      {!loading && !loadError && items.length > 0 && (() => {
+        const n = (s: string) => items.filter((i) => i.status === s).length;
+        const queued = n('approved') + n('scheduled');
+        const failed = n('failed');
+        return (
+          <WorkflowHeader
+            happening={`${queued} in the publish queue${n('draft') + n('in_review') > 0 ? ` — ${n('draft') + n('in_review')} in draft/review` : ''}`}
+            happened={`${n('published')} published`}
+            next={failed > 0 ? `${failed} failed — fix and regenerate` : 'Queue is healthy'}
+            actor="You approve — the scheduler publishes when due"
+          />
+        );
+      })()}
 
       {loading ? (
         <p style={{ color: 'var(--muted-foreground)', fontSize: 13 }}>Loading calendar…</p>
@@ -255,7 +306,20 @@ export default function GrowPage() {
                 </>
               )}
               {selected.status === 'approved' && (
-                <button disabled={busy} onClick={() => act(`/api/v1/grow/items/${selected.id}/publish`, 'Published')} style={{ minHeight: 44, padding: '0 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}>Publish now</button>
+                <>
+                  <button disabled={busy} onClick={() => act(`/api/v1/grow/items/${selected.id}/publish`, 'Published')} style={{ minHeight: 44, padding: '0 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}>Publish now</button>
+                  {/* N2.8: schedule-a-time — the status existed, the control didn't. */}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                    <input
+                      type="datetime-local"
+                      value={scheduleAt}
+                      onChange={e => setScheduleAt(e.target.value)}
+                      aria-label="Schedule publish time"
+                      style={{ minHeight: 44, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--foreground)', fontSize: 13 }}
+                    />
+                    <button disabled={busy} onClick={() => scheduleItem(selected.id)} style={{ minHeight: 44, padding: '0 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)', cursor: 'pointer' }}>Schedule</button>
+                  </div>
+                </>
               )}
               {['published', 'failed', 'scheduled'].includes(selected.status) && (
                 <span style={{ fontSize: 12, color: 'var(--muted-foreground)', alignSelf: 'center' }}>
