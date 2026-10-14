@@ -1,8 +1,8 @@
 # Spinach OS v4 — Stabilization + Revamp Report
 
-**Date:** 14 Oct 2026 (update 2: misses 1+2 closed) · **Repo:** `SpinachDigital/SpinachOS-v4` · **HEAD:** `a928e7ff08d3b4931394ded7d242fcb48baa6104` (origin/main, `git ls-remote` verified)
+**Date:** 14 Oct 2026 (update 3: N1 Foundation shipped) · **Repo:** `SpinachDigital/SpinachOS-v4` · **HEAD:** `6b6d82e072ad7acb2493d732c895a432900e8efe` (origin/main, `git ls-remote` verified)
 
-**2-line summary:** Infra fully operational; 5 UX patches + R1–R4 + both auditor misses closed and live-verified. One-number law holds (156 = 156 = 156 after orphan purge), /team populates (was 401-ing on every browser load), zero raw HTML in any approval card, P&L 100% priced. Remaining: engagement revisit fix, two stat pairs re-verify, proactive nudges, full 25-page re-walk.
+**2-line summary:** Infra fully operational; 5 UX patches + R1–R4 + both auditor misses + N1 Foundation (6 tasks, 5 commits) shipped and live-verified. Approvals is the first nav item with a 156 badge, /projects redirects to /pipeline, dead controls gone, honest-state primitives in place, jargon swept, tokens deduped. Remaining: engagement revisit fix, two stat pairs re-verify, proactive nudges, full 25-page re-walk.
 
 ---
 
@@ -13,6 +13,29 @@
 **MISS 2 — raw HTML in PUBLISH FAILED cards: my 2998daf strip covered only 1 of 3 render paths.** The raw Publora 404 HTML also lived in (a) `approvals.description` — inserted raw by `grow-publish.ts:71` and `grow.ts:316`, and (b) `payload_json.error`. Fix: shared `cleanError()` in `providers/publishing.ts`, applied at both insert sites (description + payload), frontend `cleanDesc()` guard for legacy rows, and 6 legacy DB rows cleaned in place. **Live-verified via tunnel screenshot: card shows exactly `Publish failed: Publora 404: Error (endpoint not found)` — 55 chars, no HTML anywhere. DB cross-check: 0 rows with HTML in description (all types).**
 
 **Bonus (item 6 from auditor): "Day Co 3" probe names.** 52 orphan `lead_qualified` approvals whose backing leads were already deleted — purged (backups: `docs/evidence/qa-quarantine-backup/orphan-approvals-*.json`). Pending: 208 → **156**, every remaining card references a live lead. One-number re-verified through tunnel: **156 = 156 = 156** (badge / tile / queue).
+
+
+---
+
+## 0.5 N1 FOUNDATION — SHIPPED (14 Oct, commits `1d89421`..`6b6d82e`)
+
+All 6 tasks from the N1 execution plan (frontend-only lane), applied as 4 numbered patches + 1 follow-up, each verified with `tsc exit 0` + `next build exit 0` before the next.
+
+| Commit | Tasks |
+|---|---|
+| `1d89421` | **N1.1** Sidebar `/approvals` moved to first position (inbox-first IA; label/sub/icon unchanged) · **N1.2** dead controls killed: StepDetail fake Start/Complete/Block/Reopen block deleted (real Advance stays), RightRail Today-task toggle → non-interactive status dot, PipelineSteps fake cursor-pointer/hover removed, WorkflowCards.tsx deleted (verified unmounted, zero refs left) · **N1.3** `/projects` retired: next.config redirect → `/pipeline`, sidebar entry removed, links repointed |
+| `e010477` | **N1.4** `components/states/AsyncState.tsx` primitives (AsyncRegion / EmptyState / ErrorState with 44px retry, 8-state taxonomy documented) + `/leads` error state migrated |
+| `732ff62` | **N1.5** jargon sweep: "playbook pack slug" → "Search playbooks…", clients error no longer shows `GET /api/v1/clients` / `:4000`, "pipelines-index 400" → human sentence + retry, engagement stub copy, no raw UUID fragments as names |
+| `cc012f2` | **N1.6** token dedupe (`--danger/--warn/--info` canonical), `--text-faint` lightened for WCAG 4.5:1 at 11–12px, dead 48px `.tabs` grid row removed, JetBrains Mono loaded for `.t-mono` |
+| `6b6d82e` | **Follow-up (patch miss caught in verification):** home "Project Progress → View All" still pointed at `/projects` — repointed to `/pipeline` |
+
+**Notes from application:** patch 2 initially conflicted (my Tasks sidebar entry from `a928e7f` sat inside its context lines); after patch 1 landed, all remaining patches applied clean. Redirect shipped as `permanent: false` (307) — a conscious deviation from the plan's "permanent": if `/projects` ever returns, a 308 would have cached the redirect in browsers.
+
+**Live-verified on fresh tunnels (screenshots, vision-read):**
+- Sidebar order: **Approvals first** with 156 badge, then Office Chat / Today / Command Center.
+- `/projects` → 307 → renders "Pipelines — DELIVER".
+- `/leads`: real business names, zero UUID fragments, zero raw endpoints, New 48 / Qualified 8.
+- One-number law holds on the new tunnels: **156 = 156** (badge = queue).
 
 ---
 
@@ -85,8 +108,8 @@
 ## 6. Access (rotates on tunnel restart)
 
 ```
-APP: https://transparent-compiler-batch-ontario.trycloudflare.com
-API: https://yoga-judges-shoot-eggs.trycloudflare.com
+APP: https://photographers-butter-holidays-ann.trycloudflare.com
+API: https://enrolled-contrary-lesson-charlotte.trycloudflare.com
 ```
 Founder JWT + full kit: `docs/QA-ACCESS.md` (gitignored — carries live token, never commit).
 
@@ -115,7 +138,7 @@ cloudflared tunnel --url http://localhost:3000
 | 4 | Re-verify ProbeLab 88 vs 65 + "100% success + Blocked 1" pairs (R1.3 leftovers) | Next dev pass |
 | 5 | Proactive nudges (R4 part 2) | Next dev pass |
 | 6 | ~~"Day Co 3" probe names~~ **DONE `a928e7f`** — orphan approvals purged | — |
-| 7 | Full 25-page re-walk on the final commit (8 pages spot-verified so far) | QA |
+| 7 | Full 25-page re-walk on the final commit (11 pages spot-verified so far) | QA |
 | 8 | trycloudflare quick tunnels rotate on restart — consider named tunnel for stability | Founder (optional) |
 
 ---
