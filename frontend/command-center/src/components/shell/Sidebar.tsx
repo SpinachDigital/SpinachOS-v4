@@ -26,10 +26,12 @@ const I = {
 type NavEntry = { href: string; label: string; sub: string; icon: React.ReactNode };
 
 const NAV: NavEntry[] = [
+  // N1.1 inbox-first IA: THE INBOX is the founder's first click (was last of 17).
+  { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
   { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
   { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
-  { href: '/projects', label: 'Projects', sub: 'Plan. Track. Deliver.', icon: I.projects },
+  {/* N1.3: /projects retired → /pipeline (redirect in next.config.js). */}
   { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },
   { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
   { href: '/tasks', label: 'Tasks', sub: 'Job runs & outputs', icon: I.projects },
@@ -45,7 +47,6 @@ const NAV: NavEntry[] = [
   { href: '/marketing', label: 'Marketing', sub: 'Content & Campaigns', icon: I.marketing },
   { href: '/grow', label: 'GROW', sub: 'Content engine — calendar → publish', icon: I.marketing },
   { href: '/analytics', label: 'Analytics', sub: 'Growth & Insights', icon: I.analytics },
-  { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
   { href: '/settings', label: 'Settings', sub: 'Workspace', icon: I.settings },
 ];
 // Phase 0 sidebar honesty: Team/Assets/Finance/Knowledge pointed at routes

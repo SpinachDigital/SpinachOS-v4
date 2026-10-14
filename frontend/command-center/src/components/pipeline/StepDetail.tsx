@@ -55,54 +55,9 @@ export default function StepDetail({ workflow }: { workflow: WorkflowData }) {
             </div>
           </div>
         </div>
-
-        {/* Actions */}
-        <div className="mt-4 flex justify-end space-x-3">
-          {currentStep.status === 'pending' && (
-            <button
-              className="px-4 py-2 bg-[var(--green)] text-[var(--panel)] rounded hover:bg-[var(--green)] transition-colors"
-              onClick={() => {
-                // TODO: Implement step start via WebSocket or API
-                console.log(`Starting step: ${currentStep.name}`);
-              }}
-            >
-              Start Step
-            </button>
-          )}
-          {currentStep.status === 'in_progress' && (
-            <>
-              <button
-                className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
-                onClick={() => {
-                  // TODO: Implement step completion
-                  console.log(`Completing step: ${currentStep.name}`);
-                }}
-              >
-                Complete Step
-              </button>
-              <button
-                className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
-                onClick={() => {
-                  // TODO: Implement step block
-                  console.log(`Blocking step: ${currentStep.name}`);
-                }}
-              >
-                Block
-              </button>
-            </>
-          )}
-          {currentStep.status === 'completed' && (
-            <button
-              className="px-4 py-2 bg-[var(--card-hover)] text-[var(--text)] rounded hover:bg-[var(--card-hover)] transition-colors"
-              onClick={() => {
-                // TODO: Implement step reopen
-                console.log(`Reopening step: ${currentStep.name}`);
-              }}
-            >
-              Reopen Step
-            </button>
-          )}
-        </div>
+        {/* N1.2: dead Actions block removed — the four buttons below were console.log
+            TODOs. A visible control that does nothing is a bug. Step actions live
+            behind the real Advance button until step-level actions ship. */}
       </div>
     </div>
   );

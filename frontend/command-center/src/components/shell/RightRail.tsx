@@ -91,7 +91,9 @@ export default function RightRail() {
           {loadedOnce && today.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>No items on today&rsquo;s schedule.</div>}
           {today.map(s => (
             <div className="slot" key={s.id}>
-              <button className={`ck${s.done ? ' done' : ''}`} type="button" aria-label="toggle" />
+              {/* N1.2: was a <button> with no onClick — a checkbox that could never be
+                  checked. Now a plain status dot; no fake interactivity. */}
+              <span className={`ck${s.done ? ' done' : ''}`} aria-hidden="true" />
               <div className={`st${s.done ? ' done' : ''}`}>
                 <b>{s.title}</b>
                 {s.time && <span>{s.time}</span>}

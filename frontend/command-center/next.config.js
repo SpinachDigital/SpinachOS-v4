@@ -28,7 +28,10 @@ const nextConfig = {
       { source: '/finance', destination: '/analytics', permanent: false },
       { source: '/knowledge', destination: '/settings', permanent: false },
       { source: '/terminal', destination: '/', permanent: false },
-      { source: '/kanban', destination: '/projects', permanent: false },
+      { source: '/kanban', destination: '/pipeline', permanent: false },
+      // N1.3 (2026-10-14): /projects retired — it duplicated /pipeline + /leads
+      // with less info and no actions. Workflows live at /pipeline now.
+      { source: '/projects', destination: '/pipeline', permanent: false },
     ];
   },
   async rewrites() {

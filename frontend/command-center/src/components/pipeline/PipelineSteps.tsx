@@ -19,7 +19,8 @@ export default function PipelineSteps({ workflow }: { workflow: WorkflowData }) 
       <h3 className="text-lg font-medium text-[var(--text)] mb-4">Workflow Steps</h3>
       <div className="space-y-2">
         {workflow.steps.map((step, index) => (
-          <div key={step.name} className="flex items-center gap-3 p-3 rounded bg-[var(--card)] hover:bg-[var(--card-hover)] transition-colors cursor-pointer">
+          <div key={step.name} className="flex items-center gap-3 p-3 rounded bg-[var(--card)]">
+            {/* N1.2: was cursor-pointer + hover with no onClick — looked clickable, did nothing. */}
             {/* Step number */}
             <div className="flex-shrink-0">
               <div className="h-8 w-8 flex items-center justify-center rounded-lg 
