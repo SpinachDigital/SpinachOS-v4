@@ -47,3 +47,5 @@ docs/QA-ACCESS.md
 
 # N1 screenshots (contain lead contact data — never commit)
 docs/evidence/n1/
+# N3 screenshots (same rule — real approval data in them)
+docs/evidence/n3/
