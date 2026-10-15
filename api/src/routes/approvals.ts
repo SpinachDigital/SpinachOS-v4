@@ -7,6 +7,7 @@ import { lintAgentOutput } from '../agents/style-lint';
 
 // -- imports auto-added by fix-imports (Phase 3)
 import { app, authMiddleware, supabase, emitApproval } from '../ctx';
+import { sendPushToUser, FOUNDER_EMAIL } from '../push';
 // Sprint 13: logSlotEvent — GROW slot transitions (publish approvals from
 // THE INBOX page ride the same machinery).
 import { logSlotEvent } from './grow';
@@ -259,6 +260,12 @@ app.post('/api/v1/approvals', authMiddleware, async (req, res) => {
     const { data, error } = await supabase.from('approvals').insert(enrichedBody).select().single();
     if (error) throw error;
     emitApproval({ ...data, action: 'created' });
+    // N4 §2: a new gate card is worth a buzz. Fire-and-forget; never blocks the API path.
+    void sendPushToUser(FOUNDER_EMAIL, {
+      title: 'Gate needs you',
+      body: `${data.title || 'New approval'} is waiting in the inbox.`,
+      link: `/approvals?focus=${data.id}`,
+    }).catch(() => {});
     res.status(201).json(data);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

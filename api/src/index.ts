@@ -46,6 +46,7 @@ import './routes/gates';
 import './routes/pipeline-index';
 import './routes/nudges';      // N2 §4: proactive nudges — propose, never auto-act
 import './routes/events';      // N3 §1: typed agent event stream read side
+import './routes/push';        // N4 §1: Web Push subscriptions (vapid-key/subscribe/unsubscribe/test)
 import './routes/deliverables';
 import './routes/pnl';
 import './routes/assets';
@@ -90,6 +91,10 @@ import './routes/health';      // Phase 5 GOAL 4: expanded /health (one endpoint
 // ---- cron engine (WAKE_BRAINS + retainer cron) ----
 import { startRetainerCron } from './cron-engine';
 startRetainerCron();
+
+// ---- N4 §2: stuck-pipeline edge scanner (push when idle crosses 72h) ----
+import { startStuckPipelineScanner } from './stuck-scanner';
+startStuckPipelineScanner();
 
 // ---- WS wiring ----
 setWss(wss);

@@ -18,6 +18,7 @@
 import { supabase, emitFeed, sanitizeText, broadcast } from './ctx';
 import { runGatewayTask } from './bridge';
 import { needsBrainstorm, dispatchReply, stripSafetyLeak } from './command-intent';
+import { sendPushToUser, FOUNDER_EMAIL } from './push';
 import { executeAgentTask } from './engines/agent-execution';
 import { callLaya, LAYA_DEPARTMENT_MAP } from './laya-client';
 import { hybridRetrieve } from './knowledge-helper';
@@ -168,6 +169,15 @@ export async function handleCommandThread(command: string, threadId?: string): P
     await supabase.from('thread_messages').insert({
       thread_id: thread.id, sender: 'director', role: 'user', content: command,
     });
+    // N4 §2 trigger 3: founder @-mentioned in office chat → one buzz.
+    // Fire-and-forget; the chat flow must never wait on push.
+    if (/^@founder\b/i.test(command.trim())) {
+      void sendPushToUser(FOUNDER_EMAIL, {
+        title: 'Office chat mention',
+        body: `@founder: ${command.replace(/^@founder\s*/i, '').slice(0, 100)}`,
+        link: `/chat?thread=${thread.id}`,
+      }).catch(() => {});
+    }
     // continuation on an ACTIVE brainstorm thread:
     //   - affirmative answer → delegatePlan (plan approved)
     //   - rounds >= CAP → the FINAL plan is already on the table → treat as yes
