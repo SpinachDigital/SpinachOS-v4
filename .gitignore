@@ -49,3 +49,5 @@ docs/QA-ACCESS.md
 docs/evidence/n1/
 # N3 screenshots (same rule — real approval data in them)
 docs/evidence/n3/
+# Infra-fix screenshots (real lead data)
+docs/evidence/infra/
