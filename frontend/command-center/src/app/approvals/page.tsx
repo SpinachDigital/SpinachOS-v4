@@ -367,7 +367,7 @@ export default function ApprovalsPage() {
         {selected.size > 0 && tab === 'decide' && (
           <div style={{
             position: 'sticky', top: 0, zIndex: 10, marginBottom: 12,
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
             padding: '10px 14px', borderRadius: 12,
             background: 'var(--card, #fff)', border: '1px solid var(--border)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.08)',

@@ -974,3 +974,13 @@ button:active, [role='button']:active {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ---------- N4.23: phone-as-remote ---------- */
+/* kbd hints are meaningless without a physical keyboard — hide on touch */
+@media (pointer: coarse) {
+  .kbd { display: none; }
+}
+/* approvals tab row + bulk bar: never overflow 360px */
+@media (max-width: 480px) {
+  [role="tablist"] { flex-wrap: wrap; }
+}

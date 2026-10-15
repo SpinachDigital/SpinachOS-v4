@@ -5,7 +5,7 @@
 // with projected dept tags → Live Activity / Jobs / Projects / Assets
 // → Progress / Outputs / Calendar / Quote. Live WS feed + TaskRunsPanel output viewer.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation'; // Sprint 2: no dead buttons
 import { buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
@@ -23,6 +23,21 @@ type Job = { id: string; title: string; agent: string; status: string; when: str
 type Proj = { id: string; name: string; client: string; pct: number };
 
 const HUES = [145, 160, 175, 190, 205, 130, 115, 220];
+
+import { ZONE_ROUTES } from './page-zone-routes';
+import ZonePanel from '@/components/office/ZonePanel';
+
+// N4.22 — zone → agents, inverted from the diorama module's AGENT_ZONES
+// (viewer.js). Kept in sync by hand; the module is the source of truth.
+const ZONE_AGENTS: Record<string, string[]> = {
+  engineering: ['engineering'],
+  marketing: ['social'],
+  design: ['designer'],
+  operations: ['orchestrator'],
+  clients: ['sales'],
+  'ceo-cabin': ['ceo'],
+  'research-cabin': ['research'],
+};
 export default function CommandCenter() {
   const router = useRouter(); // Sprint 2: no dead buttons
   const [stats, setStats] = useState<Stat[]>([]);
@@ -37,6 +52,30 @@ export default function CommandCenter() {
   const [outputsFeed, setOutputsFeed] = useState<{ id?: string; name: string; sub: string; icon: string; hue: number }[]>([]);
   const [activeZone, setActiveZone] = useState<string | null>(null);
   const [showRuns, setShowRuns] = useState(false);
+  // N4.22 — zone info panel (modifier-click a zone). Null = closed.
+  const [panelZone, setPanelZone] = useState<string | null>(null);
+  const modRef = useRef(false);
+
+  // Track modifier keys globally so a modifier-click on a zone opens the
+  // info panel instead of navigating (N4.22).
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => { if (e.shiftKey || e.ctrlKey || e.metaKey) modRef.current = true; };
+    const up = (e: KeyboardEvent) => { if (!e.shiftKey && !e.ctrlKey && !e.metaKey) modRef.current = false; };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
+  }, []);
+
+  // N4.21 — zone click navigates. Modifier-click opens the info panel.
+  const handleZoneClick = useCallback((zoneId: string) => {
+    if (modRef.current) {
+      setPanelZone(zoneId);
+      return;
+    }
+    const route = ZONE_ROUTES[zoneId];
+    if (route) router.push(route.href);
+    else setActiveZone(zoneId); // unknown zone: fall back to highlight
+  }, [router]);
 
   const { connected, agentStates } = useSpinachStore();
   const handleWsEvent = useSpinachStore((s) => s.handleWsEvent);
@@ -188,7 +227,9 @@ export default function CommandCenter() {
 
       {/* ============ 3D VIEWPORT (reference procedural office) ============ */}
       <section className="viewport-card" id="viewport">
-        <DioramaViewer onZoneClick={(id) => setActiveZone(activeZone === id ? null : id)} />
+        {/* N4.21: zone click navigates to the department page (ZONE_ROUTES).
+            Modifier-click opens the zone info panel (N4.22). */}
+        <DioramaViewer onZoneClick={handleZoneClick} />
         {/* agent-state chip overlays the projected tags (tags themselves render inside ReferenceOffice) */}
         <div className="viewport-tags" style={{ pointerEvents: 'none' }}>
           {activeZone && agentStates[activeZone] && (
@@ -202,6 +243,15 @@ export default function CommandCenter() {
             </div>
           )}
         </div>
+        {/* N4.22 zone info panel — live agents in the zone, no navigation needed */}
+        {panelZone && (
+          <ZonePanel
+            zoneId={panelZone}
+            agentStates={agentStates}
+            onClose={() => setPanelZone(null)}
+            onOpen={() => { const r = ZONE_ROUTES[panelZone]; setPanelZone(null); if (r) router.push(r.href); }}
+          />
+        )}
         <div className="viewport-hud tl">
           <div className="hud-chip"><span className={connected ? 'live-dot' : ''} /> {!loadedOnce ? 'CONNECTING' : connected ? 'LIVE' : 'OFFLINE'}</div>
           <div className="hud-chip">{workingCount} working</div>
@@ -212,7 +262,45 @@ export default function CommandCenter() {
         <div className="viewport-hud tr">
           <button className="hud-btn" type="button" onClick={() => setShowRuns(true)}>Task Runs</button>
         </div>
-        <div className="viewport-hint">drag to orbit · scroll to zoom · click a department</div>
+        <div className="viewport-hint">drag to orbit · scroll to zoom · click a department to open it</div>
+      </section>
+
+      {/* N4.21 zone legend — discoverability for the deep-links */}
+      <section aria-label="Office zones" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 4px' }}>
+        {Object.entries(ZONE_ROUTES).map(([zoneId, route]) => {
+          const agents = ZONE_AGENTS[zoneId] || [];
+          const working = agents.filter(a => {
+            const s = (agentStates as any)[a]?.state;
+            return s === 'working' || s === 'thinking';
+          }).length;
+          return (
+            <button
+              key={zoneId}
+              onClick={() => router.push(route.href)}
+              title={`Open ${route.label}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, minHeight: 36,
+                padding: '0 12px', borderRadius: 99, cursor: 'pointer',
+                border: '1px solid var(--border-hairline, #eee)',
+                background: 'var(--card, #fff)', color: 'var(--text)',
+                fontSize: 12.5, fontWeight: 600,
+              }}
+            >
+              <span
+                className="dot"
+                style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: working > 0 ? '#22c55e' : '#9ca3af',
+                  display: 'inline-block',
+                }}
+              />
+              {zoneId.replace('-', ' ')}
+              <span className="t-mono" style={{ fontSize: 10.5, color: 'var(--text-faint)' }}>
+                → {route.label}
+              </span>
+            </button>
+          );
+        })}
       </section>
 
       {/* ============ MID ROW ============ */}

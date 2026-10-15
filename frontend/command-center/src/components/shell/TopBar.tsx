@@ -119,6 +119,19 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
       </div>
       )}
       <div className="topbar-icons">
+        {/* N4.23 phone-as-remote: ⌘K doesn't exist on touch — a visible
+            palette trigger. Same CommandPalette, same actions. */}
+        <button
+          className="icon-btn"
+          title="Command palette (⌘K)"
+          type="button"
+          aria-label="Open command palette"
+          onClick={() => window.dispatchEvent(new CustomEvent('spinach:open-palette'))}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+          </svg>
+        </button>
         <button className="icon-btn" onClick={toggleTheme} title="Day / evening 3D" type="button">◐</button>
         {/* Sprint 10 P2: dead notification bell → wired to /approvals (THE
             INBOX — every approval/stuck card lands there). The ping dot
