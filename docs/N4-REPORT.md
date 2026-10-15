@@ -50,9 +50,15 @@ POST /api/v1/push/test                 (auth, no body)
 
 Push JSON payload: `{ title, body, link }` — service worker should `showNotification(title, { body })` and focus/open `link` on click.
 
-## §4 Founder step (the one blocker)
+## §4 Migration — RUN, live-verified
 
-`supabase/migration-n4-push.sql` — Supabase dashboard SQL editor. Same situation as N3's migrations: the MCP direct-SQL path times out from this machine (4 attempts, `SELECT 1` included), while the REST path (what the API uses) works fine at ~166ms. Until the table exists, subscribe returns an honest 500 naming the missing table; every other piece is live.
+`push_subscriptions` table is live (founder ran `supabase/migration-n4-push.sql` in the dashboard, 15 Oct). Verified end-to-end after the migration:
+
+- **subscribe → 200** `{ok:true,id:"febb53cf…"}` — row persisted (checked in DB).
+- **test push → 200** `{ok:true,sent:0,failed:1}` — the dead test endpoint was detected, its row **auto-deleted** (410/404 cleanup path confirmed: table back to 0 rows).
+- **unsubscribe → 200** `{ok:true,removed:1}`.
+- **CORS contract**: the app tunnel origin fetched `/push/vapid-key` successfully from a headless Chrome on the app origin — key length 87, `applicationServerKey` Uint8Array conversion yields 65 bytes (correct P-256 point). The Settings toggle has everything it needs.
+- **Trigger wiring smoke**: a test approval POST hit the push path fire-and-forget and still returned 201 in <1s; smoke card rejected after, queue back to 157.
 
 ## Security notes
 
