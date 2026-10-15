@@ -67,7 +67,7 @@ export default function PipelineDetailPage() {
         setData(await res.json());
         setError(null);
       } else if (res.status === 404) {
-        setError('Pipeline not found — ye workflow delete ho chuka ya exist nahi karta.');
+        setError('Pipeline not found — it may have been deleted or never existed.');
       } else {
         setError(`API ${res.status} unreachable — pipeline load failed.`);
       }

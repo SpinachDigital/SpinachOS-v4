@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/auth';
+import NudgeList from '@/components/nudges/NudgeList';
 
 interface Overview {
   today: { approvals_pending: number; tickets_open: number; leads_new: number; content_scheduled: number };
@@ -96,6 +97,13 @@ export default function TodayPage() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+            <section>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <h2 style={{ fontSize: 16, margin: 0 }}>Next up</h2>
+                <Link href="/nudges" style={{ fontSize: 13, color: 'var(--accent)' }}>All →</Link>
+              </div>
+              <NudgeList limit={5} />
+            </section>
             <section>
               <h2 style={{ fontSize: 16, margin: '0 0 10px' }}>Top inbox cards</h2>
               {data.inbox_top.length === 0 && (

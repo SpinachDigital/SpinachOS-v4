@@ -28,6 +28,7 @@ type NavEntry = { href: string; label: string; sub: string; icon: React.ReactNod
 const NAV: NavEntry[] = [
   // N1.1 inbox-first IA: THE INBOX is the founder's first click (was last of 17).
   { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
+  { href: '/nudges', label: 'Next up', sub: 'Nudges — what needs you', icon: I.command },
   { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
   { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
   { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
@@ -57,6 +58,7 @@ const NAV: NavEntry[] = [
 export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const [pending, setPending] = useState(0);
+  const [nudgeCount, setNudgeCount] = useState(0);
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
@@ -71,6 +73,23 @@ export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boole
           if (alive) setPending(Array.isArray(j) ? j.length : (j.count ?? 0));
         }
       } catch { /* offline */ }
+    })();
+    return () => { alive = false; };
+  }, [mounted]);
+  // N3.22: nudge count badge for the "Next up" nav entry.
+  useEffect(() => {
+    if (!mounted) return;
+    let alive = true;
+    (async () => {
+      try {
+        const token = await getAuthToken();
+        const r = await fetch('/api/v1/nudges', { headers: { Authorization: `Bearer ${token}` } });
+        if (r.ok) {
+          const j = await r.json();
+          const n = Array.isArray(j) ? j : (j.nudges ?? []);
+          if (alive) setNudgeCount(n.length);
+        }
+      } catch { /* offline — badge stays hidden */ }
     })();
     return () => { alive = false; };
   }, [mounted]);
@@ -95,6 +114,9 @@ export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boole
               </div>
               {n.href === '/approvals' && pending > 0 && (
                 <span className="pill completed" style={{ marginLeft: 'auto' }}>{pending}</span>
+              )}
+              {n.href === '/nudges' && nudgeCount > 0 && (
+                <span className="pill" style={{ marginLeft: 'auto', background: 'rgba(99,102,241,0.14)', color: '#4f46e5' }}>{nudgeCount}</span>
               )}
             </Link>
           );

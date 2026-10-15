@@ -7,12 +7,13 @@
  * Warm light tokens (design v6 vars) — old dead dark-* classes removed.
  * One-tap approve/reject, mobile-first: 44px touch targets, 360px clean.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import {
   FileText, MessageSquare, Megaphone, DollarSign,
-  Cpu, Palette, Code, Check, X, Clock, AlertCircle,
+  Cpu, Palette, Code, Check, X, Clock, AlertCircle, ChevronDown,
 } from 'lucide-react';
 import OutputPreview from '@/components/OutputPreview';
+import FreshFacts from '@/components/approvals/FreshFacts';
 
 interface ApprovalItem {
   id: string;
@@ -77,15 +78,40 @@ interface ApprovalQueueProps {
   approvals: ApprovalItem[];
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
+  onSnooze?: (id: string) => void;
   actionPending?: string | null;
   // Phase 6 GOAL 3 — bulk + selection (explicit select → confirm, no silent bulk)
   selected?: Set<string>;
   onToggleSelect?: (id: string) => void;
+  // N3.14 — keyboard triage: focused card ring + click-to-focus
+  focusedId?: string | null;
+  onFocusCard?: (id: string) => void;
+  // N3.14 — `o` toggles the expanded detail view
+  expandedId?: string | null;
+  onToggleExpand?: (id: string) => void;
+  // N3.14 — `r` opens an inline reason field on the card (not a modal)
+  reasonForId?: string | null;
+  onReasonSubmit?: (id: string, reason: string) => void;
+  onReasonCancel?: () => void;
+  // N3.16 — visible rollback: id -> error message, with retry
+  failed?: Record<string, string>;
+  onRetry?: (id: string) => void;
+  // N3 — show kbd hints + snooze only on the Decide tab
+  showTriage?: boolean;
 }
 
-export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, selected, onToggleSelect }: ApprovalQueueProps) {
+export function ApprovalQueue({
+  approvals, onApprove, onReject, onSnooze, actionPending, selected, onToggleSelect,
+  focusedId, onFocusCard, expandedId, onToggleExpand,
+  reasonForId, onReasonSubmit, onReasonCancel,
+  failed, onRetry, showTriage,
+}: ApprovalQueueProps) {
   const pendingApprovals = approvals.filter(a => a.status === 'pending');
   const selCount = selected?.size || 0;
+  const [reasonText, setReasonText] = useState('');
+
+  // Reset the reason draft whenever a different card's field opens.
+  React.useEffect(() => { setReasonText(''); }, [reasonForId]);
 
   return (
     <section className="animate-in">
@@ -129,16 +155,28 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
               external: { bg: 'rgba(239,68,68,0.16)', color: '#b91c1c' },
             };
             const tierStyle = gateTier ? (TIER_STYLE[gateTier] || TIER_STYLE.write) : null;
+            const isFocused = showTriage && focusedId === approval.id;
+            const isExpanded = expandedId === approval.id;
+            const showReason = reasonForId === approval.id;
+            const failMsg = failed?.[approval.id];
 
             return (
               <article
                 key={approval.id}
+                data-approval-id={approval.id}
+                tabIndex={showTriage && isPending ? 0 : undefined}
+                onClick={() => { if (showTriage && isPending) onFocusCard?.(approval.id); }}
+                onFocus={() => { if (showTriage && isPending) onFocusCard?.(approval.id); }}
                 style={{
                   borderRadius: 16, padding: 16, border: '1px solid var(--border-hairline, #eee)',
                   background: 'var(--card, #fff)',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 4px 12px -6px rgba(0,0,0,0.06)',
-                  transition: 'border-color 0.2s ease',
-                  borderColor: isPending ? 'rgba(245,158,11,0.35)' : 'var(--border-hairline, #eee)',
+                  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+                  borderColor: isFocused ? 'var(--accent)' : isPending ? 'rgba(245,158,11,0.35)' : 'var(--border-hairline, #eee)',
+                  boxShadow: isFocused
+                    ? '0 0 0 2px var(--accent), 0 4px 12px -6px rgba(0,0,0,0.06)'
+                    : '0 1px 2px rgba(0,0,0,0.03), 0 4px 12px -6px rgba(0,0,0,0.06)',
+                  outline: 'none',
+                  cursor: showTriage && isPending ? 'pointer' : undefined,
                 }}
               >
                 <div className="flex items-start gap-3 mb-3">
@@ -202,7 +240,27 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                       <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Platform: {approval.platform}</p>
                     )}
                   </div>
-                  {isPending && <Clock style={{ width: 16, height: 16, color: '#b45309', flexShrink: 0, marginTop: 2 }} />}
+                  {isPending && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 2 }}>
+                      {showTriage && onToggleSelect && (
+                        <button
+                          title="Select for bulk (x)"
+                          aria-pressed={selected?.has(approval.id)}
+                          onClick={(e) => { e.stopPropagation(); onToggleSelect(approval.id); }}
+                          style={{
+                            width: 22, height: 22, borderRadius: 6, cursor: 'pointer',
+                            border: `1.5px solid ${selected?.has(approval.id) ? 'var(--accent)' : 'var(--border-hairline, #ccc)'}`,
+                            background: selected?.has(approval.id) ? 'var(--accent)' : 'transparent',
+                            color: '#fff', fontSize: 12, fontWeight: 700,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                          }}
+                        >
+                          {selected?.has(approval.id) ? '✓' : ''}
+                        </button>
+                      )}
+                      <Clock style={{ width: 16, height: 16, color: '#b45309' }} />
+                    </div>
+                  )}
                 </div>
 
                 {approval.description && (
@@ -237,11 +295,12 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                           opacity: actionPending === approval.id ? 0.7 : 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         }}
-                        onClick={() => onApprove?.(approval.id)}
+                        onClick={(e) => { e.stopPropagation(); onApprove?.(approval.id); }}
                         disabled={actionPending === approval.id}
                       >
                         <Check className="w-4 h-4" />
                         {actionPending === approval.id ? 'Approving…' : 'Approve'}
+                        {showTriage && <span className="kbd" style={{ marginLeft: 4 }}>a</span>}
                       </button>
                       <button
                         className="flex-1"
@@ -252,12 +311,33 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                           opacity: actionPending === approval.id ? 0.7 : 1,
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         }}
-                        onClick={() => onReject?.(approval.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // If the reason field is already open for this card,
+                          // the input owns the flow — don't re-trigger.
+                          if (reasonForId !== approval.id) onReject?.(approval.id);
+                        }}
                         disabled={actionPending === approval.id}
                       >
                         <X className="w-4 h-4" />
                         {actionPending === approval.id ? 'Rejecting…' : 'Reject'}
+                        {showTriage && <span className="kbd" style={{ marginLeft: 4 }}>r</span>}
                       </button>
+                      {onSnooze && (
+                        <button
+                          title="Snooze to tomorrow (s)"
+                          style={{
+                            padding: '10px 12px', minHeight: 44, borderRadius: 10,
+                            background: 'transparent', color: 'var(--text-faint)', fontSize: 13.5, fontWeight: 600,
+                            border: '1px solid var(--border-hairline, #eee)', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          }}
+                          onClick={(e) => { e.stopPropagation(); onSnooze(approval.id); }}
+                        >
+                          <Clock className="w-4 h-4" />
+                          {showTriage && <span className="kbd">s</span>}
+                        </button>
+                      )}
                     </>
                   ) : (
                     <div className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
@@ -265,6 +345,95 @@ export function ApprovalQueue({ approvals, onApprove, onReject, actionPending, s
                     </div>
                   )}
                 </div>
+
+                {/* N3.16 visible rollback — the card returned with an honest error */}
+                {failMsg && (
+                  <div style={{
+                    marginTop: 10, padding: '10px 12px', borderRadius: 10,
+                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <span className="t-meta" style={{ fontSize: 12.5, color: '#b91c1c', flex: 1 }}>
+                      Couldn't save that decision: {failMsg} The card is back — nothing was lost.
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onRetry?.(approval.id); }}
+                      style={{
+                        minHeight: 36, padding: '0 12px', borderRadius: 8, border: 'none',
+                        background: '#b91c1c', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                      }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                {/* N3.14 `r` — inline reason field on the card, not a modal */}
+                {showReason && (
+                  <div style={{ marginTop: 10 }} onClick={e => e.stopPropagation()}>
+                    <input
+                      autoFocus
+                      value={reasonText}
+                      onChange={e => setReasonText(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && reasonText.trim()) onReasonSubmit?.(approval.id, reasonText.trim());
+                        if (e.key === 'Escape') { setReasonText(''); onReasonCancel?.(); }
+                      }}
+                      placeholder="Why reject? (Enter to confirm, Esc to cancel)"
+                      aria-label="Rejection reason"
+                      style={{
+                        width: '100%', minHeight: 44, padding: '0 12px', borderRadius: 10,
+                        border: '1px solid var(--accent)', fontSize: 13.5,
+                        background: 'var(--bg, #fff)', color: 'var(--text)', outline: 'none',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <button
+                        onClick={() => { if (reasonText.trim()) onReasonSubmit?.(approval.id, reasonText.trim()); }}
+                        disabled={!reasonText.trim()}
+                        style={{
+                          minHeight: 40, padding: '0 14px', borderRadius: 8, border: 'none',
+                          background: '#b91c1c', color: '#fff', fontSize: 13, fontWeight: 600,
+                          cursor: reasonText.trim() ? 'pointer' : 'not-allowed',
+                          opacity: reasonText.trim() ? 1 : 0.5,
+                        }}
+                      >
+                        Reject with reason
+                      </button>
+                      <button
+                        onClick={() => { setReasonText(''); onReasonCancel?.(); }}
+                        style={{
+                          minHeight: 40, padding: '0 14px', borderRadius: 8,
+                          border: '1px solid var(--border-hairline, #eee)',
+                          background: 'transparent', color: 'var(--text-faint)', fontSize: 13, cursor: 'pointer',
+                        }}
+                      >
+                        Cancel <span className="kbd">esc</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* N3.14 `o` — expanded detail: fresh facts at confirm time */}
+                {showTriage && isPending && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onToggleExpand?.(approval.id); }}
+                    className="t-meta"
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 8,
+                      fontSize: 12.5, color: 'var(--text-faint)',
+                      display: 'flex', alignItems: 'center', gap: 4,
+                    }}
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" style={{ transform: isExpanded ? 'rotate(180deg)' : undefined, transition: 'transform 0.2s' }} />
+                    {isExpanded ? 'Less' : 'Details'} {showTriage && <span className="kbd">o</span>}
+                  </button>
+                )}
+                {isExpanded && (
+                  <div onClick={e => e.stopPropagation()}>
+                    <FreshFacts approvalId={approval.id} />
+                  </div>
+                )}
               </article>
             );
           })}

@@ -146,7 +146,7 @@ export default function PipelineIndexPage() {
       {!error && rows !== null && filtered.length === 0 && (
         <div className="state-empty">
           {rows.length === 0
-            ? 'No pipelines yet — onboard a client (Client 360 → Onboard) ya Win flow se pipeline banega.'
+            ? 'No pipelines yet — onboard a client and the story starts here.'
             : 'No pipelines match this filter — filter clear karo.'}
         </div>
       )}

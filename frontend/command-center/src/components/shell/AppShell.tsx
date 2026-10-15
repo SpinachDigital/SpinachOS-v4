@@ -7,6 +7,8 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import RightRail from './RightRail';
+import CommandPalette from './CommandPalette';
+import ShortcutHelp from './ShortcutHelp';
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -33,6 +35,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
       {/* Phase 0: the canonical command bar lives in the TopBar slot
           (TopBar renders CommandGateway inline) — exactly ONE bar, no
           floating duplicate. */}
+      {/* N3.17 + N3.18: global command palette and shortcut cheat sheet */}
+      <CommandPalette />
+      <ShortcutHelp />
     </div>
   );
 }

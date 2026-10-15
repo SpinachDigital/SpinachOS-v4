@@ -57,10 +57,16 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
     return () => clearInterval(id);
   }, []);
 
-  // ⌘K focuses the command input (dispatch an event — the gateway owns the input)
+  // N3.17: ⌘K opens the command palette (actions + go-to). `/` focuses the
+  // Jarvis input (the palette owns ⌘K now; the gateway keeps its pill + `/`).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('spinach:open-palette'));
+      } else if (e.key === '/' && !e.metaKey && !e.ctrlKey && !typing) {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('spinach:focus-command'));
       }
