@@ -47,26 +47,23 @@ done     | 20:22:37 | Completed via profile (hermes/engineer)
 - Decisions persist synchronously; ledger writes, emits, and event-stream appends are all fire-and-forget (`void`), none in the request path. The snooze endpoint is a single-column update.
 - **Timings (live):** reject 42.3 / 41.5 / 41.5 ms (3 runs), snooze 23.4 ms — p95 well under the 300ms target locally. Over the Cloudflare tunnel, transport adds ~600–900ms (facts 0.62–2.3s) — that is tunnel overhead, not request-path work; the optimistic frontend (N3.16) is what makes the tunnel feel fast.
 
-## §4. Snooze persistence — CODE SHIPPED, MIGRATION PENDING (founder)
+## §4. Snooze persistence — CONFIRMED (migrations run, live E2E)
 
-- `POST /api/v1/approvals/:id/snooze` persists `snoozed_until` (default: +24h) and emits `action: 'snoozed'`. While the column doesn't exist it returns an honest **501 with the exact SQL file to run** — verified live (501, 23ms), never a fake ok.
-- `GET /api/v1/approvals` selects `*`-equivalent columns and will carry `snoozed_until` automatically once the column exists.
-- **`supabase/migration-n3-snooze.sql`** — idempotent (`IF NOT EXISTS`), dashboard-safe: column + partial index.
-- **BLOCKER (owner: Abhishek):** Supabase MCP failed 4× ("Connection terminated due to connection timeout"). Run both migrations in the dashboard SQL editor:
-  1. `supabase/migration-n3-snooze.sql`
-  2. `supabase/migration-n3-agent-events.sql` (agent_events table + indexes + RLS service-role policy)
+- `POST /api/v1/approvals/:id/snooze` persists `snoozed_until` (default: +24h) and emits `action: 'snoozed'`.
+- **Migrations run by the founder 15 Oct (dashboard SQL editor) and verified live:** `snoozed_until` column OK, `agent_events` table OK + a write/read/delete probe passed. Pre-migration the endpoint returned an honest 501 with the SQL path (verified); post-migration:
+- **Live E2E:** throwaway approval snoozed via the endpoint → HTTP 200 `{ok:true}` → DB read-back showed `snoozed_until: 2026-10-16T03:30:00+00:00` persisted (reload survives — it's on the row) → cleaned.
+- **Table-backed stream confirmed:** a real agent task wrote `progress > tool_call > done` into `agent_events` (3 rows, direct table read) and `GET /threads/:id/events` returned the same 3, newest-first. The metadata ring remains as a harmless redundancy.
 
 ## Live state after this pass
 
-- API :4000 running final code (scheduler armed on content_items), FE :3000 rebuilt against the fresh API tunnel and verified: **/approvals = 161 pending = sidebar badge = queue header, Live indicator, cards with previews, no raw internals** (`n3-approvals.png` 165KB, opened).
-- Fresh tunnels: API `https://newsletter-anti-publication-vessels.trycloudflare.com`, APP `https://managers-initial-antiques-stephanie.trycloudflare.com` (old URLs died mid-pass — the "Couldn't reach the API" screenshot moment was the dead tunnel, fixed by re-arming + rebuild).
+- API :4000 running final code (scheduler armed on content_items), FE :3000 rebuilt against the LIVE API tunnel and verified: **/approvals = 161 pending = sidebar badge = KPI bar = queue header, Live indicator green, cards with previews** (`n3-approvals.png` 165KB, opened).
+- **Tunnels (live):** API `https://anderson-vid-record-boulevard.trycloudflare.com` · APP `https://dated-campbell-ensemble-blacks.trycloudflare.com` — both 200 over the public URLs.
 - JWT re-minted (previous QA token had expired — that caused the misleading "0 rows" reads; DB was intact throughout: 214 total, 162 pending before cleanup, 161 after the leftover n3 test card was rejected).
 
 ## Open items (owner · next step)
 
 | # | Item | Owner | Next step |
 |---|---|---|---|
-| 1 | `migration-n3-snooze.sql` not run | Abhishek | Dashboard SQL editor (MCP times out) |
-| 2 | `migration-n3-agent-events.sql` not run | Abhishek | Same — table becomes the stream's source of truth; ring is the pre-migration fallback |
-| 3 | N3 frontend patches (triage keys, split inbox, ⌘K, nudges surface) | assistant | Zip applies on top; fresh facts endpoint is ready for N3.20-frontend progressive enhancement |
-| 4 | Tunnel timings are transport-dominated | — | Accept: local p95 is the real signal; N3.16 optimism hides tunnel latency |
+| 1 | N3 frontend patches (triage keys, split inbox, ⌘K, nudges surface) | assistant | Zip applies on top; fresh-facts endpoint ready for N3.20-frontend progressive enhancement; snooze now persists server-side for the Watching tab |
+| 2 | Tunnel timings are transport-dominated | — | Accept: local p95 is the real signal; N3.16 optimism hides tunnel latency |
+| 3 | trycloudflare URLs rotate on restart | — | Known limitation; rebuild FE with the new API base whenever tunnels re-arm |
