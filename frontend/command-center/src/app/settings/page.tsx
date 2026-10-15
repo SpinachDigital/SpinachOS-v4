@@ -1,5 +1,6 @@
 'use client';
 
+import PushToggle from '@/components/settings/PushToggle';
 import { useState, useEffect } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { apiFetch } from '@/lib/auth';
@@ -22,7 +23,7 @@ interface Profile {
   dormant?: boolean;
 }
 
-type Tab = 'integrations' | 'models' | 'knowledge' | 'theme' | 'api' | 'advanced';
+type Tab = 'integrations' | 'models' | 'knowledge' | 'theme' | 'api' | 'advanced' | 'notifications';
 
 // The 10 Hermes profile keys known from the execution bridge (bridge.ts).
 // Used only to mark which profiles the API does NOT report — never as fake rows.
@@ -37,6 +38,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'knowledge', label: 'Knowledge' },
   { id: 'theme', label: 'Theme' },
   { id: 'api', label: 'API Keys' },
+  { id: 'notifications', label: 'Notifications' },
   { id: 'advanced', label: 'Advanced' },
 ];
 
@@ -339,6 +341,14 @@ export default function SettingsPage() {
           </>
         ) : activeTab === 'api' ? (
           <ByokPanel />
+        ) : activeTab === 'notifications' ? (
+          <>
+            <div className="section-title">Notifications</div>
+            <div className="panel" style={{ marginBottom: 14 }}>
+              <div className="panel-head"><h3>Push notifications</h3></div>
+              <PushToggle />
+            </div>
+          </>
         ) : (
           <>
             <div className="section-title">Advanced</div>
