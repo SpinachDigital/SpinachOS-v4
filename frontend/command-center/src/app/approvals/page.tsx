@@ -115,6 +115,28 @@ export default function ApprovalsPage() {
 
   useEffect(() => { fetchApprovals(); }, [fetchApprovals]);
 
+  // N3.22 deep-link: /approvals?focus=<id> (from nudges) focuses + scrolls
+  // to the card. Runs after the list loads.
+  useEffect(() => {
+    if (loading || approvals.length === 0) return;
+    try {
+      const id = new URL(window.location.href).searchParams.get('focus');
+      if (!id) return;
+      const exists = approvals.some(a => a.id === id && a.status === 'pending');
+      if (!exists) return;
+      if (tab !== 'decide') switchTab('decide');
+      setFocusedId(id);
+      // Clear the param so refresh doesn't re-jump.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('focus');
+      window.history.replaceState(null, '', url.toString());
+      requestAnimationFrame(() => {
+        document.querySelector(`[data-approval-id="${CSS.escape(id)}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
+    } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, approvals]);
+
   useEffect(() => {
     const latest = [...feed].reverse().find(f => f.action === 'created' || f.action === 'approved' || f.action === 'rejected');
     if (latest) fetchApprovals();

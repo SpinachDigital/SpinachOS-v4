@@ -13,7 +13,8 @@ export interface Nudge {
   kind: string;
   title: string;
   why?: string;
-  action?: { label: string; href?: string };
+  // Backend shape: { label, type, target }. Accept `href` too (plan shape).
+  action?: { label: string; href?: string; target?: string };
   id?: string;
 }
 
@@ -78,18 +79,21 @@ export default function NudgeList({ limit }: { limit?: number }) {
                 </div>
               )}
             </div>
-            {n.action?.href && (
-              <Link
-                href={n.action.href}
-                style={{
-                  flexShrink: 0, minHeight: 36, padding: '0 12px', borderRadius: 8,
-                  background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600,
-                  display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
-                }}
-              >
-                {n.action.label || 'Open'}
-              </Link>
-            )}
+            {(() => {
+              const href = n.action?.href || n.action?.target;
+              return href ? (
+                <Link
+                  href={href}
+                  style={{
+                    flexShrink: 0, minHeight: 36, padding: '0 12px', borderRadius: 8,
+                    background: 'var(--accent)', color: '#fff', fontSize: 13, fontWeight: 600,
+                    display: 'inline-flex', alignItems: 'center', textDecoration: 'none',
+                  }}
+                >
+                  {n.action!.label || 'Open'}
+                </Link>
+              ) : null;
+            })()}
           </div>
         );
       })}
