@@ -293,6 +293,25 @@ app.get('/api/v1/approvals/:id/facts', authMiddleware, async (req, res) => {
       } else {
         details.push('⚠ The linked calendar item no longer exists.');
       }
+    } else if ((p.kind === 'publish_failure' || p.kind === 'grow_draft') && (p.slot_id || p.item_id)) {
+      // PUBLISH FAILED / grow_draft card: what a re-approve will attempt RIGHT NOW.
+      // Two link shapes exist: payload_json.slot_id (grow submit path) and
+      // payload_json.item_id (grow_draft path) — both point at content_items.
+      const itemId = p.slot_id || p.item_id;
+      const { data: slot } = await supabase.from('content_items').select('body_text, channel, error, status, scheduled_for').eq('id', itemId).single();
+      if (slot) {
+        headline = p.kind === 'publish_failure' ? `Retry publish to ${slot.channel}` : `Publish ${slot.channel} item`;
+        details.push(`Text now: "${String(slot.body_text || '(empty)').slice(0, 200)}"`);
+        details.push(`Item status now: ${slot.status || 'unknown'}${slot.scheduled_for ? ` · scheduled for ${slot.scheduled_for}` : ''}`);
+        if (p.kind === 'publish_failure') {
+          details.push(`Last provider error: ${String(slot.error || p.error || 'none recorded').slice(0, 160)}`);
+        }
+        if (String(slot.body_text || '') !== String(p.preview_text || '') && p.preview_text) {
+          details.push('⚠ Draft changed since this card was created — this is the CURRENT text.');
+        }
+      } else {
+        details.push('⚠ The linked calendar item no longer exists — approving cannot retry it.');
+      }
     } else if (p.kind === 'outreach' && p.draft_id) {
       const { data: d } = await supabase.from('outreach_drafts').select('subject, body, updated_at').eq('id', p.draft_id).single();
       if (d) {
