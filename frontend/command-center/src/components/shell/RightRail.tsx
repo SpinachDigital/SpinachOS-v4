@@ -1,9 +1,21 @@
 'use client';
 
 // RightRail — reference right column: Today checklist / AI Agents / System Health.
-// Live data from the :4000 bridge endpoints, 30s refresh.
+// Live data from the API bridge endpoints (direct browser → API), 30s refresh.
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation'; // Sprint 2: no dead buttons
+import { apiFetch } from '@/lib/auth';
+
+// The API host shown in the health widget — derived from the real configured
+// base, never the stale localhost-era ":4000" label.
+function apiHost(): string {
+  try {
+    const h = new URL(process.env.NEXT_PUBLIC_API_BASE || '').host;
+    return h || 'API';
+  } catch {
+    return 'API';
+  }
+}
 
 type AgentRow = { profile: string; state: string; activity?: string };
 type HealthRow = { name: string; status: string; value?: string };
@@ -25,10 +37,13 @@ export default function RightRail() {
     let alive = true;
     const load = async () => {
       try {
+        // N4-fix: bridge endpoints go direct (browser → API) via apiFetch.
+        // The Next.js /api/* rewrite proxy 500s from the server, which made
+        // this widget report OFFLINE while the API was actually up.
         const [t, a, h] = await Promise.all([
-          fetch('/api/schedule/today').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/agents').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/system/health').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/schedule/today').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/agents').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/system/health').then(r => (r.ok ? r.json() : null)),
         ]);
         if (!alive) return;
         // today: {date, slots:[{id,title,sub,time,done}]}
@@ -45,7 +60,7 @@ export default function RightRail() {
       } catch {
         // Phase 2 Task 3: API unreachable → loud error banner (not silent)
         if (alive) {
-          setApiError('API :4000 unreachable — check scripts/start-all.ps1 or run the watchdog.');
+          setApiError(`API unreachable — the app can't reach ${apiHost()}.`);
           setLoadedOnce(true); // settle the pill: "Checking…" must never stick forever
         }
       }
@@ -159,7 +174,7 @@ export default function RightRail() {
             </>
           )}
           {loadedOnce && health.length === 0 && (
-            <div className="health-row"><span className="d down" /><b>API :4000</b><span className="hv">unreachable</span></div>
+            <div className="health-row"><span className="d down" /><b>{apiHost()}</b><span className="hv">unreachable</span></div>
           )}
           {health.map(h => (
             <div className="health-row" key={h.name}>

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation'; // Sprint 2: no dead buttons
-import { buildWsUrl } from '@/lib/auth';
+import { apiFetch, buildWsUrl } from '@/lib/auth';
 import dynamic from 'next/dynamic';
 
 import TaskRunsPanel from '@/components/TaskRunsPanel';
@@ -93,13 +93,16 @@ export default function CommandCenter() {
     let alive = true;
     (async () => {
       try {
+        // N4-fix: bridge endpoints go direct (browser → API) via apiFetch.
+        // The Next.js /api/* rewrite proxy 500s from the server, so relative
+        // fetch() calls lie about API health. apiFetch bypasses the proxy.
         const [s, a, j, p, as, o] = await Promise.all([
-          fetch('/api/overview/stats').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/activity?limit=15').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/jobs?limit=6').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/projects').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/assets').then(r => (r.ok ? r.json() : null)),
-          fetch('/api/outputs').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/overview/stats').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/activity?limit=15').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/jobs?limit=6').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/projects').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/assets').then(r => (r.ok ? r.json() : null)),
+          apiFetch('/api/outputs').then(r => (r.ok ? r.json() : null)),
         ]);
         if (!alive) return;
         // All-null = the API is unreachable (every call failed) → loud error state
