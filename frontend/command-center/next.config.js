@@ -37,7 +37,14 @@ const nextConfig = {
   async rewrites() {
     // ONE canonical env var: NEXT_PUBLIC_API_BASE (documented in README).
     // The old NEXT_PUBLIC_API_URL name is retired.
-    const api = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+    // N4c (2026-10-15): the rewrite proxy now targets the API's ORIGIN (API_ORIGIN,
+    // default http://localhost:4000) instead of NEXT_PUBLIC_API_BASE. Routing the
+    // proxy through the public Cloudflare tunnel made the FE server hairpin through
+    // the internet to reach an API sitting on the same machine — every probe paid
+    // a cloudflare round-trip and died with ECONNRESET whenever the tunnel flaked.
+    // Browsers still use NEXT_PUBLIC_API_BASE (they need the public URL); only the
+    // server-side proxy goes direct.
+    const api = process.env.API_ORIGIN || 'http://localhost:4000';
     return [
       // dashboard bridge endpoints (NO /v1): stats, agents, health, activity, jobs, projects…
       {

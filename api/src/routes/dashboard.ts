@@ -85,15 +85,18 @@ app.get('/api/system/health', async (_req, res) => {
       layaValue = r.ok ? ':8000' : `HTTP ${r.status}`;
     } catch { layaValue = 'unreachable'; }
     // Gateway (Agent Engine): probe the endpoint agents actually use.
-    // /v1/models requires auth on OmniRoute (401 false-alarm); /v1/chat/completions
-    // is the real path every runAgentTask call takes — probe that instead.
+    // N4c (2026-10-15): the old probe did a REAL chat completion with max_tokens 400
+    // and a 30s budget — when OmniRoute was slow this endpoint hung 30s+ and every
+    // health consumer (RightRail badge, tunnel keepalives) died on it. A health
+    // probe must be cheap and bounded: 5s, 1 token, and a failure is a 'warn'
+    // value, never a hang.
     let gwState = 'warn', gwValue = 'down';
     try {
       const r = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(30_000),
-        body: JSON.stringify({ model: 'combo/spinach-agents', messages: [{ role: 'user', content: 'ping' }], max_tokens: 400 }),
+        signal: AbortSignal.timeout(5_000),
+        body: JSON.stringify({ model: 'combo/spinach-agents', messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
       });
       gwState = r.ok ? 'ok' : 'warn';
       gwValue = r.ok ? 'OmniRoute' : `HTTP ${r.status}`;
