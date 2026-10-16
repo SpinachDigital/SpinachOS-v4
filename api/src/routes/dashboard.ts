@@ -92,11 +92,14 @@ app.get('/api/system/health', async (_req, res) => {
     // value, never a hang.
     let gwState = 'warn', gwValue = 'down';
     try {
+      // Combo name is configurable: GATEWAY_COMBO in .env (default combo/spinach-agents-v2).
+      // This probe must not 401 when the combo gets renamed during a sweep.
+      const combo = process.env.GATEWAY_COMBO || 'combo/spinach-agents-v2';
       const r = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: AbortSignal.timeout(5_000),
-        body: JSON.stringify({ model: 'combo/spinach-agents', messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
+        body: JSON.stringify({ model: combo, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
       });
       gwState = r.ok ? 'ok' : 'warn';
       gwValue = r.ok ? 'OmniRoute' : `HTTP ${r.status}`;
