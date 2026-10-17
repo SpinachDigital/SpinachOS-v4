@@ -255,16 +255,19 @@ body {
 }
 .user-chip .who b { display: block; font-size: 13px; }
 .user-chip .who span { font-size: 11px; color: var(--text-faint); }
+/* UX pass (2026-10-17): the solid-white date card bled against the dark
+   theme on every page. Now a consistent panel card. */
 .date-card {
-  background: var(--white-card); color: var(--white-card-text);
+  background: var(--panel); color: var(--text);
+  border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 8px 14px;
   display: flex; align-items: center; gap: 12px;
   white-space: nowrap;
 }
-.date-card .d1 { font-size: 10.5px; color: var(--white-card-dim); }
+.date-card .d1 { font-size: 10.5px; color: var(--text-dim); }
 .date-card .d2 { font-size: 16px; font-weight: 700; }
-.date-card .d3 { font-size: 10.5px; color: var(--white-card-dim); }
+.date-card .d3 { font-size: 10.5px; color: var(--text-dim); }
 
 /* ---------- tabs ---------- */
 .tabs {
@@ -984,3 +987,10 @@ button:active, [role='button']:active {
 @media (max-width: 480px) {
   [role="tablist"] { flex-wrap: wrap; }
 }
+
+/* UX pass (2026-10-17): sidebar section headers for Act/Run/Know groups. */
+.nav-group-head {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-faint); padding: 14px 16px 4px; user-select: none;
+}
+.nav-group + .nav-group .nav-group-head { padding-top: 18px; }

@@ -144,10 +144,23 @@ export default function PipelineIndexPage() {
       {!error && rows === null && <div className="state-loading">Loading pipelines…</div>}
 
       {!error && rows !== null && filtered.length === 0 && (
-        <div className="state-empty">
-          {rows.length === 0
-            ? 'No pipelines yet — onboard a client and the story starts here.'
-            : 'No pipelines match this filter — filter clear karo.'}
+        <div className="state-empty" style={{ textAlign: 'center', padding: '48px 24px' }}>
+          {rows.length === 0 ? (
+            <>
+              <p style={{ fontSize: 15, fontWeight: 600, margin: '0 0 6px' }}>No pipelines yet</p>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 16px' }}>
+                Onboard a client and the story starts here — gates, filings, and delivery tracking.
+              </p>
+              <Link href="/leads" className="btn btn-primary btn-sm" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                + Start from leads
+              </Link>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>No pipelines match this filter.</p>
+              <Link href="/pipeline" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center' }}>Clear filter</Link>
+            </>
+          )}
         </div>
       )}
 

@@ -25,7 +25,15 @@ const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
 // Fall back to an honest label instead of a blank row.
 const entryTitle = (e: Entry): string => {
   const t = e.value?.title ?? e.value?.what ?? e.key;
-  return typeof t === 'string' && t.trim() ? t : 'Untitled entry';
+  const base = typeof t === 'string' && t.trim() ? t : '';
+  // UX pass (2026-10-17): bare event names ("task completion", "pattern")
+  // are meaningless in a list — enrich with the entry key / task subject.
+  const GENERIC = /^(task completion|pattern|event|note|update)$/i;
+  if (!base || GENERIC.test(base.trim())) {
+    const k = typeof e.key === 'string' && e.key.trim() && !GENERIC.test(e.key.trim()) ? e.key.trim() : '';
+    return k ? `${base || 'Event'} — ${k}` : (base || 'Untitled entry');
+  }
+  return base;
 };
 
 // Probe/test rows sometimes carry garbage timestamps. Anything more than

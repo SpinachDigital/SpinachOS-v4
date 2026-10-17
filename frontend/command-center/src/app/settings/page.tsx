@@ -163,9 +163,9 @@ export default function SettingsPage() {
                         setup flow in this UI yet. Honest state: the button says
                         what it does instead of silently doing nothing. */}
                     {int.connected ? (
-                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>wired</span>
+                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Connected</span>
                     ) : (
-                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>not set up</span>
+                      <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Not connected</span>
                     )}
                   </div>
                 </div>

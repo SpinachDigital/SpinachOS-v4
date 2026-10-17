@@ -57,7 +57,30 @@ export const runHrWatcherOnce = async (): Promise<{ created: number; resolved: n
   const activeAgents = new Map((agents || []).filter(a => a.status === 'active').map(a => [a.id, a]));
 
   // ---- 1. stuck: running tasks > 4h ----
+  // UX pass (2026-10-17): flags alone created alarm fatigue — tasks stayed
+  // "running" for 300h+ on the Team page. Tasks stuck > 24h are now marked
+  // blocked with a recorded reason (honest state, not just a flag).
   const fourHoursAgo = new Date(now - 4 * 3600 * 1000).toISOString();
+  const oneDayAgo = new Date(now - 24 * 3600 * 1000).toISOString();
+  const { data: zombieTasks } = await supabase
+    .from('tasks')
+    .select('id, title')
+    .eq('status', 'running')
+    .lt('created_at', oneDayAgo)
+    .limit(50);
+  if (zombieTasks && zombieTasks.length) {
+    // Note: tasks has no 'error' column — the reason lives in metadata.reason
+    // (schema-cache verified 2026-10-17).
+    await supabase.from('tasks').update({
+      status: 'blocked',
+      metadata: {
+        timeout: '24h-ceiling',
+        closed_at: new Date().toISOString(),
+        reason: 'Auto-closed: ran past the 24h ceiling with no completion event — the run died without reporting back.',
+      },
+      updated_at: new Date().toISOString(),
+    }).in('id', zombieTasks.map(t => t.id));
+  }
   const { data: stuckTasks } = await supabase
     .from('tasks')
     .select('id, title, assigned_to, metadata, created_at')

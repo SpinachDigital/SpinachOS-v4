@@ -25,30 +25,47 @@ const I = {
 
 type NavEntry = { href: string; label: string; sub: string; icon: React.ReactNode };
 
-const NAV: NavEntry[] = [
-  // N1.1 inbox-first IA: THE INBOX is the founder's first click (was last of 17).
-  { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
-  { href: '/nudges', label: 'Next up', sub: 'Nudges — what needs you', icon: I.command },
-  { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
-  { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
-  { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
-  // N1.3: /projects retired → /pipeline (redirect in next.config.js).
-  { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },
-  { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
-  { href: '/tasks', label: 'Tasks', sub: 'Job runs & outputs', icon: I.projects },
-  { href: '/team', label: 'Team', sub: 'HR & human roster', icon: I.team },
-  { href: '/clients', label: 'Clients', sub: 'Relationships', icon: I.clients },
-  { href: '/assets', label: 'Assets', sub: 'CREATE — the library', icon: I.assets },
-  { href: '/memory', label: 'Company Memory', sub: 'RAG search — everything learned', icon: I.command },
-  { href: '/playbooks', label: 'Playbooks', sub: 'Installable workflows', icon: I.projects },
-  { href: '/ledger', label: 'Memory Ledger', sub: 'Decisions — replayable', icon: I.team },
-  { href: '/evolutions', label: 'Evolutions', sub: 'Learning loop — proposals', icon: I.analytics },
-  { href: '/pnl', label: 'P&L', sub: 'AI cost vs revenue', icon: I.analytics },
-  { href: '/leads', label: 'Lead Inbox', sub: 'WIN — qualify & outreach', icon: I.approvals },
-  { href: '/marketing', label: 'Marketing', sub: 'Content & Campaigns', icon: I.marketing },
-  { href: '/grow', label: 'GROW', sub: 'Content engine — calendar → publish', icon: I.marketing },
-  { href: '/analytics', label: 'Analytics', sub: 'Growth & Insights', icon: I.analytics },
-  { href: '/settings', label: 'Settings', sub: 'Workspace', icon: I.settings },
+// UX pass (2026-10-17): 21 flat items = scan fatigue. Grouped into
+// three intents — what needs ME, what the COMPANY runs, what we KNOW.
+const GROUPS: { head: string; items: NavEntry[] }[] = [
+  {
+    head: 'Act',
+    items: [
+      // N1.1 inbox-first IA: THE INBOX is the founder's first click.
+      { href: '/approvals', label: 'Approvals', sub: 'Director Gate', icon: I.approvals },
+      { href: '/nudges', label: 'Next up', sub: 'Nudges — what needs you', icon: I.command },
+      { href: '/chat', label: 'Office Chat', sub: 'The Jarvis surface', icon: I.command },
+      { href: '/leads', label: 'Lead Inbox', sub: 'WIN — qualify & outreach', icon: I.approvals },
+    ],
+  },
+  {
+    head: 'Run',
+    items: [
+      { href: '/today', label: 'Today', sub: 'Company at a glance', icon: I.command },
+      { href: '/', label: 'Command Center', sub: 'Overview', icon: I.command },
+      // N1.3: /projects retired → /pipeline (redirect in next.config.js).
+      { href: '/pipeline', label: 'Pipelines', sub: 'DELIVER — gates & filing', icon: I.projects },
+      { href: '/grow', label: 'GROW', sub: 'Content engine — calendar → publish', icon: I.marketing },
+      { href: '/marketing', label: 'Marketing', sub: 'Content & Campaigns', icon: I.marketing },
+      { href: '/assets', label: 'Assets', sub: 'CREATE — the library', icon: I.assets },
+      { href: '/agents', label: 'Agent Fleet', sub: 'AI agents — live states', icon: I.agents },
+      { href: '/tasks', label: 'Tasks', sub: 'Job runs & outputs', icon: I.projects },
+      { href: '/team', label: 'Team', sub: 'HR & human roster', icon: I.team },
+      { href: '/clients', label: 'Clients', sub: 'Relationships', icon: I.clients },
+      { href: '/playbooks', label: 'Playbooks', sub: 'Installable workflows', icon: I.projects },
+    ],
+  },
+  {
+    head: 'Know',
+    items: [
+      { href: '/memory', label: 'Company Memory', sub: 'RAG search — everything learned', icon: I.command },
+      { href: '/ledger', label: 'Memory Ledger', sub: 'Decisions — replayable', icon: I.team },
+      { href: '/evolutions', label: 'Evolutions', sub: 'Learning loop — proposals', icon: I.analytics },
+      { href: '/pnl', label: 'P&L', sub: 'AI cost vs revenue', icon: I.analytics },
+      { href: '/analytics', label: 'Analytics', sub: 'Growth & Insights', icon: I.analytics },
+      { href: '/settings', label: 'Settings', sub: 'Workspace', icon: I.settings },
+    ],
+  },
 ];
 // Phase 0 sidebar honesty: Team/Assets/Finance/Knowledge pointed at routes
 // that redirect elsewhere (IA v3). They're REMOVED from the sidebar until
@@ -101,7 +118,10 @@ export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boole
         <img src="/brand/logo/spinach-labs-logo-primary-reverse.svg" alt="Spinach Labs" />
       </div>
       <nav className="nav">
-        {NAV.map((n) => {
+        {GROUPS.map((g) => (
+          <div key={g.head} className="nav-group">
+            <div className="nav-group-head">{g.head}</div>
+            {g.items.map((n) => {
           const active = pathname === n.href || (n.href !== '/' && pathname.startsWith(n.href));
           return (
             <Link key={n.href} href={n.href} className={`nav-item${active ? ' active' : ''}`} onClick={onNavigate}>
@@ -119,8 +139,10 @@ export default function Sidebar({ drawerOpen, onNavigate }: { drawerOpen?: boole
                 <span className="pill" style={{ marginLeft: 'auto', background: 'rgba(99,102,241,0.14)', color: '#4f46e5' }}>{nudgeCount}</span>
               )}
             </Link>
-          );
-        })}
+            );
+          })}
+          </div>
+        ))}
       </nav>
       <div className="brand-card">
         <h4>Ideas<br />Systems<br />Impact <span className="dot">●</span></h4>

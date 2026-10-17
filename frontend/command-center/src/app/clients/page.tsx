@@ -126,13 +126,21 @@ export default function ClientsPage() {
             </button>
           </div>
         ) : visible.length === 0 ? (
-          <div className="empty-state">
+          <div className="empty-state" style={{ textAlign: 'center', padding: '48px 24px' }}>
             <h3>{clients.length === 0 ? 'No clients yet' : 'No matches'}</h3>
-            <p>
-              {clients.length === 0
-                ? 'Onboard your first client to see them here. The client directory fills automatically on onboarding.'
-                : 'Try a different search term.'}
-            </p>
+            {clients.length === 0 ? (
+              <>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 16px' }}>
+                  Onboard your first client — the directory, pipelines, and delivery story all start here.
+                </p>
+                <button className="btn btn-primary btn-sm" type="button" onClick={() => router.push('/leads')}
+                  style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  + Onboard first client
+                </button>
+              </>
+            ) : (
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>Try a different search term.</p>
+            )}
           </div>
         ) : (
           <div className="table-wrap">

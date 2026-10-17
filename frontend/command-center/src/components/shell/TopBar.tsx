@@ -23,6 +23,7 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
   const [pendingCount, setPendingCount] = useState<number | null>(null);
   const pathname = usePathname();
   const onChat = pathname === '/chat';
+  const hideGreeting = onChat;
 
   // Sprint 10 P2: bell ping reflects pending approvals (same source as the
   // sidebar badge — /api/v1/approvals/pending).
@@ -105,10 +106,14 @@ export default function TopBar({ onHamburger }: { onHamburger?: () => void }) {
           <path d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      <div className="greeting">
-        <h1>{greeting}, Abhishek 👋</h1>
-        <p>Let&rsquo;s build a brighter tomorrow.</p>
-      </div>
+      {/* UX pass (2026-10-17): /chat renders its own greeting as the thread
+          hero — the duplicate here read like a bug. */}
+      {!hideGreeting && (
+        <div className="greeting">
+          <h1>{greeting}, Abhishek 👋</h1>
+          <p>Let&rsquo;s build a brighter tomorrow.</p>
+        </div>
+      )}
       {/* THE canonical command bar — CommandGateway (thread_id, responses,
           brainstorm, voice). Mounted in the topbar slot on every page EXCEPT
           /chat (Sprint 10 P0: the chat page IS the gateway's thread UI — its

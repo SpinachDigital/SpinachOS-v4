@@ -7,7 +7,7 @@
 //       title, content, source, created_at }], total, ms }
 // The endpoint shape is frozen — this page only reads it.
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { apiFetch } from '@/lib/auth';
 
 interface Chunk {
@@ -28,6 +28,15 @@ const input: React.CSSProperties = {
 export default function MemoryPage() {
   const [q, setQ] = useState('');
   const [clientId, setClientId] = useState('');
+  // UX pass (2026-10-17): raw UUID input replaced with a client dropdown —
+  // nobody memorizes IDs.
+  const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    apiFetch('/api/v1/clients').then(r => (r.ok ? r.json() : null)).then(d => {
+      const list = Array.isArray(d) ? d : [];
+      setClients(list.map((c: any) => ({ id: c.id, name: c.name || c.company || c.id.slice(0, 8) })));
+    }).catch(() => {});
+  }, []);
   const [data, setData] = useState<Result | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +77,36 @@ export default function MemoryPage() {
         </button>
       </div>
       <div style={{ marginBottom: 20 }}>
-        <input
-          style={{ ...input, minHeight: 40, fontSize: 13, maxWidth: 340 }}
+        <select
+          style={{ ...input, minHeight: 40, fontSize: 13, maxWidth: 340, cursor: 'pointer' }}
           value={clientId}
           onChange={(e) => setClientId(e.target.value)}
-          placeholder="Client ID filter (optional)"
-          aria-label="Filter by client ID"
-        />
+          aria-label="Filter by client"
+        >
+          <option value="">All clients</option>
+          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
       </div>
 
       {error && <p style={{ color: '#dc2626' }}>{error}</p>}
+      {/* UX pass: pre-search guidance — example prompts instead of a black void */}
+      {!searched && !loading && (
+        <div style={{ border: '1px dashed var(--border)', borderRadius: 12, padding: '20px 24px', background: 'var(--card)', maxWidth: 560 }}>
+          <p style={{ fontSize: 13.5, fontWeight: 600, margin: '0 0 10px' }}>Try asking the memory…</p>
+          {[
+            'What did we learn from the last client onboarding?',
+            'Which decisions did the founder correct this week?',
+            'Summarize the Brand Sprint deliverable pattern.',
+          ].map(ex => (
+            <button key={ex} type="button" onClick={() => { setQ(ex); }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', marginBottom: 6,
+                borderRadius: 8, border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--foreground)', fontSize: 13, cursor: 'pointer' }}>
+              {ex}
+            </button>
+          ))}
+        </div>
+      )}
       {data && (
         <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
           {data.total} result{data.total === 1 ? '' : 's'} · {data.engine} · {data.ms}ms

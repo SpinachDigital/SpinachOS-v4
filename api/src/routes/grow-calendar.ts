@@ -60,6 +60,35 @@ app.post(GROW_API + '/items', authMiddleware, async (req, res) => {
 });
 
 // ---------- PATCH /api/v1/grow/items/:id (edit draft fields, reschedule) ----------
+// UX pass (2026-10-17): the failed section's Retry button — failed items go
+// back to draft so they re-enter the pipeline (generate → approve → publish).
+// The old error is preserved in metadata for the inspect view.
+app.post(GROW_API + '/items/:id/retry', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data: item, error: fetchErr } = await supabase
+      .from('content_items')
+      .select('id, status, error, metadata')
+      .eq('id', id)
+      .single();
+    if (fetchErr || !item) return res.status(404).json({ error: 'Item not found' });
+    if (item.status !== 'failed') {
+      return res.status(400).json({ error: `Cannot retry an item in status: ${item.status} — only failed items retry` });
+    }
+    const meta = { ...(item.metadata || {}), last_error: item.error || null, retried_at: new Date().toISOString() };
+    const { data, error } = await supabase
+      .from('content_items')
+      .update({ status: 'draft', error: null, metadata: meta, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ ok: true, item: data, message: 'Item reset to draft — regenerate and approve when ready.' });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.patch(GROW_API + '/items/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;

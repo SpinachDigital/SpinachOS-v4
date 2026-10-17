@@ -21,6 +21,30 @@ type AgentRow = { profile: string; state: string; activity?: string };
 type HealthRow = { name: string; status: string; value?: string };
 type Slot = { id: string; title: string; time?: string; done: boolean };
 
+// UX pass (2026-10-17): the rail showed snake_case ids and 10-char truncated
+// activity with zero context. Human names + 44-char preview + relative time.
+const HUMAN_AGENT: Record<string, string> = {
+  ceo: 'CEO', cto: 'CTO', orchestrator: 'Orchestrator', engineer: 'Engineering',
+  designer: 'Design', social: 'Social', seo_specialist: 'SEO Specialist',
+  research: 'Research', sales: 'Sales', ads_manager: 'Ads Manager',
+  ops: 'Ops', hr_director: 'HR Director', content: 'Content', hr: 'HR',
+  director: 'Director', founder: 'You',
+};
+const humanAgent = (id: string) => HUMAN_AGENT[String(id || '').toLowerCase()] || id;
+const clip = (s: string, n = 44) => {
+  const t = String(s || '').trim();
+  return t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t;
+};
+const relTime = (iso?: string) => {
+  if (!iso) return '';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const h = Math.round(mins / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+};
+
 export default function RightRail() {
   const router = useRouter(); // Sprint 2: wire View All Agents + Today chevron
   const [today, setToday] = useState<Slot[]>([]);
@@ -146,8 +170,8 @@ export default function RightRail() {
                 </svg>
               </div>
               <div className="an">
-                <b>{a.profile}</b>
-                <span>{a.activity || a.state}</span>
+                <b>{humanAgent(a.profile)}</b>
+                <span>{clip(a.activity || '') || a.state}</span>
               </div>
               <div className="agent-st">
                 {a.state === 'working' ? <span className="d busy" /> : a.state === 'blocked' ? <span className="d blocked" /> : <span className="d" />}

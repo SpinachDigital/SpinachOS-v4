@@ -140,8 +140,13 @@ export default function GrowPage() {
   };
 
   const queue = items.filter(i => i.status === 'approved' || i.status === 'scheduled');
-  const history = items.filter(i => i.status === 'published' || i.status === 'failed');
+  // UX pass (2026-10-17): failed items were buried in History — a dead end.
+  // They are the founder's #1 action surface: failed section shows reason +
+  // regenerate + inspect, above the queue.
+  const failedItems = items.filter(i => i.status === 'failed');
+  const history = items.filter(i => i.status === 'published');
   const byStatus = (s: string) => items.filter(i => i.status === s);
+  const isOverdue = (iso?: string | null) => Boolean(iso && new Date(iso).getTime() < Date.now() - 3600_000);
 
   return (
     <div style={{ padding: '24px', color: 'var(--foreground)' }}>
@@ -223,6 +228,9 @@ export default function GrowPage() {
                       <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titleOf(item.title)}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
                         {item.channel}{item.style_score != null ? ` · style ${item.style_score}/10` : ''}{item.scheduled_for ? ` · ${new Date(item.scheduled_for).toLocaleString()}` : ''}
+                      {isOverdue(item.scheduled_for) && item.status !== 'published' && (
+                        <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 99, background: 'rgba(245,158,11,0.15)', color: '#b45309', fontSize: 10, fontWeight: 700 }}>OVERDUE</span>
+                      )}
                       </div>
                     </button>
                   ))}
@@ -230,6 +238,29 @@ export default function GrowPage() {
               );
             })}
           </div>
+
+          {/* UX pass: failed items — actionable, not a dead end */}
+          {failedItems.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 8px', color: '#ef4444' }}>
+                ⚠ Failed — needs you ({failedItems.length})
+              </h2>
+              {failedItems.map(item => (
+                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '10px 14px', marginBottom: 6, borderRadius: 8, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{titleOf(item.title)} <span style={{ color: 'var(--muted-foreground)', fontSize: 11 }}>({item.channel})</span></div>
+                    <div style={{ fontSize: 11.5, color: 'var(--muted-foreground)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.error ? String(item.error).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : 'no reason recorded'}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                    <button disabled={busy} onClick={() => act(`/api/v1/grow/items/${item.id}/retry`, 'Retry queued')} style={{ minHeight: 36, padding: '0 12px', borderRadius: 6, border: '1px solid rgba(239,68,68,0.4)', background: 'rgba(239,68,68,0.12)', color: '#ef4444', cursor: 'pointer', fontWeight: 600 }}>Retry</button>
+                    <button disabled={busy} onClick={() => setSelected(item)} style={{ minHeight: 36, padding: '0 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--foreground)', cursor: 'pointer' }}>Inspect</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Publish queue */}
           {queue.length > 0 && (

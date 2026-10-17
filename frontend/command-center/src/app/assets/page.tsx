@@ -229,10 +229,18 @@ export default function AssetsPage() {
             <button onClick={() => void load()} className="btn btn-secondary btn-sm mt-3" style={{ minHeight: 44 }}>Retry</button>
           </div>
         ) : assets.length === 0 ? (
-          <div style={{ padding: 32, textAlign: 'center', borderRadius: 16, border: '1px solid var(--border-hairline)' }}>
-            <p className="t-meta" style={{ color: 'var(--text-faint)' }}>
-              No assets{kindFilter !== 'all' ? ` of type "${kindFilter}"` : ''}{' '}yet — filed deliverables and uploads land here.
+          <div style={{ padding: 40, textAlign: 'center', borderRadius: 16, border: '1px dashed var(--border)', background: 'var(--card)' }}>
+            <p className="t-body-md" style={{ color: 'var(--text)', margin: '0 0 4px', fontWeight: 600 }}>
+              {kindFilter !== 'all' ? `No ${kindFilter} assets yet` : 'No assets yet'}
             </p>
+            <p className="t-meta" style={{ color: 'var(--text-faint)', margin: '0 0 16px' }}>
+              Deliverables from approved work and your uploads land here.
+            </p>
+            {kindFilter === 'all' && (
+              <button onClick={() => setShowUpload(true)} className="btn btn-primary btn-sm" style={{ minHeight: 44 }}>
+                + Upload first asset
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>

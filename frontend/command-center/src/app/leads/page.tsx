@@ -140,6 +140,31 @@ export default function LeadsPage() {
         );
       })()}
 
+      {/* UX pass (2026-10-17): priority strip — the 5 leads to act on first
+          (highest score, not yet onboarded/dead). Decision support, not a data dump. */}
+      {!loading && !error && leads.length > 0 && (() => {
+        const actionable = leads
+          .filter((l) => l.status !== 'onboarded' && l.status !== 'dead' && l.status !== 'disqualified')
+          .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+          .slice(0, 5);
+        if (!actionable.length) return null;
+        return (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px', marginBottom: 20, background: 'var(--card)' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, margin: '0 0 10px' }}>Act next — top {actionable.length} by score</p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {actionable.map((l) => (
+                <span key={l.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px',
+                  borderRadius: 99, border: '1px solid var(--border)', background: 'var(--background)', fontSize: 12.5 }}>
+                  <strong>{l.company || l.name}</strong>
+                  {l.score != null && <span style={{ color: scoreColor(l.score), fontWeight: 700 }}>{l.score}</span>}
+                  <span style={{ color: 'var(--muted-foreground)' }}>{l.status}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {notice && (
         <p style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px',
           background: 'var(--card)', fontSize: 14, margin: '0 0 16px' }}>{notice}</p>
@@ -204,15 +229,17 @@ export default function LeadsPage() {
                     <div key={l.id} style={{ border: '1px solid var(--border)', borderRadius: 8,
                       padding: '10px 12px', background: 'var(--background)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <strong style={{ fontSize: 14 }}>{l.name}</strong>
+                        <strong style={{ fontSize: 14 }}>{l.company || l.name}</strong>
                         {l.score != null && (
-                          <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(l.score) }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(l.score),
+                            background: 'color-mix(in srgb, currentColor 12%, transparent)',
+                            padding: '2px 8px', borderRadius: 99 }}>
                             {l.score}/100
                           </span>
                         )}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '2px 0 8px' }}>
-                        {l.company ? `${l.company} · ` : ''}{l.email} · {l.source}
+                        {l.company && l.name !== l.company ? <span style={{ opacity: 0.75 }}>{l.name} · </span> : ''}{l.email} · {l.source}
                         <span style={{ color: stale ? '#d97706' : 'inherit', fontWeight: stale ? 700 : 400 }}>
                           {' '}· {daysInStage(l.updated_at)}d here{stale ? ' — stale' : ''}
                         </span>

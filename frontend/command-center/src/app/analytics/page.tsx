@@ -51,6 +51,14 @@ export default function AnalyticsPage() {
     return () => clearInterval(t);
   }, [fetchAll]);
 
+// UX pass (2026-10-17): snake_case ids and 10-char activities read like logs.
+const HUMAN_AGENT: Record<string, string> = {
+  ceo: 'CEO', cto: 'CTO', orchestrator: 'Orchestrator', engineer: 'Engineering',
+  designer: 'Design', social: 'Social', seo_specialist: 'SEO Specialist',
+  research: 'Research', sales: 'Sales', ads_manager: 'Ads Manager',
+  ops: 'Ops', hr_director: 'HR Director', content: 'Content', hr: 'HR',
+  director: 'Director', founder: 'You',
+};
   const working = agents.filter(a => a.state === 'working' || a.state === 'thinking').length;
   const blocked = agents.filter(a => a.state === 'blocked').length;
   const successRate = logs.length > 0
@@ -122,10 +130,10 @@ export default function AnalyticsPage() {
                   style={{ borderBottom: i < agents.length - 1 ? '1px solid var(--border-hairline)' : 'none' }}>
                   <div className="flex items-center gap-3">
                     <span className={`dot ${a.state === 'working' ? 'dot-teal dot-pulse' : a.state === 'blocked' ? 'dot-red' : 'dot-gray'}`} />
-                    <span className="t-body-md capitalize" style={{ color: 'var(--text)' }}>{a.profile}</span>
+                    <span className="t-body-md" style={{ color: 'var(--text)' }}>{HUMAN_AGENT[String(a.profile || '').toLowerCase()] || a.profile}</span>
                   </div>
                   <div className="flex items-center gap-4 min-w-0">
-                    {a.activity && <span className="t-meta truncate max-w-xs" style={{ color: 'var(--text-faint)' }}>{a.activity}</span>}
+                    {a.activity && <span className="t-meta truncate max-w-xs" style={{ color: 'var(--text-faint)' }}>{String(a.activity).slice(0, 44)}{String(a.activity).length > 44 ? '…' : ''}</span>}
                     <span className="t-mono" style={{ color: 'var(--text-faint)', fontSize: 11 }}>{a.state}</span>
                   </div>
                 </div>
