@@ -94,14 +94,17 @@ app.get('/api/system/health', async (_req, res) => {
     // the badge flapped ok→500 even though the chain was alive. Probe the COMBO
     // (spinach-agents-v2) instead: the gateway's own failover absorbs a single
     // lane blip, so the badge reflects "can agents run", which is the real question.
-    // 15s ceiling because lane 1 is a 3.6s reasoning model; max_tokens 200 so
-    // reasoning models return real content instead of a null-content 1-token truncate.
+    // Founder-run (2026-10-17): even the combo chain now touches 15.3s under NIM
+    // load (lane-2 500s → lane-3 retries), so a 15s ceiling aborted healthy
+    // probes at exactly 15.0s and the badge flapped. 20s ceiling: the chain
+    // p50 is 3-6s, worst observed 15.7s. max_tokens 200 so reasoning models
+    // return real content instead of a null-content 1-token truncate.
     let gwState = 'warn', gwValue = 'down';
     try {
       const r = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(20_000),
         body: JSON.stringify({ model: 'combo/spinach-agents-v2', messages: [{ role: 'user', content: 'ping' }], max_tokens: 200 }),
       });
       gwState = r.ok ? 'ok' : 'warn';
