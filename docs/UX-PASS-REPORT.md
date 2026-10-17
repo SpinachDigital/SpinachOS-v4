@@ -35,6 +35,15 @@ All ten confirmed live again post-restart: health probe fast-lane 20s, `/win /de
 - Agent Fleet (`agents-fresh2.png`): idle agents neutral dots (not red) ✓, names "SEO Specialist / HR Director / Ads Manager" (not snake_case) ✓
 - Office Chat (`chat-final.png`): TopBar greeting-free ✓, canvas time-aware "Good night, Abhishek 👋" ✓, rail activities 2-line readable (was "Executing: Bre...") ✓
 
+## Batch 3 — last 3 audit pages (nudges / pnl / evolutions), commit `5b64907`
+These pages were never critiqued (screenshot batch from the first audit run went stale before fixes; re-shot post-fix and reviewed designer+PM).
+- **Evolutions — 3 real bugs found and fixed:**
+  - "Confidence: 8800%" → API sends whole percent (88); render multiplied again. Now renders 88%. ✓ vision-verified
+  - "Created: —" → page read `created_at`, API sends `proposed_at`. Real dates now ("17 Oct, 03:00 am"). ✓
+  - "Evidence (0 refs)" → evidence is a dict of real metrics, not a ref array. Now "Evidence (4 metrics)" with key-value lines (agent, multiple, peak_day_usd). ✓
+- **Nudges — priority fix:** API returned grouped-flat (10 stale approvals then 10 silent leads), all high+medium mixed. Now severity-first sort: 224h-stuck pipeline on top, red triage dot on high-severity cards. ✓ vision-verified (top card = pipeline stuck, red dots present)
+- **P&L — audited, no code bug found.** PM findings recorded for roadmap: (1) no revenue/margin tie-in — per-client section is an honest "No clients yet" empty state; (2) `claude-opus-4-6-thinking` = 91% of cost (₹32.63 of ₹35.83) on 22 calls with no agent-level attribution click-through. These are feature work, not fixes.
+
 ## Test log
 - `npx tsc --noEmit` api: 0 · fe: 0
 - `next build`: exit 0
