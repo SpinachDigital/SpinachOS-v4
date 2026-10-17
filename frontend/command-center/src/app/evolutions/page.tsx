@@ -12,7 +12,7 @@ interface EvolutionProposal {
   confidence: number;
   evidence: any[];
   status: 'proposed' | 'approved' | 'rejected' | 'applied';
-  created_at: string;
+  proposed_at: string;
   applied_at?: string;
   payload?: any;
 }
@@ -27,7 +27,7 @@ interface LearnedPreference {
   confidence: number;
   status: string;
   evidence_refs: any[];
-  created_at: string;
+  proposed_at: string;
 }
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -139,11 +139,14 @@ export default function EvolutionsPage() {
                         <h3 className="t-title" style={{ color: 'var(--text)', margin: 0 }}>{p.title}</h3>
                         <span className="t-mono" style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: typeInfo.color + '20', color: typeInfo.color }}>{typeInfo.label}</span>
                         <span className="t-mono" style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: statusInfo.bg, color: statusInfo.color }}>{p.status}</span>
-                        <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Confidence: {Math.round(p.confidence * 100)}%</span>
+                        {/* UX pass (2026-10-18): API returns confidence as a WHOLE PERCENT
+                            (88 = 88%), but the render multiplied by 100 again → "8800%".
+                            Values > 1 arrive pre-scaled; <= 1 are fractions. */}
+                        <span className="t-meta" style={{ color: 'var(--text-faint)' }}>Confidence: {Math.round(p.confidence > 1 ? p.confidence : p.confidence * 100)}%</span>
                       </div>
                       <p className="t-meta mt-1" style={{ color: 'var(--text)', marginTop: 8 }}>{p.rationale}</p>
                       <div className="flex items-center gap-4 mt-2" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
-                        <span>Created: {fmtTime(p.created_at)}</span>
+                        <span>Created: {fmtTime(p.proposed_at)}</span>
                         {p.applied_at && <span>Applied: {fmtTime(p.applied_at)}</span>}
                       </div>
                     </div>
@@ -159,8 +162,22 @@ export default function EvolutionsPage() {
                     </div>
                   </div>
                   <details className="t-meta" style={{ color: 'var(--text-faint)', marginTop: 8 }}>
-                    <summary style={{ cursor: 'pointer', color: 'var(--text-faint)' }}>Evidence ({p.evidence?.length || 0} refs)</summary>
-                    <pre style={{ marginTop: 8, padding: 12, background: 'var(--bg-2)', borderRadius: 8, overflow: 'auto', maxHeight: 200, fontSize: 11 }}>{JSON.stringify(p.evidence, null, 2)}</pre>
+                    {/* UX pass (2026-10-18): evidence is a dict of real metrics, not a
+                        ref list. "Evidence (0 refs)" hid live data behind a dead count. */}
+                    <summary style={{ cursor: 'pointer', color: 'var(--text-faint)' }}>Evidence{p.evidence && typeof p.evidence === 'object' && !Array.isArray(p.evidence) ? ` (${Object.keys(p.evidence).length} metrics)` : ''}</summary>
+                    {Array.isArray(p.evidence) ? (
+                      <pre style={{ marginTop: 8, padding: 12, background: 'var(--bg-2)', borderRadius: 8, overflow: 'auto', maxHeight: 200, fontSize: 11 }}>{JSON.stringify(p.evidence, null, 2)}</pre>
+                    ) : (
+                      <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, color: 'var(--text-faint)' }}>
+                        {p.evidence && typeof p.evidence === 'object'
+                          ? Object.entries(p.evidence).map(([k, v]) => (
+                              <span key={k} className="t-mono">
+                                <b style={{ color: 'var(--text)', fontWeight: 600 }}>{k}</b>: {typeof v === 'number' ? (v < 1 && v > 0 ? v.toFixed(4) : v) : String(v)}
+                              </span>
+                            ))
+                          : <span>No evidence recorded.</span>}
+                      </div>
+                    )}
                   </details>
                 </div>
               );

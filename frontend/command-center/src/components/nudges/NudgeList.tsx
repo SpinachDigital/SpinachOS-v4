@@ -13,6 +13,7 @@ export interface Nudge {
   kind: string;
   title: string;
   why?: string;
+  severity?: string;
   // Backend shape: { label, type, target }. Accept `href` too (plan shape).
   action?: { label: string; href?: string; target?: string };
   id?: string;
@@ -44,7 +45,12 @@ export default function NudgeList({ limit }: { limit?: number }) {
 
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (nudges === null) return <LoadingState label="Checking what needs you…" />;
-  const shown = limit ? nudges.slice(0, limit) : nudges;
+  // UX pass (2026-10-18): the API returns grouped-then-flat (10 stale, 10
+  // silent). A founder should see HIGH first — sort by severity, keep order within.
+  const SEV_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sorted = [...nudges].sort((a, b) =>
+    (SEV_RANK[a.severity ?? 'low'] ?? 2) - (SEV_RANK[b.severity ?? 'low'] ?? 2));
+  const shown = limit ? sorted.slice(0, limit) : sorted;
   if (shown.length === 0) {
     return <EmptyState title="Nothing stale." hint="No approvals aging, no silent leads, no stuck pipelines. The company runs." />;
   }
@@ -69,6 +75,9 @@ export default function NudgeList({ limit }: { limit?: number }) {
             }}>
               {style.label}
             </span>
+            {n.severity === 'high' && (
+              <span title="High severity" style={{ width: 7, height: 7, borderRadius: 99, background: '#ef4444', flexShrink: 0 }} />
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="t-meta" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', wordBreak: 'break-word' }}>
                 {n.title}
