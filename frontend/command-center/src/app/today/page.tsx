@@ -90,7 +90,7 @@ export default function TodayPage() {
                 style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '14px 16px',
                   background: 'var(--card)', textDecoration: 'none', color: 'var(--text)', minHeight: 88,
                   display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span style={{ fontSize: 28, fontWeight: 700 }}>{data.today[s.key]}</span>
+                <span style={{ fontSize: 28, fontWeight: 700, fontVariantNumeric: 'slashed-zero' }}>{data.today[s.key]}</span>
                 <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>{s.label} →</span>
               </Link>
             ))}

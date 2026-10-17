@@ -28,6 +28,20 @@ import { app, authMiddleware, emitApproval, emitFeed, sanitizeText, supabase, JW
 import { lintAgentOutput } from '../agents/style-lint';
 import { recordMemory, recordApprovalDecision } from '../memory-ledger';
 import { runSpecialistTask } from '../bridge';
+
+// QA pass (2026-10-16): lead company names carry escaped entities from imports
+// ("&#x2F;" instead of "/") — decode before any title/description is built.
+const unescapeEntities = (s: unknown): string =>
+  String(s ?? '')
+    .replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (m, code) => {
+      if (code[0] === '#') {
+        const hex = code[1] === 'x' || code[1] === 'X';
+        const cp = parseInt(code.slice(hex ? 2 : 1), hex ? 16 : 10);
+        return Number.isFinite(cp) ? String.fromCodePoint(cp) : m;
+      }
+      const named: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+      return named[code] ?? m;
+    });
 import { getEmailSender, sendEmail } from '../providers/email';
 import jwt from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
@@ -268,7 +282,7 @@ app.post('/api/v1/leads/:id/qualify', founderOnly, async (req: Request, res: Res
     // read-tier card: the founder's Approve/Disqualify on the card IS the decision
     const { data: card, error: cardErr } = await supabase.from('approvals').insert({
       type: 'lead_qualified',
-      title: `Lead qualified — ${lead.company || lead.name} (score ${score}/100)`,
+      title: `Lead qualified — ${unescapeEntities(lead.company || lead.name)} (score ${score}/100)`,
       description: rationale,
       status: 'pending',
       requested_by: 'sales',
@@ -318,7 +332,7 @@ app.post('/api/v1/leads/qualify-batch', founderOnly, async (req: Request, res: R
       await supabase.from('leads').update({ score, updated_at: new Date().toISOString() }).eq('id', lead.id);
       const { data: card } = await supabase.from('approvals').insert({
         type: 'lead_qualified',
-        title: `Lead qualified — ${lead.company || lead.name} (score ${score}/100)`,
+        title: `Lead qualified — ${unescapeEntities(lead.company || lead.name)} (score ${score}/100)`,
         description: rationale,
         status: 'pending',
         requested_by: 'sales',
@@ -396,7 +410,7 @@ app.post('/api/v1/leads/:id/draft-outreach', founderOnly, async (req: Request, r
     // write-tier card — sending is irreversible; the approval IS the gate
     const { data: card, error: cardErr } = await supabase.from('approvals').insert({
       type: 'outreach',
-      title: `Outreach email — ${lead.company || lead.name}`,
+      title: `Outreach email — ${unescapeEntities(lead.company || lead.name)}`,
       description: subject,
       status: 'pending',
       requested_by: 'sales',

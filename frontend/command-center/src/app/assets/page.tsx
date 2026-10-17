@@ -231,7 +231,7 @@ export default function AssetsPage() {
         ) : assets.length === 0 ? (
           <div style={{ padding: 32, textAlign: 'center', borderRadius: 16, border: '1px solid var(--border-hairline)' }}>
             <p className="t-meta" style={{ color: 'var(--text-faint)' }}>
-              No assets{kindFilter !== 'all' ? ` of type "${kindFilter}"` : ''} yet — filed deliverables and uploads land here.
+              No assets{kindFilter !== 'all' ? ` of type "${kindFilter}"` : ''}{' '}yet — filed deliverables and uploads land here.
             </p>
           </div>
         ) : (

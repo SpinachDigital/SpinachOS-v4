@@ -32,6 +32,10 @@ const nextConfig = {
       // N1.3 (2026-10-14): /projects retired — it duplicated /pipeline + /leads
       // with less info and no actions. Workflows live at /pipeline now.
       { source: '/projects', destination: '/pipeline', permanent: false },
+      // QA pass (2026-10-16): dead blueprint nav names — old short routes 404'd.
+      { source: '/win', destination: '/leads', permanent: false },
+      { source: '/deliver', destination: '/pipeline', permanent: false },
+      { source: '/create', destination: '/assets', permanent: false },
     ];
   },
   async rewrites() {

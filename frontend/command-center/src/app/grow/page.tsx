@@ -267,7 +267,7 @@ export default function GrowPage() {
                         (item.provider_post_id
                           ? ' · post ' + (item.provider_post_id.startsWith('dryrun-') ? 'dry-run (no provider connected)' : item.provider_post_id)
                           : ' · no post id recorded')
-                      : 'failed: ' + (item.error || 'no reason was recorded')}
+                      : 'failed: ' + (item.error ? String(item.error).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) : 'no reason was recorded')}
                   </div>
                 </div>
               ))}

@@ -182,7 +182,7 @@ export default function PipelineIndexPage() {
               {/* N2.11: idle time becomes a visual property of the card. */}
               {r.idle_hours != null && r.status === 'active' && (
                 <span style={{ color: rotting ? 'var(--danger)' : 'inherit', fontWeight: rotting ? 700 : 400 }}>
-                  · idle {r.idle_hours >= 48 ? `${Math.round(r.idle_hours / 24)}d` : `${Math.round(r.idle_hours)}h`}
+                  · idle {r.idle_hours >= 48 ? `${Math.round(r.idle_hours / 24)}d ${Math.round(r.idle_hours % 24)}h` : `${Math.round(r.idle_hours)}h`}
                 </span>
               )}
               <span>{new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>

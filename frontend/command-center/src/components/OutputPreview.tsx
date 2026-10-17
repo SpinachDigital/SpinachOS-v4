@@ -60,7 +60,20 @@ function pick(payload: any): Shape {
     if (payload.kind === 'lead_qualified' || (payload.score != null && payload.rationale)) {
       const bits: string[] = [];
       if (payload.score != null) bits.push(`Score ${payload.score}/100`);
-      if (payload.model) bits.push(`scored by ${payload.model}`);
+      // QA pass (2026-10-16): humanize the model name — raw slugs like
+      // "claude-opus-4-6-thinking" read like internals. Strip provider
+      // prefixes and hyphens → "Opus 4.6".
+      if (payload.model) {
+        const human = String(payload.model)
+          .replace(/^.*\//, '')
+          .replace(/-(?:thinking|preview|latest|high|low)$/i, '')
+          .replace(/claude-(\w+?)-(\d+)-(\d+)/i, (_m, fam: string, maj: string, min: string) => `${fam[0].toUpperCase()}${fam.slice(1)} ${maj}.${min}`)
+          .replace(/nemotron-([\d.]+)[a-z-]*/i, 'Nemotron $1')
+          .replace(/gemini-([\d.]+)-flash/i, 'Gemini $1 Flash')
+          .replace(/gpt-oss-(\d+)b/i, 'GPT-OSS $1B')
+          .replace(/-/g, ' ');
+        bits.push(`assessed with ${human}`);
+      }
       const opts = Array.isArray(payload.options) && payload.options.length
         ? `\n\nNext-step options:\n${payload.options.map((o: any, i: number) => `${i + 1}. ${typeof o === 'string' ? o : (o.label || o.action || JSON.stringify(o))}`).join('\n')}`
         : '';
@@ -198,7 +211,7 @@ export function OutputPreview({ payload, agent, kind, title }: { payload: any; a
             )}
           </div>
           <div className="t-mono" style={{ fontSize: 9.5, color: 'var(--text-faint)' }}>
-            {shape.body.length.toLocaleString('en-IN')} chars
+            {shape.body.length.toLocaleString('en-IN')}{' '}characters
           </div>
         </div>
       </div>

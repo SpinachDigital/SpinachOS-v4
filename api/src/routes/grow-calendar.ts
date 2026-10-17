@@ -15,7 +15,7 @@ app.get(GROW_API + '/calendar', authMiddleware, async (req, res) => {
     const { from, to } = req.query;
     let query = supabase
       .from('content_items')
-      .select('id, title, channel, status, scheduled_for, style_score')
+      .select('id, title, channel, status, scheduled_for, style_score, error')
       .order('scheduled_for', { ascending: true, nullsFirst: false });
 
     if (from) query = query.gte('scheduled_for', from);

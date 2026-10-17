@@ -47,6 +47,15 @@ const decodeEntities = (s: string): string => {
   }
 };
 
+// QA pass (2026-10-16): profile ids are internal slugs — the founder sees
+// names. "lead_qualified requested by @sales" reads like a log line.
+const HUMAN_PROFILE: Record<string, string> = {
+  sales: 'Sales', ceo: 'CEO', cto: 'CTO', orchestrator: 'Orchestrator',
+  engineer: 'Engineering', designer: 'Design', social: 'Social',
+  seo_specialist: 'SEO', research: 'Research', ads_manager: 'Ads',
+  founder: 'you', director: 'you',
+};
+
 // MISS 2 fix (frontend guard): legacy rows may still carry raw provider HTML
 // in description. Strip tags + collapse whitespace before rendering. This is
 // defense in depth — the API now cleans at insert time (providers/publishing.cleanError).
@@ -201,7 +210,7 @@ export function ApprovalQueue({
                     </div>
                     <p className="t-meta" style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>
                       {config.label}
-                      {approval.requested_by && ` · requested by @${approval.requested_by}`}
+                      {approval.requested_by && ` · raised by ${HUMAN_PROFILE[approval.requested_by] || approval.requested_by}`}
                     </p>
                     {isGate && tierStyle && (
                       <div className="flex items-center gap-2" style={{ marginTop: 4, flexWrap: 'wrap' }}>
@@ -244,7 +253,7 @@ export function ApprovalQueue({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginTop: 2 }}>
                       {showTriage && onToggleSelect && (
                         <button
-                          title="Select for bulk (x)"
+                          title="Select this card for bulk action (x)"
                           aria-pressed={selected?.has(approval.id)}
                           onClick={(e) => { e.stopPropagation(); onToggleSelect(approval.id); }}
                           style={{
@@ -336,6 +345,7 @@ export function ApprovalQueue({
                         >
                           <Clock className="w-4 h-4" />
                           {showTriage && <span className="kbd">s</span>}
+                          <span style={{ fontSize: 12.5 }}>Snooze</span>
                         </button>
                       )}
                     </>

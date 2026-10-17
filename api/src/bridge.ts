@@ -164,16 +164,16 @@ export { getBreakerStates, getFallbackLog, recordFallback };
 // DB pick still overrides everything (the picker is the surface, this is
 // just a default that actually works).
 const GATEWAY_MODEL_BY_PROFILE: Record<string, string> = {
-  ceo: 'combo/spinach-agents',
-  cto: 'combo/spinach-agents',
-  orchestrator: 'combo/spinach-agents',
-  engineer: 'combo/spinach-agents',
-  designer: 'combo/spinach-agents',
-  social: 'combo/spinach-agents',
-  seo_specialist: 'combo/spinach-agents',
-  research: 'combo/spinach-agents',
-  sales: 'combo/spinach-agents',
-  ads_manager: 'combo/spinach-agents',
+  ceo: 'combo/spinach-agents-v2',
+  cto: 'combo/spinach-agents-v2',
+  orchestrator: 'combo/spinach-agents-v2',
+  engineer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  designer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  social: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  seo_specialist: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  research: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  sales: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  ads_manager: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
 };
 
 export const PROFILE_SOULS: Record<string, string> = {

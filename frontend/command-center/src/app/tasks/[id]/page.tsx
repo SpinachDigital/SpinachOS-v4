@@ -65,7 +65,7 @@ function OutputCard({ out, agent }: { out: Output; agent?: string }) {
             </div>
             <div>
               <div className="t-meta" style={{ fontSize: 12.5, fontWeight: 600 }}>{agent ? `@${agent}` : 'Spinach Digital'}</div>
-              <div className="t-mono" style={{ fontSize: 9.5, color: 'var(--text-faint)' }}>{body.length.toLocaleString('en-IN')} chars</div>
+              <div className="t-mono" style={{ fontSize: 9.5, color: 'var(--text-faint)' }}>{body.length.toLocaleString('en-IN')}{' '}characters</div>
             </div>
           </div>
           <p className="t-meta" style={{ fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)' }}>{body}</p>

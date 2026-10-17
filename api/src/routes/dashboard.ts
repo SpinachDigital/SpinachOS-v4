@@ -82,24 +82,27 @@ app.get('/api/system/health', async (_req, res) => {
     try {
       const r = await fetch('http://localhost:8000/health', { signal: AbortSignal.timeout(3000) });
       layaState = r.ok ? 'ok' : 'warn';
-      layaValue = r.ok ? ':8000' : `HTTP ${r.status}`;
+      layaValue = r.ok ? 'local' : `HTTP ${r.status}`;
     } catch { layaValue = 'unreachable'; }
     // Gateway (Agent Engine): probe the endpoint agents actually use.
-    // N4c (2026-10-15): the old probe did a REAL chat completion with max_tokens 400
+    // N4c (2026-10-15) + QA pass (2026-10-16): the old probe did a REAL chat completion with max_tokens 400
     // and a 30s budget — when OmniRoute was slow this endpoint hung 30s+ and every
     // health consumer (RightRail badge, tunnel keepalives) died on it. A health
-    // probe must be cheap and bounded: 5s, 1 token, and a failure is a 'warn'
-    // value, never a hang.
+    // probe must be cheap and bounded: and a failure is a 'warn' value, never a hang.
+    // QA pass 2 (2026-10-17): probing ONE frozen model (super-vl) inherits NIM's
+    // intermittent free-tier 500s ("Failed to generate completions", ~250ms) —
+    // the badge flapped ok→500 even though the chain was alive. Probe the COMBO
+    // (spinach-agents-v2) instead: the gateway's own failover absorbs a single
+    // lane blip, so the badge reflects "can agents run", which is the real question.
+    // 15s ceiling because lane 1 is a 3.6s reasoning model; max_tokens 200 so
+    // reasoning models return real content instead of a null-content 1-token truncate.
     let gwState = 'warn', gwValue = 'down';
     try {
-      // Combo name is configurable: GATEWAY_COMBO in .env (default combo/spinach-agents-v2).
-      // This probe must not 401 when the combo gets renamed during a sweep.
-      const combo = process.env.GATEWAY_COMBO || 'combo/spinach-agents-v2';
       const r = await fetch(`${OMNIROUTE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5_000),
-        body: JSON.stringify({ model: combo, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
+        signal: AbortSignal.timeout(15_000),
+        body: JSON.stringify({ model: 'combo/spinach-agents-v2', messages: [{ role: 'user', content: 'ping' }], max_tokens: 200 }),
       });
       gwState = r.ok ? 'ok' : 'warn';
       gwValue = r.ok ? 'OmniRoute' : `HTTP ${r.status}`;
@@ -114,7 +117,7 @@ app.get('/api/system/health', async (_req, res) => {
   } catch (e: any) {
     res.json([
       { name: 'Database', state: 'warn', value: 'degraded' },
-      { name: 'Laya Router', state: 'ok', value: ':8000' },
+      { name: 'Laya Router', state: 'ok', value: 'local' },
       { name: 'Agent Engine', state: 'ok', value: 'OmniRoute' },
       { name: 'WebSocket', state: 'ok', value: `${wsClients.size} clients` },
       { name: 'Scrapers', state: 'ok', value: '3 active' },

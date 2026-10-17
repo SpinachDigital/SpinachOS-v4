@@ -220,7 +220,7 @@ export default function SettingsPage() {
               )}
               {unreported.length > 0 && (
                 <div className="info-note" style={{ marginTop: 12 }}>
-                  The API currently reports {profiles.length} of {KNOWN_PROFILE_KEYS.length} known profiles.
+                  The API currently reports {profiles.length}{' '}of {KNOWN_PROFILE_KEYS.length}{' '}known profiles.
                   Not reported (live in the Hermes runtime, not the API):{' '}
                   <span className="t-mono">{unreported.join(', ')}</span>
                 </div>

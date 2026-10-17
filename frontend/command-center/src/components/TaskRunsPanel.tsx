@@ -25,6 +25,8 @@ interface TaskRow {
     failed_at?: string;
     action?: string;
     reply?: string;
+    command?: string;
+    prompt?: string;
   };
   created_at: string;
 }
@@ -50,9 +52,15 @@ export default function TaskRunsPanel({ onClose }: { onClose?: () => void }) {
       const res = await apiFetch('/api/v1/kanban/cards');
       if (res.ok) {
         const data = await res.json();
-        // Only agent-execution tasks (they carry metadata.source/model/output)
+        // Only agent-execution tasks (they carry metadata.source/model/output).
+        // QA pass (2026-10-16): test/debug prompts (PONG, ping, probe sweeps)
+        // are dev noise — filter them out of the founder-facing rail.
+        const isTestTask = (t: TaskRow) => {
+          const m = String(t.metadata?.command || t.metadata?.prompt || t.title || '').toLowerCase();
+          return /^\s*(say |reply |reply with |probe |ping|pong|test|debug|sweep)/.test(m);
+        };
         const runs = (Array.isArray(data) ? data : []).filter((t: TaskRow) =>
-          t.metadata && (t.metadata.source || t.metadata.model || t.metadata.output || t.metadata.error)
+          t.metadata && (t.metadata.source || t.metadata.model || t.metadata.output || t.metadata.error) && !isTestTask(t)
         ).slice(0, 30);
         setTasks(runs);
       }

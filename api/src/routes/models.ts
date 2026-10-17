@@ -5,29 +5,53 @@
  */
 
 // -- imports auto-added by fix-imports (Phase 3)
-import { app, authMiddleware } from '../ctx';
+import { app, authMiddleware, supabase } from '../ctx';
 import { getBreakerStates, getFallbackLog } from '../bridge';
 app.get('/api/v1/profiles', authMiddleware, async (_req, res) => {
   try {
     // P1 Task 6: all 10 real profiles, live vs dormant marked explicitly.
-    // model = the bridge's GATEWAY_MODEL_BY_PROFILE (the model the profile's
-    // gateway calls actually use); fallback_model = the tiered route every
-    // gateway call degrades to; provider = OmniRoute today.
-    // Phase 13 routing fix: all profiles ride combo/spinach-agents (tested
-    // 200 priority chain) — the auto/* slugs hung via the noauth opencode
-    // connection. The per-dept DB pick still overrides at call time.
-    const profiles = [
-      { id: 'ceo',            name: 'CEO',           model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'cto',            name: 'CTO',           model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'orchestrator',   name: 'Orchestrator',  model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'designer',       name: 'Designer',      model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'engineer',       name: 'Engineer',      model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'social',         name: 'Social',        model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'seo_specialist', name: 'SEO',           model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'research',       name: 'Research',      model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'sales',          name: 'Sales',         model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'live',    dormant: false },
-      { id: 'ads_manager',    name: 'Ads Manager',   model: 'combo/spinach-agents', fallback_model: 'combo/spinach-agents', provider: 'omniroute', status: 'dormant', dormant: true },
-    ];
+    // model = what the profile's gateway calls actually use; fallback_model =
+    // the tiered route every gateway call degrades to; provider = OmniRoute today.
+    // NIM sweep (2026-10-16): combo/spinach-agents-v2 = super-120b → super-vl
+    // → agy/gemini → openrouter/free. Specialist depts ride super-vl direct.
+    const defaults: Record<string, string> = {
+      ceo: 'combo/spinach-agents-v2',
+      cto: 'combo/spinach-agents-v2',
+      orchestrator: 'combo/spinach-agents-v2',
+      designer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      engineer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      social: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      seo_specialist: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      research: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      sales: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+      ads_manager: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+    };
+    // DB picks win over the hardcoded defaults — the Settings picker writes
+    // these, so the UI must reflect them (bug: UI showed the stale hardcoded
+    // combo for every profile).
+    const { data: picks } = await supabase
+      .from('department_model_picks')
+      .select('department, model')
+      .in('department', Object.keys(defaults));
+    const pickMap = new Map((picks || []).map((p: any) => [p.department, p.model]));
+    const names: Record<string, string> = {
+      ceo: 'CEO', cto: 'CTO', orchestrator: 'Orchestrator', designer: 'Designer',
+      engineer: 'Engineer', social: 'Social', seo_specialist: 'SEO', research: 'Research',
+      sales: 'Sales', ads_manager: 'Ads Manager',
+    };
+    const dormantSet = new Set(['ads_manager']);
+    const profiles = Object.keys(defaults).map((id) => {
+      const model = pickMap.get(id) || defaults[id];
+      return {
+        id,
+        name: names[id],
+        model,
+        fallback_model: defaults[id],
+        provider: 'omniroute',
+        status: dormantSet.has(id) ? 'dormant' : 'live',
+        dormant: dormantSet.has(id),
+      };
+    });
     res.json(profiles);
   } catch (e: any) {
     res.status(500).json({ error: e.message });

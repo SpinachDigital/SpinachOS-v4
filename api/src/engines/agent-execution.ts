@@ -22,21 +22,22 @@ export const AGENT_MODELS: Record<string, string> = {
   // Phase 13 routing fix (2026-10-09): auto/* candidates resolved through an
   // opencode connection with NO key ('noauth') — every auto call hung through
   // dead providers (fastrouter 402, agy 429, agnes 503, gemini hedge-hang).
-  // combo/spinach-agents = priority chain tested 200 on this gateway
-  // (agentrouter claude 2s → gpt-5.6-sol → openrouter nemotron 5s → free).
-  ceo: 'combo/spinach-agents',
-  cto: 'combo/spinach-agents',
-  orchestrator: 'combo/spinach-agents',
-  research: 'combo/spinach-agents',
-  social: 'combo/spinach-agents',
-  sales: 'combo/spinach-agents',
-  seo_specialist: 'combo/spinach-agents',
-  engineer: 'combo/spinach-agents',
-  designer: 'combo/spinach-agents',
-  ops: 'combo/spinach-agents',
-  hr_director: 'combo/spinach-agents',
-  content: 'combo/spinach-agents',
-  hr: 'combo/spinach-agents',
+  // NIM sweep (2026-10-16): combo/spinach-agents-v2 = super-120b → super-vl-120b
+  // → agy/gemini-3.8-flash-high → openrouter/free. Specialist depts go direct
+  // to the fast lane (super-vl, ~2.7s) matching department_model_picks.
+  ceo: 'combo/spinach-agents-v2',
+  cto: 'combo/spinach-agents-v2',
+  orchestrator: 'combo/spinach-agents-v2',
+  research: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  social: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  sales: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  seo_specialist: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  engineer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  designer: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  ops: 'combo/spinach-agents-v2',
+  hr_director: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  content: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
+  hr: 'nvidia/nvidia/nemotron-3.5-super-vl-120b-a12b',
 };
 
 export const AGENT_SYSTEM_PROMPTS: Record<string, string> = {

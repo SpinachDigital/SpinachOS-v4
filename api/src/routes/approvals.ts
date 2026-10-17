@@ -252,6 +252,33 @@ app.post('/api/v1/approvals', authMiddleware, async (req, res) => {
     // (OutputPreview shape) or payload.output; regex only, sub-ms, no LLM.
     const lintText = String(req.body?.payload_json?.text ?? req.body?.payload?.output ?? '');
     const lintResult = lintAgentOutput(lintText);
+    // QA pass (2026-10-16): drop contentless cards at ingest. A card with no
+    // rationale/description/text gives the founder nothing to judge — the
+    // duplicates ("empty body" Fitness Factory / motan) came from here.
+    const pj: any = req.body?.payload_json ?? {};
+    const hasContent = Boolean(
+      String(pj.rationale ?? pj.text ?? req.body?.description ?? pj.output ?? '').trim()
+    );
+    if (!hasContent) {
+      res.status(422).json({ error: 'Approval rejected at ingest: no content to review (empty rationale/description).' });
+      return;
+    }
+    // QA pass (2026-10-16): dedupe on ingest — same type + lead ref already
+    // pending = skip (the "yeet" x6 cards). key = lead_id when present.
+    const dedupeKey = pj.lead_id ? String(pj.lead_id) : null;
+    if (dedupeKey) {
+      const { data: existing } = await supabase
+        .from('approvals')
+        .select('id, title')
+        .eq('status', 'pending')
+        .eq('type', req.body?.type ?? 'lead_qualified')
+        .contains('payload_json', { lead_id: pj.lead_id })
+        .limit(1);
+      if (existing && existing.length) {
+        res.status(409).json({ error: 'Duplicate approval suppressed at ingest.', existing_id: existing[0].id });
+        return;
+      }
+    }
     const enrichedBody = {
       ...req.body,
       style_score: lintResult.score,

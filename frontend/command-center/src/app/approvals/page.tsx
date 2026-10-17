@@ -320,7 +320,7 @@ export default function ApprovalsPage() {
         <div style={{
           margin: '12px 24px 0', padding: '10px 14px', borderRadius: 10,
           background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.25)',
-          display: 'flex', alignItems: 'center', gap: 12,
+          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
           <span className="t-meta" style={{ fontSize: 13, color: 'var(--text)', flex: 1 }}>
             The inbox runs on keyboard now — <span className="kbd">j</span>/<span className="kbd">k</span> move,{' '}
@@ -330,8 +330,10 @@ export default function ApprovalsPage() {
         </div>
       )}
 
-      {/* N3.15 split inbox tabs */}
-      <div className="flex items-center gap-1 px-6 pt-4" role="tablist" aria-label="Inbox tabs">
+      {/* N3.15 split inbox tabs — QA pass: flex-wrap so the 390px phone
+          viewport wraps tabs instead of overflowing. */}
+      <div className="flex items-center gap-1 px-6 pt-4" role="tablist" aria-label="Inbox tabs"
+        style={{ flexWrap: 'wrap', rowGap: 4 }}>
         {TABS.map(t => (
           <button
             key={t.id}
