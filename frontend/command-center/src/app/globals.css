@@ -605,7 +605,11 @@ body {
 .agent-ic svg { width: 16px; height: 16px; }
 .agent-row .an { flex: 1; min-width: 0; }
 .agent-row .an b { display: block; font-size: 12.5px; font-weight: 600; }
-.agent-row .an span { display: block; font-size: 10.5px; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* UX pass (2026-10-18): 1-line ellipsis cut activities at ~16 chars.
+   Two lines + the 40-char clip() gives real context. */
+.agent-row .an span { display: block; font-size: 10.5px; color: var(--text-faint);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; line-height: 1.35; }
 .agent-st { font-size: 10.5px; color: var(--text-faint); flex: none; display: flex; align-items: center; gap: 6px; }
 .agent-st .d { width: 6px; height: 6px; border-radius: 50%; background: var(--green-bright); }
 .agent-st .d.busy { background: var(--warn); }

@@ -26,6 +26,13 @@ type Thread = { id: string; title: string; mode: string; status: string; updated
 type CardRef = { kind: 'task' | 'deliverable' | 'approval'; id: string };
 
 // Suggestion chips — every chip triggers a REAL flow (§1: no dead chips).
+// UX pass (2026-10-18): the canvas greeting was hardcoded 'Good evening' —
+// at 1 AM it read wrong. Same time-aware logic as TopBar now.
+function chatGreeting(): string {
+  const h = new Date().getHours();
+  return h < 4 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 21 ? 'Good evening' : 'Good night';
+}
+
 const CHIPS: { label: string; prompt: string | null; href?: string }[] = [
   { label: '📋 Show pending approvals', prompt: null, href: '/approvals' },
   { label: '🤖 What are agents doing?', prompt: null, href: '/team' },
@@ -220,7 +227,7 @@ export default function ChatPage() {
         {/* greeting + chips (fresh thread only) */}
         {messages.length === 0 && !threadId && (
           <div style={{ padding: '36px 24px 8px' }}>
-            <h2 className="t-title" style={{ fontSize: 22, color: 'var(--text)', margin: '0 0 4px' }}>Good evening, Abhishek 👋</h2>
+            <h2 className="t-title" style={{ fontSize: 22, color: 'var(--text)', margin: '0 0 4px' }}>{chatGreeting()}, Abhishek 👋</h2>
             <p className="t-meta" style={{ fontSize: 13, color: 'var(--text-faint)', margin: 0 }}>A quieter, brighter tomorrow — what should the office do?</p>
             <div className="flex flex-wrap" style={{ gap: 8, marginTop: 18 }}>
               {CHIPS.map((c) => (
