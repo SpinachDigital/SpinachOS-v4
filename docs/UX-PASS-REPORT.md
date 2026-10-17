@@ -2,7 +2,7 @@
 
 **Commit `f01d441` pushed to origin/main (ls-remote verified). 14 audit findings implemented — all live-verified.** Gates: API tsc 0, FE tsc 0, `next build` 0, API+FE restarted, 12/12 pages HTTP 200.
 
-Base: `3e64771` · This commit: 17 files, +422/−86 · Key-leak grep on diff: clean.
+Base: `3e64771` · Round 2 code: `f01d441` (17 files, +422/−86) · Follow-ups: `42c8137` (chat greeting + rail clamp) · Key-leak grep on all diffs: clean.
 
 ## Round 1 (10 fixes) — previously shipped in `20bd8cf`, re-verified this pass
 All ten confirmed live again post-restart: health probe fast-lane 20s, `/win /deliver /create` redirects, DB-driven profiles, approvals dedupe 409/422, test-task filter, entity decode, space/zero/idle formats, humanized labels, grow error column, 390px responsive fixes.
@@ -28,8 +28,12 @@ All ten confirmed live again post-restart: health probe fast-lane 20s, `/win /de
 
 ## Honest leftovers
 - NIM free-tier intermittent 500s remain (failover absorbs; documented in QA pass 1).
-- Stale background screenshots taken pre-fix showed old UI — fresh DOM checks supersede them.
-- Agent Fleet dot colors + chat greeting dedup: code-verified, one screenshot each pending.
+- Stale background screenshots taken pre-fix showed old UI — fresh DOM + post-fix screenshots supersede them.
+- ~~Agent Fleet dot colors + chat greeting dedup pending~~ — both vision-verified post-fix (`agents-fresh2.png`, `chat-final.png`): neutral dots on idle, human names, "Good night" at 2 AM, rail activities 2-line readable.
+
+## Visual verification log (post-fix screenshots, 2026-10-18 ~2 AM)
+- Agent Fleet (`agents-fresh2.png`): idle agents neutral dots (not red) ✓, names "SEO Specialist / HR Director / Ads Manager" (not snake_case) ✓
+- Office Chat (`chat-final.png`): TopBar greeting-free ✓, canvas time-aware "Good night, Abhishek 👋" ✓, rail activities 2-line readable (was "Executing: Bre...") ✓
 
 ## Test log
 - `npx tsc --noEmit` api: 0 · fe: 0
