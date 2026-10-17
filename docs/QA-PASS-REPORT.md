@@ -24,7 +24,7 @@
 ### Files touched (`20bd8cf`, 18 files +180/−75)
 API: `routes/dashboard.ts`, `routes/models.ts`, `routes/approvals.ts`, `routes/win-leads.ts`, `routes/grow-calendar.ts`, `engines/agent-execution.ts`, `bridge.ts` · FE: `next.config.js`, `approvals/page.tsx`, `assets/page.tsx`, `grow/page.tsx`, `pipeline/page.tsx`, `settings/page.tsx`, `tasks/[id]/page.tsx`, `today/page.tsx`, `components/ApprovalQueue.tsx`, `components/OutputPreview.tsx`, `components/TaskRunsPanel.tsx`
 
-**Gates:** api tsc 0 · fe tsc 0 · `next build` exit 0 · key-leak grep clean (no `nvapi-` anywhere in report/repo)
+**Gates:** api tsc 0 · fe tsc 0 · `next build` exit 0 · key-leak grep clean (zero API keys in report/repo — this line is the only occurrence of the prefix pattern, in prose)
 
 ---
 
