@@ -44,3 +44,15 @@
 ## Files changed
 
 `api/src/routes/dashboard.ts`, `frontend/.../app/grow/page.tsx`, `app/leads/page.tsx`, `app/team/page.tsx`, `components/ApprovalQueue.tsx` — 5 files, +77/−29.
+
+## Batch 2 review (pages not yet founder-reviewed), commit `b713a81`
+
+Reviewed: pipeline, clients, tasks, office(/→home redirect). 3 more fixes:
+
+| Page | What Abhishek saw | Fix | Verified |
+|---|---|---|---|
+| Pipelines | "Auto-advance on real events · approval gates between stages · stuck stages surface in THE INBOX" — DevOps speak | "Client work moves itself forward · you approve the big steps · stuck work lands in your inbox" | DOM |
+| Clients | "Client 360 lives one click away — DNA summary…" teaser card while 0 clients exist | Teaser renders only after first client | DOM: 0 clients → no teaser |
+| Tasks | "87 job runs (test noise hidden)" — counts didn't add up (25+0+4 ≠ 87) | "87 job runs · 58 test runs hidden" — honest math | DOM |
+
+Gates: fe tsc 0, build 0, pages 200. Roadmap from reviews (not fixed): dev/system tasks ("jwt verify", "tunnel relink") in the main feed; blocked "Hi" card with no failure reason visible; agent activity strings still surface test prompts globally.
