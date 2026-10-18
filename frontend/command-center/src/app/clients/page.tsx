@@ -180,11 +180,11 @@ export default function ClientsPage() {
           </div>
         )}
 
-        <div className="info-note">
+        {clients.length > 0 && (<div className="info-note">
           Client 360 lives one click away — open any row for timeline, pipelines, deliverables,
           DNA summary, approvals, and retainer schedule.{' '}
           <Link href="/approvals" style={{ color: 'var(--green-bright)' }}>Pending approvals →</Link>
-        </div>
+        </div>)}
       </div>
     </div>
   );

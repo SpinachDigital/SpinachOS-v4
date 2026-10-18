@@ -81,7 +81,9 @@ export default function TasksPage() {
       <div className="page-head">
         <div>
           <h1>Tasks</h1>
-          <p className="sub">{loading ? 'Loading tasks…' : `${visible.length} job runs${hideTests ? ' (test noise hidden)' : ''}`}</p>
+          <p className="sub">{loading ? 'Loading tasks…' : hideTests && tasks && tasks.length > visible.length
+  ? `${visible.length} job runs · ${tasks.length - visible.length} test runs hidden`
+  : `${visible.length} job runs`}</p>
         </div>
         <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
           {loading ? 'Refreshing…' : 'Refresh'}

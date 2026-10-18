@@ -87,7 +87,7 @@ export default function PipelineIndexPage() {
       <header className="page-head">
         <div>
           <h1>Pipelines — DELIVER</h1>
-          <p>Auto-advance on real events · approval gates between stages · stuck stages surface in THE INBOX</p>
+          <p>Client work moves itself forward · you approve the big steps · stuck work lands in your inbox</p>
         </div>
       </header>
 
