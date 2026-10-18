@@ -30,7 +30,10 @@ const entryTitle = (e: Entry): string => {
   // are meaningless in a list — enrich with the entry key / task subject.
   const GENERIC = /^(task completion|pattern|event|note|update)$/i;
   if (!base || GENERIC.test(base.trim())) {
-    const k = typeof e.key === 'string' && e.key.trim() && !GENERIC.test(e.key.trim()) ? e.key.trim() : '';
+    let k = typeof e.key === 'string' && e.key.trim() && !GENERIC.test(e.key.trim()) ? e.key.trim() : '';
+    // Founder retest (2026-10-18): raw task UUIDs read as machine noise.
+    // "task:2614705b-…" -> "run 2614705b" — short, still traceable.
+    k = k.replace(/^task:\s?([0-9a-f]{8})[0-9a-f-]*$/i, 'run $1');
     return k ? `${base || 'Event'} — ${k}` : (base || 'Untitled entry');
   }
   return base;

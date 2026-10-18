@@ -60,7 +60,7 @@ export default function MemoryPage() {
     <main style={{ maxWidth: 900, margin: '0 auto', padding: 24 }}>
       <h1 style={{ fontSize: 22, margin: '0 0 4px' }}>Company memory</h1>
       <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 20px' }}>
-        Semantic search over everything the company has learned — deliverables, decisions, client DNA.
+        Search everything the company has learned — deliverables, decisions, client notes.
       </p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
