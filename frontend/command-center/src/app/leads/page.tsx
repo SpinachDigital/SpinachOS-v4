@@ -239,7 +239,9 @@ export default function LeadsPage() {
                         )}
                       </div>
                       <div style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '2px 0 8px' }}>
-                        {l.company && l.name !== l.company ? <span style={{ opacity: 0.75 }}>{l.name} · </span> : ''}{l.email} · {l.source}
+                        {[l.company && l.name !== l.company ? l.name : null, l.email || null, l.source || null].filter(Boolean).map((part, idx, arr) => (
+                          <span key={idx}>{part}{idx < arr.length - 1 ? ' · ' : ''}</span>
+                        ))}
                         <span style={{ color: stale ? '#d97706' : 'inherit', fontWeight: stale ? 700 : 400 }}>
                           {' '}· {daysInStage(l.updated_at)}d here{stale ? ' — stale' : ''}
                         </span>

@@ -228,9 +228,20 @@ export default function GrowPage() {
                       <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titleOf(item.title)}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
                         {item.channel}{item.style_score != null ? ` · style ${item.style_score}/10` : ''}{item.scheduled_for ? ` · ${new Date(item.scheduled_for).toLocaleString()}` : ''}
-                      {isOverdue(item.scheduled_for) && item.status !== 'published' && (
-                        <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 99, background: 'rgba(245,158,11,0.15)', color: '#b45309', fontSize: 10, fontWeight: 700 }}>OVERDUE</span>
-                      )}
+                      {(() => {
+                        // Founder retest (2026-10-18): a month-old idea backlog is
+                        // known history, not an alarm. Badge only when actionable
+                        // (<7d late or a draft); older ideas show a quiet date note.
+                        const ms = item.scheduled_for ? new Date(item.scheduled_for).getTime() : 0;
+                        const isOld = ms && Date.now() - ms > 7 * 24 * 3600 * 1000;
+                        if (!ms || item.status === 'published' || !isOverdue(item.scheduled_for)) return null;
+                        if (isOld && item.status === 'idea') {
+                          return <span style={{ marginLeft: 6, color: 'var(--muted-foreground)', fontSize: 10 }}>planned, never generated</span>;
+                        }
+                        return (
+                          <span style={{ marginLeft: 6, padding: '1px 7px', borderRadius: 99, background: 'rgba(245,158,11,0.15)', color: '#b45309', fontSize: 10, fontWeight: 700 }}>OVERDUE</span>
+                        );
+                      })()}
                       </div>
                     </button>
                   ))}

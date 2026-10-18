@@ -179,12 +179,27 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* flags panel — severity-sorted, one-click actions */}
-        {flags && flags.length > 0 && (
-          <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.04)' }}>
-            <div style={{ fontSize: 11, color: '#ef4444', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 700 }}>⚠ Flags ({flags.length})</div>
+        {/* flags panel — severity-sorted, one-click actions.
+            Founder retest (2026-10-18): 10 LOW "idle 24h" flags in a red
+            emergency box read as a crisis on a quiet Sunday. Red is reserved
+            for HIGH/MEDIUM; LOW idles become one calm gray note. */}
+        {flags && flags.length > 0 && (() => {
+          const lows = flags.filter(f => f.severity === 'low');
+          const rest = flags.filter(f => f.severity !== 'low');
+          const urgentTint = rest.length ? '1px solid rgba(239,68,68,0.25)' : '1px solid var(--border)';
+          const urgentBg = rest.length ? 'rgba(239,68,68,0.04)' : 'var(--card)';
+          return (
+          <div style={{ padding: '12px 14px', borderRadius: 12, border: urgentTint, background: urgentBg }}>
+            {rest.length > 0 && (
+              <div style={{ fontSize: 11, color: '#ef4444', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 700 }}>⚠ Needs attention ({rest.length})</div>
+            )}
+            {lows.length > 0 && (
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: rest.length ? 8 : 0 }}>
+                {lows.length} agent{lows.length > 1 ? 's' : ''} waiting for assignments — dispatch work from Chat when ready.
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {flags.map(f => (
+              {rest.map(f => (
                 <div key={f.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13, flexShrink: 0 }}>{SEV_DOT[f.severity]} {FLAG_ICON[f.type]}</span>
                   <div style={{ flex: '1 1 260px', minWidth: 0 }}>
@@ -200,7 +215,8 @@ export default function TeamPage() {
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
         {flags && flags.length === 0 && (
           <div style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid var(--border-soft)', background: 'var(--panel)', fontSize: 13, color: 'var(--text-dim)' }}>
             All clear 🎉 — no open flags.
@@ -242,8 +258,8 @@ export default function TeamPage() {
                         background: a.queue_depth >= 3 ? '#f59e0b' : 'var(--accent)',
                       }} />
                     </div>
-                    <span className="t-mono" style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>q{a.queue_depth}</span>
-                    <span className="t-mono" style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }}>✓{a.week_completed}/wk</span>
+                    <span className="t-mono" style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }} title="Tasks waiting in this agent's queue">{a.queue_depth} queued</span>
+                    <span className="t-mono" style={{ fontSize: 10, color: 'var(--text-faint)', flexShrink: 0 }} title="Tasks completed this week">{a.week_completed} done this week</span>
                   </div>
                 </button>
               );

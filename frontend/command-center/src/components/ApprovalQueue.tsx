@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import {
   FileText, MessageSquare, Megaphone, DollarSign,
-  Cpu, Palette, Code, Check, X, Clock, AlertCircle, ChevronDown,
+  Cpu, Palette, Code, Check, X, Clock, AlertCircle, ChevronDown, Users,
 } from 'lucide-react';
 import OutputPreview from '@/components/OutputPreview';
 import FreshFacts from '@/components/approvals/FreshFacts';
@@ -73,6 +73,11 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; tint: string; label: 
   strategy: { icon: <Cpu className="w-4 h-4" />, tint: 'rgba(168,85,247,0.14)', label: 'Strategy' },
   design: { icon: <Palette className="w-4 h-4" />, tint: 'rgba(6,182,212,0.14)', label: 'Design' },
   code: { icon: <Code className="w-4 h-4" />, tint: 'rgba(16,185,129,0.14)', label: 'Code' },
+  // Founder retest (2026-10-18): live approval types that fell back to raw ids.
+  lead_qualified: { icon: <Users className="w-4 h-4" />, tint: 'rgba(34,197,94,0.14)', label: 'New lead' },
+  grow_draft: { icon: <FileText className="w-4 h-4" />, tint: 'rgba(99,102,241,0.14)', label: 'Content draft' },
+  grow_publish: { icon: <Megaphone className="w-4 h-4" />, tint: 'rgba(236,72,153,0.14)', label: 'Publish' },
+  gate: { icon: <Cpu className="w-4 h-4" />, tint: 'rgba(168,85,247,0.14)', label: 'Stage gate' },
 };
 
 const STATUS_STYLE: Record<string, React.CSSProperties> = {
@@ -277,19 +282,31 @@ export function ApprovalQueue({
                     {cleanDesc(decodeEntities(approval.description))}
                   </p>
                 )}
+                {/* Founder retest (2026-10-18): agents write the same text into
+                    description and the draft body — the card said it twice. The
+                    deliverable box now hides when it adds nothing. */}
+                {(() => {
+                  const pj = approval.payload_json;
+                  const body = pj && typeof pj === 'object'
+                    ? String(pj.body ?? pj.text ?? pj.content ?? pj.draft ?? '')
+                    : String(pj ?? '');
+                  const desc = cleanDesc(decodeEntities(approval.description || ''));
+                  const dup = body.trim() && desc.trim() && body.trim().startsWith(desc.trim().slice(0, 60));
+                  return dup ? null : (
+                    <div style={{
+                      padding: 12, borderRadius: 12, marginBottom: 12,
+                      background: 'var(--bg-2, #fafaf7)', border: '1px solid var(--border-soft, #eee)',
+                    }}>
+                      <OutputPreview
+                        payload={approval.payload_json}
+                        agent={approval.requested_by}
+                        kind={approval.type}
+                        title={approval.title}
+                      />
+                    </div>
+                  );
+                })()}
 
-                {/* In-card deliverable preview — Sprint 1 pattern, never a JSON dump */}
-                <div style={{
-                  padding: 12, borderRadius: 12, marginBottom: 12,
-                  background: 'var(--bg-2, #fafaf7)', border: '1px solid var(--border-soft, #eee)',
-                }}>
-                  <OutputPreview
-                    payload={approval.payload_json}
-                    agent={approval.requested_by}
-                    kind={approval.type}
-                    title={approval.title}
-                  />
-                </div>
 
                 {/* One-tap actions — 44px touch targets */}
                 <div className="flex items-center gap-2 pt-2" style={{ borderTop: '1px solid var(--border-soft, #eee)' }}>

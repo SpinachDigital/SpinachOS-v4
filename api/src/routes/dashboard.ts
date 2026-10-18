@@ -22,11 +22,13 @@ app.get('/api/overview/stats', async (_req, res) => {
       supabase.from('agent_states').select('profile', { count: 'exact', head: true }).eq('is_dormant', false),
     ]);
     res.json([
-      { label: 'Active Clients', value: c.count ?? 0, icon: 'briefcase', delta: '↑ live' },
-      { label: 'Tasks Running', value: t.count ?? 0, icon: 'clock', delta: '↑ now' },
-      { label: 'Pipelines', value: wf.count ?? 0, icon: 'folder', delta: '↑ live' },
+      // Founder retest (2026-10-18): deltas were dev-speak ("↑ live", "● real DB
+      // count"). Now they describe the number, not the data source.
+      { label: 'Active Clients', value: c.count ?? 0, icon: 'briefcase', delta: c.count ? 'currently served' : 'none yet' },
+      { label: 'Tasks Running', value: t.count ?? 0, icon: 'clock', delta: t.count ? 'in progress' : 'idle' },
+      { label: 'Pipelines', value: wf.count ?? 0, icon: 'folder', delta: wf.count ? 'in flight' : 'none yet' },
       { label: 'Pending Approvals', value: ap.count ?? 0, icon: 'check', delta: ap.count ? 'action needed' : 'clear' },
-      { label: 'Agents Online', value: ag.count ?? 0, icon: 'bolt', delta: '● real DB count' },
+      { label: 'Agents Online', value: ag.count ?? 0, icon: 'bolt', delta: ag.count ? 'ready to work' : 'all offline' },
     ]);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
