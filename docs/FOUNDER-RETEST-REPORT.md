@@ -56,3 +56,17 @@ Reviewed: pipeline, clients, tasks, office(/→home redirect). 3 more fixes:
 | Tasks | "87 job runs (test noise hidden)" — counts didn't add up (25+0+4 ≠ 87) | "87 job runs · 58 test runs hidden" — honest math | DOM |
 
 Gates: fe tsc 0, build 0, pages 200. Roadmap from reviews (not fixed): dev/system tasks ("jwt verify", "tunnel relink") in the main feed; blocked "Hi" card with no failure reason visible; agent activity strings still surface test prompts globally.
+
+## Batch 3 review (memory, ledger, analytics, settings), commit `2aedb65`
+
+Reviewed the last 4 unreviewed pages. 2 more fixes:
+
+| Page | What Abhishek saw | Fix | Verified |
+|---|---|---|---|
+| Ledger | 39 rows of "task completion — task:2614705b-ae41-…" raw UUID noise | "task completion — run 2614705b" (short, traceable) | DOM: 0 UUIDs, 39 run-refs |
+| Memory | "Semantic search over everything… client DNA" jargon subtitle | "Search everything the company has learned — deliverables, decisions, client notes." | DOM |
+
+Roadmap additions from these reviews:
+- Analytics: "1 Blocked now" red metric doesn't say WHO is blocked — should deep-link to the blocked agent. Page is 90% telemetry; no business insights yet (agreed, feature work).
+- Settings: API Keys / Advanced tabs have no danger warning; split "everyday" vs "developer" sections.
+- "founder correction" ledger entries carry no context about what was corrected.
